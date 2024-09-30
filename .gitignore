@@ -1,0 +1,45 @@
+# Bytecode-filer och Python-cachemappar
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtuell miljö
+.venv/
+env/
+venv/
+
+# Flask migrations
+migrations/
+
+# Inställningar/konfigurationer som kan vara specifika för din dator
+instance/
+*.env
+config.py
+.env
+
+# Pytest cachefiler
+.pytest_cache/
+
+# Loggfiler
+*.log
+
+# Databasefiler
+*.sqlite3
+*.db
+
+# Anaconda-environments
+.conda/
+
+# VSCode konfigurationsfiler
+.vscode/
+
+# Mac OS-filer
+.DS_Store
+
+# Jupyter Notebook checkpoints (om du använder Jupyter i projektet)
+.ipynb_checkpoints/
+
+# Pipenv & Poetry
+Pipfile
+Pipfile.lock
+poetry.lock
