@@ -6,32 +6,67 @@
     <title>Flask API Test</title>
 </head>
 <body>
-    <h1>Skicka ett meddelande till servern</h1>
+    <h1>Hantera användare</h1>
     
-    <form id="messageForm">
-        <label for="messageInput">Skriv ett meddelande:</label><br><br>
-        <input type="text" id="messageInput" name="message" placeholder="Skriv något här..." required><br><br>
-        <button type="submit">Skicka</button>
+    <!-- Formulär för att lägga till en användare -->
+    <h2>Lägg till en användare</h2>
+    <form id="addUserForm">
+        <label for="emailInput">E-post:</label><br><br>
+        <input type="email" id="emailInput" name="email" placeholder="Skriv din e-post här..." required><br><br>
+
+        <label for="passwordInput">Lösenord:</label><br><br>
+        <input type="password" id="passwordInput" name="password" placeholder="Skriv ditt lösenord..." required><br><br>
+
+        <button type="submit">Lägg till användare</button>
     </form>
 
+    <h2>Hämta alla användare</h2>
+    <button id="fetchUsersBtn">Hämta användare</button>
+    
+    <ul id="userList"></ul>
+
     <script>
-        document.getElementById('messageForm').addEventListener('submit', function(event) {
+        // Hantera formulär för att lägga till användare
+        document.getElementById('addUserForm').addEventListener('submit', function(event) {
             event.preventDefault();  // Förhindra sidladdning
 
-            const message = document.getElementById('messageInput').value;
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
 
-            // Skicka POST-förfrågan till Flask-servern
-            fetch('http://127.0.0.1:5000/api/data', {
+            // Skicka POST-förfrågan till Flask-servern för att lägga till användare
+            fetch('http://127.0.0.1:5000/api/add_user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message: message })
+                body: JSON.stringify({ email: email, password: password })
             })
             .then(response => response.json())
             .then(data => {
-                // Visa svaret i en popup
-                alert(data.response_message);
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        // Hämta alla användare från servern
+        document.getElementById('fetchUsersBtn').addEventListener('click', function() {
+            fetch('http://127.0.0.1:5000/api/users')
+            .then(response => response.json())
+            .then(users => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';  // Rensa listan
+
+                users.forEach(user => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `ID: ${user.id}, E-post: ${user.email}`;
+                    userList.appendChild(listItem);
+                });
             })
             .catch(error => {
                 console.error('Error:', error);
