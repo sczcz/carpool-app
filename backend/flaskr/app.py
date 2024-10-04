@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 from database import db, User
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+CORS(app)  # Aktiverar CORS för hela appen
 
 # Konfiguration för SQLite-databasen
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
