@@ -37,6 +37,11 @@
     
     <ul id="userList"></ul>
 
+    <h2>Testa din session</h2>
+    <button id="testSessionBtn">Testa session</button>
+
+    <h2>Avsluta din session</h2>
+    <button id="logoutBtn">Logga ut</button>
     <!-- Här lägger du till root-elementet för React -->
     <div id="root"></div>
 
@@ -90,6 +95,7 @@
                     alert(data.error);
                 } else {
                     alert(`Inloggad! Token: ${data.access_token}`);
+                    console.log(`Inloggad! Token: ${data.access_token}`);
                     // Här kan du spara token, t.ex. i localStorage
                     localStorage.setItem('jwt_token', data.access_token);
                 }
@@ -117,6 +123,51 @@
                 console.error('Error:', error);
             });
         });
+
+        // Testa om JWT-token fungerar med skyddad route /api/protected
+document.getElementById('testSessionBtn').addEventListener('click', function() {
+    // Hämta token från localStorage
+    const token = localStorage.getItem('jwt_token');
+
+    if (!token) {
+        alert('Ingen token hittades! Logga in först.');
+        return;
+    }
+
+    // Skicka GET-förfrågan till /api/protected med token i Authorization-headern
+    fetch('http://127.0.0.1:5000/api/protected', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,  // Skicka JWT-token
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        // Kontrollera om servern returnerar ett giltigt svar
+        if (!response.ok) {
+            throw new Error('Åtkomst nekad! Felaktig token eller utgången.');
+        }
+        return response.json();  // Returnera JSON-data från svaret
+    })
+    .then(data => {
+        console.log('Skyddade data:', data);
+        alert(JSON.stringify(data));
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Fel vid begäran: ' + error.message);
+    });
+});
+
+// Logga ut användaren genom att ta bort JWT-tokenen från localStorage
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    // Ta bort token från localStorage
+    localStorage.removeItem('jwt_token');
+
+    // Bekräfta för användaren att de har loggats ut
+    alert('Du har loggats ut!');
+});
+
     </script>
 </body>
 </html>
