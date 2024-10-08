@@ -20,6 +20,18 @@
         <button type="submit">Lägg till användare</button>
     </form>
 
+    <!-- Formulär för att logga in -->
+    <h2>Logga in</h2>
+    <form id="loginForm">
+        <label for="loginEmailInput">E-post:</label><br><br>
+        <input type="email" id="loginEmailInput" name="email" placeholder="Skriv din e-post här..." required><br><br>
+
+        <label for="loginPasswordInput">Lösenord:</label><br><br>
+        <input type="password" id="loginPasswordInput" name="password" placeholder="Skriv ditt lösenord..." required><br><br>
+
+        <button type="submit">Logga in</button>
+    </form>
+
     <h2>Hämta alla användare</h2>
     <button id="fetchUsersBtn">Hämta användare</button>
     
@@ -37,7 +49,7 @@
             const password = document.getElementById('passwordInput').value;
 
             // Skicka POST-förfrågan till Flask-servern för att lägga till användare
-            fetch('http://127.0.0.1:5000/api/add_user', {
+            fetch('http://127.0.0.1:5000/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -57,6 +69,36 @@
             });
         });
 
+        // Hantera formulär för att logga in
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();  // Förhindra sidladdning
+
+            const email = document.getElementById('loginEmailInput').value;
+            const password = document.getElementById('loginPasswordInput').value;
+
+            // Skicka POST-förfrågan till Flask-servern för att logga in
+            fetch('http://127.0.0.1:5000/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert(`Inloggad! Token: ${data.access_token}`);
+                    // Här kan du spara token, t.ex. i localStorage
+                    localStorage.setItem('jwt_token', data.access_token);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
         // Hämta alla användare från servern
         document.getElementById('fetchUsersBtn').addEventListener('click', function() {
             fetch('http://127.0.0.1:5000/api/users')
@@ -67,7 +109,7 @@
 
                 users.forEach(user => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `ID: ${user.id}, E-post: ${user.email}`;
+                    listItem.textContent = `ID: ${user.id}, E-post: ${user.email}`;  // Removed password from display for security reasons
                     userList.appendChild(listItem);
                 });
             })
