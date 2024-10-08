@@ -8,15 +8,21 @@ app = Flask(__name__)
 
 CORS(app)  # Enable CORS for the entire app
 
-# Database configuration
-instance_path = os.path.join(app.instance_path, 'users.db')
+# Create a specific path for the database
+basedir = os.path.abspath(os.path.dirname(__file__))  # Gets the base directory of your project
+db_path = os.path.join(basedir, 'instance', 'users.db')  # Change 'backend' to your desired folder
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{instance_path}'
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'  # Use the correct path for your DB
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET'] = 'your_jwt_secret_key'  # Add this line to set the JWT secret
+app.config['JWT_SECRET'] = 'your_jwt_secret_key'
 
 # Initialize the database with the Flask app
 db.init_app(app)
+
+# Ensure the directory exists
+if not os.path.exists(os.path.join(basedir, 'instance')):
+    os.makedirs(os.path.join(basedir, 'instance'))
 
 # Create all tables
 with app.app_context():
