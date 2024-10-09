@@ -1,48 +1,42 @@
 from flask import Flask, render_template, request, jsonify
-from database import db, User
 from flask_cors import CORS
+from routes.auth import auth_bp  # Import the auth blueprint
+import os
+from extensions import db  # Import the db instance from extensions.py
+from models.auth_model import User  # Adjust import based on your models structure
 
 app = Flask(__name__)
 
-CORS(app)  # Aktiverar CORS för hela appen
+CORS(app)  # Enable CORS for the entire app
 
-# Konfiguration för SQLite-databasen
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+# Create a specific path for the database
+basedir = os.path.abspath(os.path.dirname(__file__))  # Gets the base directory of your project
+db_path = os.path.join(basedir, 'instance', 'users.db')  # Change 'backend' to your desired folder
+
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'  # Use the correct path for your DB
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET'] = 'your_jwt_secret_key'
 
-# Initiera databasen med Flask-applikationen
+# Initialize the database with the Flask app
 db.init_app(app)
 
-# Skapa alla tabeller
+# Ensure the directory exists
+if not os.path.exists(os.path.join(basedir, 'instance')):
+    os.makedirs(os.path.join(basedir, 'instance'))
+
+# Create all tables
 with app.app_context():
     db.create_all()
 
-# Route för att rendera index.html
+# Register the auth blueprint
+app.register_blueprint(auth_bp)
+
+# Route to render index.html
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Route för att lägga till en ny användare (POST)
-@app.route('/api/add_user', methods=['POST'])
-def add_user():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    
-    # Kontrollera om användaren redan finns
-    user_exists = User.query.filter_by(email=email).first()
-    
-    if user_exists:
-        return jsonify({"error": "Användare finns redan!"}), 400
-
-    # Skapa och spara ny användare i databasen
-    new_user = User(email=email, password=password)
-    db.session.add(new_user)
-    db.session.commit()
-    
-    return jsonify({"message": f"Användare {email} skapad!"}), 201
-
-# Route för att hämta alla användare (GET)
 @app.route('/api/users', methods=['GET'])
 def get_users():
     users = User.query.all()
@@ -51,4 +45,3 @@ def get_users():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    #app.run("0.0.0.0", port=5000, debug=True)      #For testing on non-localhost
