@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, Button, FormControl, FormLabel, Input, Text, Alert } from '@chakra-ui/react';
 
 const Register = () => {
     const [email, setEmail] = useState('');
@@ -32,25 +33,31 @@ const Register = () => {
     };
 
     return (
-        <form onSubmit={handleRegister}>
-            <h2>Registrera användare</h2>
-            <label>E-post:</label>
-            <input 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                required 
-            />
-            <label>Lösenord:</label>
-            <input 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
-            />
-            <button type="submit">Registrera</button>
-            {error && <div className="error">{error}</div>}
-        </form>
+        <Box width="400px" mx="auto" mt={8} p={4} borderWidth={1} borderRadius="lg">
+            <Text fontSize="2xl" mb={4}>Registrera användare</Text>
+            <form onSubmit={handleRegister}>
+                <FormControl mb={4}>
+                    <FormLabel>E-post:</FormLabel>
+                    <Input 
+                        type="email" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        required 
+                    />
+                </FormControl>
+                <FormControl mb={4}>
+                    <FormLabel>Lösenord:</FormLabel>
+                    <Input 
+                        type="password" 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        required 
+                    />
+                </FormControl>
+                <Button type="submit" colorScheme="teal" width="full">Registrera</Button>
+            </form>
+            {error && <Alert status="error" mt={4}>{error}</Alert>}
+        </Box>
     );
 };
 

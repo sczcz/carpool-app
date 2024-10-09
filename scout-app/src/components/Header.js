@@ -1,13 +1,13 @@
-// src/components/Header.js
-
-
 import React from 'react';
+import { Box, Heading } from '@chakra-ui/react';
 
 const Header = () => {
     return (
-        <header>
-            <h1>JONSTORPS KUSTSCOUTKÅR</h1>
-        </header>
+        <Box as="header" bg="teal.500" p={4} textAlign="center">
+            <Heading as="h1" size="xl" color="white">
+                JONSTORPS KUSTSCOUTKÅR
+            </Heading>
+        </Box>
     );
 };
 

@@ -7,7 +7,7 @@ const Navbar = () => {
     <Box as="nav" bg="teal.500" color="white" p={4}>
       <Flex alignItems="center">
         <Text fontSize="xl" fontWeight="bold">
-          <Link to="/">MyWebsite</Link>
+          <Link to="/">Home</Link>
         </Text>
         <Spacer />
         <Flex gap={4}>

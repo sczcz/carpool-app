@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, Button, Text, List, ListItem } from '@chakra-ui/react';
 
 const FetchUsers = () => {
     const [users, setUsers] = useState([]);
@@ -11,17 +12,17 @@ const FetchUsers = () => {
     };
 
     return (
-        <div>
-            <h2>Hämta alla användare</h2>
-            <button onClick={handleFetchUsers}>Hämta användare</button>
-            <ul>
+        <Box width="400px" mx="auto" mt={8} p={4} borderWidth={1} borderRadius="lg">
+            <Text fontSize="2xl" mb={4}>Hämta alla användare</Text>
+            <Button onClick={handleFetchUsers} colorScheme="teal" mb={4}>Hämta användare</Button>
+            <List spacing={3}>
                 {users.map(user => (
-                    <li key={user.id}>
+                    <ListItem key={user.id}>
                         ID: {user.id}, E-post: {user.email}
-                    </li>
+                    </ListItem>
                 ))}
-            </ul>
-        </div>
+            </List>
+        </Box>
     );
 };
 

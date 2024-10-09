@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Button, Text, Alert } from '@chakra-ui/react';
 
 const TestSession = () => {
     const handleTestSession = () => {
@@ -32,10 +33,10 @@ const TestSession = () => {
     };
 
     return (
-        <div>
-            <h2>Testa din session</h2>
-            <button onClick={handleTestSession}>Testa session</button>
-        </div>
+        <Box width="400px" mx="auto" mt={8} p={4} borderWidth={1} borderRadius="lg">
+            <Text fontSize="2xl" mb={4}>Testa din session</Text>
+            <Button onClick={handleTestSession} colorScheme="teal">Testa session</Button>
+        </Box>
     );
 };
 
