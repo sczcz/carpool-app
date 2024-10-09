@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button, FormControl, FormLabel, Input, Box, Text } from '@chakra-ui/react'; // Importera Chakra UI komponenter
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -33,25 +34,29 @@ const Login = () => {
     };
 
     return (
-        <form onSubmit={handleLogin}>
-            <h2>Logga in</h2>
-            <label>E-post:</label>
-            <input 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                required 
-            />
-            <label>Lösenord:</label>
-            <input 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
-            />
-            <button type="submit">Logga in</button>
-            {error && <div className="error">{error}</div>}
-        </form>
+        <Box width="300px" margin="auto" marginTop="100px">
+            <form onSubmit={handleLogin}>
+                <Text fontSize="2xl" marginBottom="4">Logga in</Text>
+                <FormControl id="email" isRequired>
+                    <FormLabel>E-post:</FormLabel>
+                    <Input 
+                        type="email" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                    />
+                </FormControl>
+                <FormControl id="password" isRequired marginTop="4">
+                    <FormLabel>Lösenord:</FormLabel>
+                    <Input 
+                        type="password" 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                    />
+                </FormControl>
+                <Button colorScheme="teal" width="full" marginTop="4" type="submit">Logga in</Button>
+                {error && <Text color="red.500" marginTop="4">{error}</Text>}
+            </form>
+        </Box>
     );
 };
 
