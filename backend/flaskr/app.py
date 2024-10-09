@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, jsonify
-from database import db, User
 from flask_cors import CORS
-from auth import auth_bp  # Import the auth blueprint
+from routes.auth import auth_bp  # Import the auth blueprint
 import os
+from extensions import db  # Import the db instance from extensions.py
+from models.auth_model import User  # Adjust import based on your models structure
 
 app = Flask(__name__)
 

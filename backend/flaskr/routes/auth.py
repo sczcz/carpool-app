@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from database import db, User
+from extensions import db
+from models.auth_model import User
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
