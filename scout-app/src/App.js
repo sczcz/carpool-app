@@ -7,6 +7,7 @@ import Register from './components/Register';
 import FetchUsers from './components/FetchUsers';
 import TestSession from './components/TestSession';
 import Logout from './components/Logout';
+import Home from './components/Home'; // Importera Home
 
 
 const App = () => {
@@ -15,6 +16,7 @@ const App = () => {
     <Header /> {/* Add your Header component here */}
       <Navbar />
       <Routes>
+      <Route path="/" element={<Home />} /> {/* Lägg till Home-rutten */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/FetchUsers" element={<FetchUsers />} />
