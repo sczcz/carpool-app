@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -17,13 +18,13 @@ const Login = () => {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                alert(data.error);
+                setError(data.error);
             } else {
                 alert(`Inloggad! Token: ${data.access_token}`);
                 localStorage.setItem('jwt_token', data.access_token);
-                // Reset form fields
                 setEmail('');
                 setPassword('');
+                setError('');
             }
         })
         .catch(error => {
@@ -32,26 +33,25 @@ const Login = () => {
     };
 
     return (
-        <div>
+        <form onSubmit={handleLogin}>
             <h2>Logga in</h2>
-            <form onSubmit={handleLogin}>
-                <label>E-post:</label>
-                <input 
-                    type="email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required 
-                /><br />
-                <label>Lösenord:</label>
-                <input 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
-                /><br />
-                <button type="submit">Logga in</button>
-            </form>
-        </div>
+            <label>E-post:</label>
+            <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+            />
+            <label>Lösenord:</label>
+            <input 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+            />
+            <button type="submit">Logga in</button>
+            {error && <div className="error">{error}</div>}
+        </form>
     );
 };
 

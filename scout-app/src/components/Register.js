@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const handleRegister = (e) => {
         e.preventDefault();
@@ -17,12 +18,12 @@ const Register = () => {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                alert(data.error);
+                setError(data.error);
             } else {
                 alert(data.message);
-                // Reset form fields
                 setEmail('');
                 setPassword('');
+                setError('');
             }
         })
         .catch(error => {
@@ -31,26 +32,25 @@ const Register = () => {
     };
 
     return (
-        <div>
+        <form onSubmit={handleRegister}>
             <h2>Registrera användare</h2>
-            <form onSubmit={handleRegister}>
-                <label>E-post:</label>
-                <input 
-                    type="email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required 
-                /><br />
-                <label>Lösenord:</label>
-                <input 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
-                /><br />
-                <button type="submit">Registrera</button>
-            </form>
-        </div>
+            <label>E-post:</label>
+            <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+            />
+            <label>Lösenord:</label>
+            <input 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+            />
+            <button type="submit">Registrera</button>
+            {error && <div className="error">{error}</div>}
+        </form>
     );
 };
 
