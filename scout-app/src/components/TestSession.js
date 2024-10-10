@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Text, Alert } from '@chakra-ui/react';
+import { Button, Text, Flex } from '@chakra-ui/react';
 
 const TestSession = () => {
     const handleTestSession = () => {
@@ -33,10 +33,20 @@ const TestSession = () => {
     };
 
     return (
-        <Box width="400px" mx="auto" mt={8} p={4} borderWidth={1} borderRadius="lg">
-            <Text fontSize="2xl" mb={4}>Testa din session</Text>
-            <Button onClick={handleTestSession} colorScheme="teal">Testa session</Button>
-        </Box>
+        <Flex 
+            direction="column" 
+            align="center" 
+            justify="center" 
+            mt={8} 
+            textAlign="center" // Centrera texten
+        >
+            <Text fontSize="2xl" mb={4} color="brand.500">
+                Testa din session
+            </Text>
+            <Button onClick={handleTestSession} colorScheme="brand">
+                Testa session
+            </Button>
+        </Flex>
     );
 };
 

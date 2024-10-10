@@ -4,11 +4,12 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ChakraProvider } from '@chakra-ui/react'; // Importera ChakraProvider
+import customTheme from './Theme'; // Importera ditt tema från Theme.js i src-mappen
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <ChakraProvider>  {/* Omge din App med ChakraProvider */}
+    <ChakraProvider theme={customTheme}>  {/* Använd ditt anpassade tema */}
       <App />
     </ChakraProvider>
   </React.StrictMode>

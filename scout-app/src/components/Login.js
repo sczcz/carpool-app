@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, FormControl, FormLabel, Input, Box, Text } from '@chakra-ui/react'; // Importera Chakra UI komponenter
+import { Button, FormControl, FormLabel, Input, Box, Text } from '@chakra-ui/react';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -34,15 +34,16 @@ const Login = () => {
     };
 
     return (
-        <Box width="300px" margin="auto" marginTop="100px">
+        <Box width="300px" margin="auto" marginTop="100px" bg="brand.300" p={4} borderRadius="lg" boxShadow="md">
             <form onSubmit={handleLogin}>
-                <Text fontSize="2xl" marginBottom="4">Logga in</Text>
+                <Text fontSize="2xl" marginBottom="4" color="brand.500">Logga in</Text>
                 <FormControl id="email" isRequired>
                     <FormLabel>E-post:</FormLabel>
                     <Input 
                         type="email" 
                         value={email} 
                         onChange={(e) => setEmail(e.target.value)} 
+                        bg="white"
                     />
                 </FormControl>
                 <FormControl id="password" isRequired marginTop="4">
@@ -51,9 +52,10 @@ const Login = () => {
                         type="password" 
                         value={password} 
                         onChange={(e) => setPassword(e.target.value)} 
+                        bg="white"
                     />
                 </FormControl>
-                <Button colorScheme="teal" width="full" marginTop="4" type="submit">Logga in</Button>
+                <Button colorScheme="brand" width="full" marginTop="4" type="submit">Logga in</Button>
                 {error && <Text color="red.500" marginTop="4">{error}</Text>}
             </form>
         </Box>
