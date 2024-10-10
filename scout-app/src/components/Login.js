@@ -14,6 +14,7 @@ const Login = () => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',  // Detta säkerställer att cookies skickas med i begäran
             body: JSON.stringify({ email, password })
         })
         .then(response => response.json())
@@ -21,8 +22,7 @@ const Login = () => {
             if (data.error) {
                 setError(data.error);
             } else {
-                alert(`Inloggad! Token: ${data.access_token}`);
-                localStorage.setItem('jwt_token', data.access_token);
+                alert('Inloggad! Cookie är satt.');
                 setEmail('');
                 setPassword('');
                 setError('');
@@ -30,6 +30,7 @@ const Login = () => {
         })
         .catch(error => {
             console.error('Error:', error);
+            setError('Något gick fel, försök igen.');
         });
     };
 

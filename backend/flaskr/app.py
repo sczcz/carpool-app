@@ -1,47 +1,50 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, jsonify
 from flask_cors import CORS
-from routes.auth import auth_bp  # Import the auth blueprint
+from routes.auth import auth_bp  # Import auth blueprint
 import os
-from extensions import db  # Import the db instance from extensions.py
-from models.auth_model import User  # Adjust import based on your models structure
+from extensions import db  # Import db instance
+from models.auth_model import User  # Import your User model
 
 app = Flask(__name__)
 
-CORS(app)  # Enable CORS for the entire app
+# Tillåt CORS med credentials för att inkludera cookies i begäran från React-klienten
+CORS(app, supports_credentials=True, origins=['http://localhost:3000'], methods=['GET', 'POST', 'OPTIONS'])
 
-# Create a specific path for the database
-basedir = os.path.abspath(os.path.dirname(__file__))  # Gets the base directory of your project
-db_path = os.path.join(basedir, 'instance', 'users.db')  # Change 'backend' to your desired folder
+# Skapa en specifik sökväg för databasen
+basedir = os.path.abspath(os.path.dirname(__file__))  # Basen för ditt projekt
+db_path = os.path.join(basedir, 'instance', 'users.db')  # Använd rätt sökväg för databasen
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'  # Use the correct path for your DB
+# Databas-konfiguration
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'  # Ange rätt databasväg
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET'] = 'your_jwt_secret_key'
+app.config['JWT_SECRET'] = os.getenv('JWT_SECRET', 'default_secret_key')  # Använd en miljövariabel för JWT-secret
 
-# Initialize the database with the Flask app
+# Initiera databasen med Flask-appen
 db.init_app(app)
 
-# Ensure the directory exists
+# Se till att katalogen finns (om den inte redan existerar)
 if not os.path.exists(os.path.join(basedir, 'instance')):
     os.makedirs(os.path.join(basedir, 'instance'))
 
-# Create all tables
+# Skapa alla tabeller
 with app.app_context():
     db.create_all()
 
-# Register the auth blueprint
+# Registrera auth blueprint
 app.register_blueprint(auth_bp)
 
-# Route to render index.html
+# Route för att rendera en grundläggande index.html
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# Route för att hämta alla användare
 @app.route('/api/users', methods=['GET'])
 def get_users():
     users = User.query.all()
     users_list = [{"id": user.user_id, "email": user.email} for user in users]
     return jsonify(users_list), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)

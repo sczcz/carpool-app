@@ -1,18 +1,15 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response, current_app
 from extensions import db
 from models.auth_model import User
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
-from flask import current_app
 from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
-CORS(auth_bp)  # Enable CORS for the auth blueprint
-
-# Secret key for encoding JWT tokens
-JWT_SECRET = "your_jwt_secret_key"
+# Tillåt CORS med credentials från specifik origin (din React-app)
+CORS(auth_bp, supports_credentials=True, origins='http://localhost:3000')
 
 # Route for user registration (POST)
 @auth_bp.route('/api/register', methods=['POST'])
@@ -21,68 +18,85 @@ def register():
     email = data.get('email')
     password = data.get('password')
 
-    # Check if the user already exists
+    # Kontrollera om användaren redan finns
     user_exists = User.query.filter_by(email=email).first()
     
     if user_exists:
         return jsonify({"error": "User already exists!"}), 400
 
-    # Hash the password before saving
+    # Hasha lösenordet innan det sparas
     hashed_password = generate_password_hash(password)
 
-    # Create and save a new user in the database
+    # Skapa och spara ny användare i databasen
     new_user = User(email=email, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
     
     return jsonify({"message": f"User {email} created!"}), 201
 
-# Route for user login (POST)
+
+# Route för inloggning (POST)
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
 
-    # Find the user by email
+    # Hitta användaren via email
     user = User.query.filter_by(email=email).first()
-    
+
     if not user or not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password!"}), 401
 
-    # Create JWT token
+    # Skapa JWT-token
     token = jwt.encode({
         'sub': user.user_id,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     }, current_app.config['JWT_SECRET'], algorithm='HS256')
 
-    return jsonify({"access_token": token}), 200
+    # Skriv ut token för felsökning
+    print(f"Generated JWT token for user {user.email}: {token}", flush=True)
 
-# Middleware to protect routes
+    # Skicka JWT-tokenen som en HttpOnly-cookie
+    response = make_response(jsonify({"message": "Login successful!"}))
+    response.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None')  # för lokal utveckling (ändra vid produktion)
+    
+    return response
+
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        
-        # Check if the token is passed
-        if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split(" ")[1]
+        # Hämta token från cookies
+        print(f"Cookies received: {request.cookies}", flush=True)  # Logga alla cookies
+        token = request.cookies.get('jwt_token')
+
+        # Logga tokenen för felsökning
+        print(f"Token received: {token}", flush=True)
 
         if not token:
             return jsonify({"error": "Token is missing!"}), 401
 
         try:
-            # Decode the token
+            # Dekryptera tokenen
             data = jwt.decode(token, current_app.config['JWT_SECRET'], algorithms=['HS256'])
             current_user = User.query.get(data['sub'])
+
+            if current_user is None:
+                return jsonify({"error": "User not found!"}), 401
+
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token has expired!"}), 401
         except Exception as e:
-            return jsonify({"error": str(e)}), 401
+            return jsonify({"error": f"Token error: {str(e)}"}), 401
 
         return f(current_user, *args, **kwargs)
 
     return decorated
 
-# Example of a protected route
+
+
+# Exempel på en skyddad route
 @auth_bp.route('/api/protected', methods=['GET'])
 @token_required
 def protected_route(current_user):

@@ -1,19 +1,15 @@
-import React from 'react';
-import { Box, Button, Text, Alert } from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { Box, Button, Text } from '@chakra-ui/react';
 
 const TestSession = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(null);  // State för att hålla reda på om användaren är inloggad
+    const [error, setError] = useState('');
+
     const handleTestSession = () => {
-        const token = localStorage.getItem('jwt_token');
-
-        if (!token) {
-            alert('Ingen token hittades! Logga in först.');
-            return;
-        }
-
         fetch('http://127.0.0.1:5000/api/protected', {
             method: 'GET',
+            credentials: 'include',  // Detta skickar med cookies i begäran
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             }
         })
@@ -24,11 +20,13 @@ const TestSession = () => {
             return response.json();
         })
         .then(data => {
+            setIsLoggedIn(true);  // Om tokenen är giltig, är användaren inloggad
+            setError('');
             alert('Skyddade data: ' + JSON.stringify(data));
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Fel vid begäran: ' + error.message);
+            setIsLoggedIn(false);  // Om det är ett fel, betyder det att användaren inte är inloggad eller att tokenen har gått ut
+            setError('Fel vid begäran: ' + error.message);
         });
     };
 
@@ -36,6 +34,9 @@ const TestSession = () => {
         <Box width="400px" mx="auto" mt={8} p={4} borderWidth={1} borderRadius="lg">
             <Text fontSize="2xl" mb={4}>Testa din session</Text>
             <Button onClick={handleTestSession} colorScheme="teal">Testa session</Button>
+
+            {isLoggedIn === true && <Text color="green.500" mt={4}>Du är inloggad!</Text>}
+            {isLoggedIn === false && <Text color="red.500" mt={4}>{error || 'Du är inte inloggad!'}</Text>}
         </Box>
     );
 };
