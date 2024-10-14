@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 # Tillåt CORS med credentials för att inkludera cookies i begäran från React-klienten
 CORS(app, supports_credentials=True, resources={r"/api/*": {
-    "origins": ["http://localhost:3000", "http://192.168.1.102:3000"],
+    "origins": ["http://localhost:3000"],
     "methods": ["GET", "POST", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
 }})
