@@ -24,7 +24,7 @@ const Navbar = () => {
     <Box as="nav" bg="brand.500" color="white" p={4}>
       <Flex alignItems="center">
         <Text fontSize="xl" fontWeight="bold" color="white">
-          <Link to="/">Home</Link>
+          <Link to="/">Start</Link>
         </Text>
         <Spacer />
         
@@ -40,11 +40,11 @@ const Navbar = () => {
 
         {/* Desktop Buttons */}
         <Flex gap={4} display={{ base: 'none', md: 'flex' }}>
-          <Button as={Link} to="/login" variant="outline" colorScheme="whiteAlpha">Login</Button>
-          <Button as={Link} to="/register" variant="outline" colorScheme="whiteAlpha">Register</Button>
+          <Button as={Link} to="/login" variant="outline" colorScheme="whiteAlpha">Logga in</Button>
+          <Button as={Link} to="/register" variant="outline" colorScheme="whiteAlpha">Registrera</Button>
           <Button as={Link} to="/FetchUsers" variant="outline" colorScheme="whiteAlpha">Fetch Users</Button>
           <Button as={Link} to="/TestSession" variant="outline" colorScheme="whiteAlpha">Test Session</Button>
-          <Button as={Link} to="/logout" variant="outline" colorScheme="whiteAlpha">Logout</Button>
+          <Button as={Link} to="/logout" variant="outline" colorScheme="whiteAlpha">Logga ut</Button>
         </Flex>
       </Flex>
 
@@ -54,17 +54,17 @@ const Navbar = () => {
         <DrawerContent>
           <DrawerHeader>
             <Flex justifyContent="space-between">
-              <Text fontSize="xl" fontWeight="bold">Menu</Text>
+              <Text fontSize="xl" fontWeight="bold">Meny</Text>
               <CloseButton onClick={onClose} />
             </Flex>
           </DrawerHeader>
           <DrawerBody>
             <Flex direction="column" gap={4}>
-              <Button as={Link} to="/login" variant="outline" colorScheme="brand" onClick={onClose}>Login</Button>
-              <Button as={Link} to="/register" variant="outline" colorScheme="brand" onClick={onClose}>Register</Button>
+              <Button as={Link} to="/login" variant="outline" colorScheme="brand" onClick={onClose}>Logga in</Button>
+              <Button as={Link} to="/register" variant="outline" colorScheme="brand" onClick={onClose}>Registrera</Button>
               <Button as={Link} to="/FetchUsers" variant="outline" colorScheme="brand" onClick={onClose}>Fetch Users</Button>
               <Button as={Link} to="/TestSession" variant="outline" colorScheme="brand" onClick={onClose}>Test Session</Button>
-              <Button as={Link} to="/logout" variant="outline" colorScheme="brand" onClick={onClose}>Logout</Button>
+              <Button as={Link} to="/logout" variant="outline" colorScheme="brand" onClick={onClose}>Logga ut</Button>
             </Flex>
           </DrawerBody>
         </DrawerContent>

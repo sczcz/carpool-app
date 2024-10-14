@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Heading, Text, Button } from '@chakra-ui/react';
+import { Link } from 'react-router-dom'; // Importera Link från React Router
 
 const Home = () => {
     return (
@@ -10,8 +11,8 @@ const Home = () => {
             <Text fontSize="md" mb={6} color="brand.500" maxW="600px" mx="auto">
                 Vi erbjuder en innovativ plattform som förenklar samordningen av transporter genom att främja samåkning mellan föräldrar och scouter. Tjänsten gör det enkelt att hitta och erbjuda platser i bilar, vilket minskar onödig körning och klimatpåverkan. Genom att använda vår tjänst kan föräldrar planera resor, scoutledare organisera aktiviteter och scouter få relevant information. Tillsammans kan vi skapa en hållbar och trygg miljö för alla våra medlemmar och göra ett positivt avtryck i scoutäventyret!
             </Text>
-            <Button colorScheme="brand" size="md">
-                Kom igång - leder ingenstans än
+            <Button as={Link} to="/register" colorScheme="brand" size="md">
+                Klicka här för att registrera dig här
             </Button>
         </Box>
     );
