@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Box, Button, FormControl, FormLabel, Input, Text, Alert } from '@chakra-ui/react';
 
+const apiURL = "/api/register";
+
 const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -9,7 +11,7 @@ const Register = () => {
     const handleRegister = (e) => {
         e.preventDefault();
 
-        fetch('http://127.0.0.1:5000/api/register', {
+        fetch(apiURL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

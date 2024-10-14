@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button, FormControl, FormLabel, Input, Box, Text } from '@chakra-ui/react'; // Importera Chakra UI komponenter
 
+const apiURL = "/api/login";
+
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -9,7 +11,7 @@ const Login = () => {
     const handleLogin = (e) => {
         e.preventDefault();
 
-        fetch('http://127.0.0.1:5000/api/login', {
+        fetch(apiURL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

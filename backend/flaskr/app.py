@@ -8,7 +8,11 @@ from models.auth_model import User  # Import your User model
 app = Flask(__name__)
 
 # Tillåt CORS med credentials för att inkludera cookies i begäran från React-klienten
-CORS(app, supports_credentials=True, origins=['http://localhost:3000'], methods=['GET', 'POST', 'OPTIONS'])
+CORS(app, supports_credentials=True, resources={r"/api/*": {
+    "origins": ["http://localhost:3000", "http://192.168.1.102:3000"],
+    "methods": ["GET", "POST", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization"],
+}})
 
 # Skapa en specifik sökväg för databasen
 basedir = os.path.abspath(os.path.dirname(__file__))  # Basen för ditt projekt
@@ -47,4 +51,4 @@ def get_users():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Box, Button, Text, List, ListItem } from '@chakra-ui/react';
 
+const apiURL = "/api/users"
+
 const FetchUsers = () => {
     const [users, setUsers] = useState([]);
 
     const handleFetchUsers = () => {
-        fetch('http://127.0.0.1:5000/api/users')
+        fetch(apiURL)
         .then(response => response.json())
         .then(data => setUsers(data))
         .catch(error => console.error('Error:', error));

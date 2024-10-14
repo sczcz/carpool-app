@@ -9,7 +9,6 @@ from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
 # Tillåt CORS med credentials från specifik origin (din React-app)
-CORS(auth_bp, supports_credentials=True, origins='http://localhost:3000')
 
 # Route for user registration (POST)
 @auth_bp.route('/api/register', methods=['POST'])
@@ -59,7 +58,7 @@ def login():
 
     # Skicka JWT-tokenen som en HttpOnly-cookie
     response = make_response(jsonify({"message": "Login successful!"}))
-    response.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None')  # för lokal utveckling (ändra vid produktion)
+    response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='None')  # för lokal utveckling (ändra vid produktion)
     
     return response
 

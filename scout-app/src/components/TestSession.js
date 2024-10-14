@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Box, Button, Text } from '@chakra-ui/react';
 
+const apiURL = "/api/protected";
+
 const TestSession = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(null);  // State för att hålla reda på om användaren är inloggad
     const [error, setError] = useState('');
 
     const handleTestSession = () => {
-        fetch('http://127.0.0.1:5000/api/protected', {
+        fetch(apiURL, {
             method: 'GET',
             credentials: 'include',  // Detta skickar med cookies i begäran
             headers: {
