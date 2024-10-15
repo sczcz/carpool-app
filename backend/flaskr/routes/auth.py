@@ -164,3 +164,5 @@ def add_address(current_user):
     current_user.city = city
 
     db.session.commit()
+
+    return make_response(jsonify({"message": "Address updated!"}), 200)

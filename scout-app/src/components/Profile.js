@@ -31,6 +31,34 @@ const Profile = () => {
   const [childLastName, setChildLastName] = useState('');
   const [childRole, setChildRole] = useState('Spårare');
 
+  const handleSaveAddress = async () => {
+    try {
+      const response = await fetch('/api/protected/add-user-address', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies if your authentication uses them
+        body: JSON.stringify({
+          address,
+          postcode,
+          city,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert('Address updated successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.message || 'Failed to update address'}`);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred while updating the address');
+    }
+  };
+
   const handleAddChild = () => {
     if (childFirstName && childLastName) {
       setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole }]);
@@ -106,7 +134,7 @@ const Profile = () => {
             placeholder="Skriv in din ort"
           />
         </FormControl>
-        <Button colorScheme="brand" onClick={() => alert(`Adress sparad: ${address}, ${postcode}, ${city}`)}>
+        <Button colorScheme="brand" onClick={handleSaveAddress}>
           Spara Adress
         </Button>
       </VStack>
