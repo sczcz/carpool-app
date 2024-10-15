@@ -11,7 +11,7 @@ const Dashboard = () => {
     const [postcode, setPostcode] = useState('');
     const [city, setCity] = useState('');
     const [description, setDescription] = useState('');
-    const [swedishLawLink, setSwedishLawLink] = useState('');
+    const [svenskaLagLink, setSvenskaLagLink] = useState(''); // Ändrat till svenska benämningen
     const [editingIndex, setEditingIndex] = useState(null); // Index för att hålla reda på vilken aktivitet som redigeras
 
     const handleAddActivity = () => {
@@ -22,7 +22,7 @@ const Dashboard = () => {
             postcode,
             city,
             description,
-            swedishLawLink,
+            svenskaLagLink,
         };
 
         // Om vi redigerar en aktivitet, uppdatera den istället
@@ -48,7 +48,7 @@ const Dashboard = () => {
         setPostcode('');
         setCity('');
         setDescription('');
-        setSwedishLawLink('');
+        setSvenskaLagLink(''); // Ändrat till svenska benämningen
         setIsOpen(false); // Stäng fliken efter att aktiviteten har lagts till eller uppdaterats
     };
 
@@ -60,7 +60,7 @@ const Dashboard = () => {
         setPostcode(activityToEdit.postcode);
         setCity(activityToEdit.city);
         setDescription(activityToEdit.description);
-        setSwedishLawLink(activityToEdit.swedishLawLink);
+        setSvenskaLagLink(activityToEdit.svenskaLagLink); // Ändrat till svenska benämningen
         setEditingIndex(index); // Sätt index för redigering
         setIsOpen(true); // Öppna formuläret för redigering
     };
@@ -134,8 +134,8 @@ const Dashboard = () => {
                     <FormControl mb={4}>
                         <FormLabel>Länk till Svenska lag</FormLabel>
                         <Input 
-                            value={swedishLawLink} 
-                            onChange={(e) => setSwedishLawLink(e.target.value)} 
+                            value={svenskaLagLink} 
+                            onChange={(e) => setSvenskaLagLink(e.target.value)} // Ändrat till svenska benämningen
                             placeholder="URL till Svenska lag" 
                         />
                     </FormControl>
@@ -149,20 +149,28 @@ const Dashboard = () => {
             </Collapse>
 
             {/* Lista med skapade aktiviteter */}
-            <VStack spacing={4} mt={8} width="100%" maxW="600px">
+            <Grid 
+                templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }} 
+                gap={6}
+                width="100%"
+                maxW="1200px"
+                mt={8}
+            >
                 {activities.map((activity, index) => (
-                    <Box key={index} p={4} borderWidth={1} borderRadius="md" boxShadow="md" bg="brand.100" width="100%">
-                        <Heading as="h4" size="md" color="brand.600">{activity.name}</Heading>
-                        <Text><strong>Plats:</strong> {activity.location}</Text>
-                        <Text><strong>Adress:</strong> {activity.address}, {activity.postcode}, {activity.city}</Text>
-                        <Text><strong>Beskrivning:</strong> {activity.description}</Text>
-                        <Text><strong>Länk till Svenska lag:</strong> <a href={activity.swedishLawLink} target="_blank" rel="noopener noreferrer">{activity.swedishLawLink}</a></Text>
-                        <Button colorScheme="blue" onClick={() => handleEditActivity(index)}>
-                            Redigera
-                        </Button>
-                    </Box>
+                    <GridItem key={index} w="100%">
+                        <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
+                            <Heading as="h3" size="lg" mb={4} color="brand.600">{activity.name}</Heading>
+                            <Text fontSize="md" color="brand.500"><strong>Plats:</strong> {activity.location}</Text>
+                            <Text fontSize="md" color="brand.500"><strong>Adress:</strong> {activity.address}, {activity.postcode}, {activity.city}</Text>
+                            <Text fontSize="md" color="brand.500"><strong>Beskrivning:</strong> {activity.description}</Text>
+                            <Text fontSize="md" color="brand.500"><strong>Länk till Svenska lag:</strong> <a href={activity.svenskaLagLink} target="_blank" rel="noopener noreferrer">{activity.svenskaLagLink}</a></Text>
+                            <Button colorScheme="blue" mt={4} onClick={() => handleEditActivity(index)}>
+                                Redigera
+                            </Button>
+                        </Box>
+                    </GridItem>
                 ))}
-            </VStack>
+            </Grid>
 
             {/* Huvudsektion med översikt */}
             <Grid 
@@ -197,19 +205,6 @@ const Dashboard = () => {
                     </Box>
                 </GridItem>
             </Grid>
-
-            {/* Sektion för länkar till andra funktioner */}
-            <VStack spacing={4} mt={8} width="100%" maxW="600px">
-                <Button width="100%" colorScheme="brand" onClick={() => alert('Navigera till användarhantering')}>
-                    Hantera användare
-                </Button>
-                <Button width="100%" colorScheme="brand" onClick={() => alert('Navigera till samåkning')}>
-                    Hantera transporter
-                </Button>
-                <Button width="100%" colorScheme="brand" onClick={() => alert('Navigera till notifikationer')}>
-                    Visa notifikationer
-                </Button>
-            </VStack>
         </Flex>
     );
 };
