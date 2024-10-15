@@ -9,7 +9,9 @@ class Carpool(db.Model):
     activity_id = db.Column(db.Integer, db.ForeignKey('activities.activity_id', ondelete='SET NULL'))  # Koppling till aktivitet
     total_seats = db.Column(db.Integer, nullable=False)
     available_seats = db.Column(db.Integer, nullable=False)
-    departure_location = db.Column(db.String(255), nullable=False)  # Utgångsplats för carpool
+    departure_address = db.Column(db.String(255), nullable=False)  # Adress för utgångsplats
+    departure_postcode = db.Column(db.String(20), nullable=False)  # Postnummer för utgångsplats
+    departure_city = db.Column(db.String(100), nullable=False)  # Ort för utgångsplats
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # När carpoolen skapades
 
 # Passagerar-tabell

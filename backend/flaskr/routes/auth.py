@@ -10,6 +10,30 @@ from functools import wraps
 auth_bp = Blueprint('auth', __name__)
 # Tillåt CORS med credentials från specifik origin (din React-app)
 
+# Mapping for role names to role IDs
+role_mapping = {
+    'Vårdnadshavare': 1,
+    'Ledare': 2,
+    'Spårare': 3,
+    'Upptäckare': 4,
+    'Äventyrare': 5,
+    'Utmanare': 6,
+    'Rövare': 7
+}
+
+def assign_user_role(role, user_id):
+    # Kontrollera om rollen finns i role_mapping
+    role_id = role_mapping.get(role)
+    
+    if role_id is None:
+        # Om rollen inte finns, returnera ett felmeddelande
+        return jsonify({"error": "Invalid role provided!"}), 400
+    
+    # Skapa och returnera ett UserRole-objekt baserat på role_id
+    newUserRole = UserRole(user_id=user_id, role_id=role_id)
+    return newUserRole
+
+
 # Route for user registration (POST)
 @auth_bp.route('/api/register', methods=['POST'])
 def register():
@@ -34,14 +58,14 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    if role == 'Vårdnadshavare':
-        newUserRole = UserRole(user_id=new_user.user_id, role_id=1)
-    elif role == 'Ledare':
-        newUserRole = UserRole(user_id=new_user.user_id, role_id=2)
-    else:
-        return jsonify({"error": "Invalid role provided!"}), 400
-    db.session.add(newUserRole)
-    db.session.commit()
+
+    # Använd funktionen för att tilldela rätt roll
+    try:
+        newUserRole = assign_user_role(role, new_user.user_id)
+        db.session.add(newUserRole)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
     
     return jsonify({"message": f"User {email} created!"}), 201
 
@@ -122,3 +146,21 @@ def token_required(f):
 @token_required
 def protected_route(current_user):
     return jsonify({"logged_in_as": current_user.email}), 200
+
+@auth_bp.route('/api/protected/add-user-address', methods=['POST'])
+@token_required
+def add_address(current_user):
+    
+    data = request.get_json()
+    address = data.get('address')
+    postcode = data.get('postcode')
+    city = data.get('city')
+
+    if not all([address, postcode, city]):
+        return jsonify({"error": "Address, postcode, and city are required!"}), 400
+    
+    current_user.address = address
+    current_user.postcode = postcode
+    current_user.city = city
+
+    db.session.commit()

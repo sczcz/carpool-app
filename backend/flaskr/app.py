@@ -52,13 +52,33 @@ def get_users():
 @app.before_request
 def seed_roles():
     # Kontrollera om rollerna redan finns för att undvika dubbletter
-    if not Role.query.filter_by(name='guardian').first():
-        guardian_role = Role(name='guardian')
+    if not Role.query.filter_by(name='vårdnadshavare').first():
+        guardian_role = Role(name='vårdnadshavare')
         db.session.add(guardian_role)
     
-    if not Role.query.filter_by(name='leader').first():
-        leader_role = Role(name='leader')
+    if not Role.query.filter_by(name='ledare').first():
+        leader_role = Role(name='ledare')
         db.session.add(leader_role)
+    
+    if not Role.query.filter_by(name='spårare').first():
+        sparare_role = Role(name='spårare')
+        db.session.add(sparare_role)
+
+    if not Role.query.filter_by(name='upptäckare').first():
+        explorer_role = Role(name='upptäckare')
+        db.session.add(explorer_role)
+
+    if not Role.query.filter_by(name='äventyrare').first():
+        adventurer_role = Role(name='äventyrare')
+        db.session.add(adventurer_role)
+
+    if not Role.query.filter_by(name='utmanare').first():
+        challenger_role = Role(name='utmanare')
+        db.session.add(challenger_role)
+
+    if not Role.query.filter_by(name='rover').first():
+        rover_role = Role(name='rover')
+        db.session.add(rover_role)
     
     # Spara ändringarna
     db.session.commit()
