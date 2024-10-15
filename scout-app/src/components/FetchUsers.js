@@ -1,30 +1,53 @@
 import React, { useState } from 'react';
-import { Box, Button, Text, List, ListItem } from '@chakra-ui/react';
+import { Button, Text, List, ListItem, Flex, VStack, Alert } from '@chakra-ui/react';
 
-const apiURL = "/api/users"
+const apiURL = "/api/users";
 
 const FetchUsers = () => {
     const [users, setUsers] = useState([]);
+    const [error, setError] = useState('');
 
     const handleFetchUsers = () => {
         fetch(apiURL)
-        .then(response => response.json())
-        .then(data => setUsers(data))
-        .catch(error => console.error('Error:', error));
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fel vid hämtning av användare');
+                }
+                return response.json();
+            })
+            .then(data => {
+                setUsers(data);
+                setError('');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                setError('Kunde inte hämta användare.');
+            });
     };
 
     return (
-        <Box width="400px" mx="auto" mt={8} p={4} borderWidth={1} borderRadius="lg">
-            <Text fontSize="2xl" mb={4}>Hämta alla användare</Text>
-            <Button onClick={handleFetchUsers} colorScheme="teal" mb={4}>Hämta användare</Button>
+        <Flex direction="column" align="center" mt={8}>
+            <Text fontSize="2xl" mb={4} color="brand.500">Hämta alla användare</Text>
+            <Button onClick={handleFetchUsers} colorScheme="brand" mb={4}>
+                Hämta användare
+            </Button>
+
+            {error && (
+                <Alert status="error" mt={4} mb={4}>
+                    {error}
+                </Alert>
+            )}
+
             <List spacing={3}>
-                {users.map(user => (
-                    <ListItem key={user.id}>
-                        ID: {user.id}, E-post: {user.email}
-                    </ListItem>
-                ))}
+                <VStack spacing={3}>
+                    {users.map(user => (
+                        <ListItem key={user.id} color="brand.400">
+                            ID: {user.id}, E-post: {user.email}
+                        </ListItem>
+                    ))}
+                </VStack>
             </List>
-        </Box>
+        </Flex>
     );
 };
 
