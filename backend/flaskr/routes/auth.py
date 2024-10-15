@@ -63,6 +63,17 @@ def login():
     return response
 
 
+@auth_bp.route('/api/logout', methods=['POST'])
+def logout():
+    # Create a response to send back to the user
+    response = make_response(jsonify({"message": "Logout successful!"}))
+    
+    # Clear the JWT token by setting the cookie with an expired date
+    response.set_cookie('jwt_token', '', expires=0, httponly=True, secure=False, samesite='Lax')  # For local dev
+    
+    return response
+
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
