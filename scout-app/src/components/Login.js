@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button, FormControl, FormLabel, Input, Box, Text } from '@chakra-ui/react';
 
+const apiURL = "/api/login";
+
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -9,11 +11,12 @@ const Login = () => {
     const handleLogin = (e) => {
         e.preventDefault();
 
-        fetch('http://127.0.0.1:5000/api/login', {
+        fetch(apiURL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',  // Detta säkerställer att cookies skickas med i begäran
             body: JSON.stringify({ email, password })
         })
         .then(response => response.json())
@@ -21,8 +24,7 @@ const Login = () => {
             if (data.error) {
                 setError(data.error);
             } else {
-                alert(`Inloggad! Token: ${data.access_token}`);
-                localStorage.setItem('jwt_token', data.access_token);
+                alert('Inloggad! Cookie är satt.');
                 setEmail('');
                 setPassword('');
                 setError('');
@@ -30,6 +32,7 @@ const Login = () => {
         })
         .catch(error => {
             console.error('Error:', error);
+            setError('Något gick fel, försök igen.');
         });
     };
 
