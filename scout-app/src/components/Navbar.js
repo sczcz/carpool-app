@@ -68,31 +68,33 @@ const Navbar = () => {
       transition="background 0.3s, color 0.3s" // Smooth transition
     >
       <Flex alignItems="center" justifyContent="space-between">
-        <LilyWhiteIcon style={{ width: '30px', height: '30px', marginRight: '8px' }} />
-        
-        {/* Conditional Rendering of Title */}
-        {isScrolled && (
-          <Text fontSize="xl" fontWeight="bold" mr="auto">
-            Jonstorps Kustscoutkår
-          </Text>
-        )}
-
-        {/* Hamburger Icon Button for Mobile */}
+        {/* Hamburger Icon Button for Mobile on the left side */}
         <IconButton
           aria-label="Open Menu"
           icon={<HamburgerIcon />}
           variant="outline"
-          colorScheme={isScrolled ? "white" : "brand"} // Change color based on scroll
+          colorScheme={isScrolled ? "white" : "brand"} // Blue when not scrolled, white when scrolled
           onClick={onOpen}
           display={{ base: 'flex', md: 'none' }} 
+          boxSize="40px" // Set the size of the icon (change value for thickness)
+          mr="4" // Adds margin to the right of the hamburger icon
         />
 
-        {/* Desktop Buttons - Centered */}
+        <LilyWhiteIcon style={{ width: '30px', height: '30px', marginRight: '8px' }} />
+        
+        {/* Conditional Rendering of Title */}
+        {isScrolled && (
+          <Text fontSize="xl" fontWeight="bold" mr="auto" as={Link} to="/"  >
+            Jonstorps Kustscoutkår
+          </Text>
+        )}
+
+        {/* Center flex grow for the desktop buttons */}
         <Flex 
           gap={4} 
           display={{ base: 'none', md: 'flex' }} 
-          justifyContent="center" // Center the buttons
-          flexGrow={1} // Allow the button container to grow and center the links
+          justifyContent="center"
+          flexGrow={1} 
         >
           {links.map(({ to, label }) => (
             <Button 
@@ -107,24 +109,24 @@ const Navbar = () => {
           ))}
         </Flex>
 
-        {/* Profile Icon with Dropdown */}
+        {/* Profile Icon with Dropdown - Color does not change with scroll */}
         <Menu>
-          <MenuButton as={Button} variant="link" colorScheme={isScrolled ? "white" : "brand"}>
+          <MenuButton as={Button} variant="link" colorScheme="brand">
             <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" /> {/* Change to your avatar URL */}
           </MenuButton>
           <MenuList>
-            <MenuItem as={Link} to="/profile">Profile</MenuItem>
-            <MenuItem as={Link} to="/logout">Logout</MenuItem>
-            <MenuItem as={Link} to="/TestSession">Test Session</MenuItem>
-            <MenuItem as={Link} to="/FetchUsers">Fetch Users</MenuItem>
-            <MenuItem as={Link} to="/login">Login</MenuItem>
-            <MenuItem as={Link} to="/register">Register</MenuItem>
+            <MenuItem as={Link} to="/profile" color="brand.500">Profile</MenuItem>
+            <MenuItem as={Link} to="/logout" color="brand.500">Logout</MenuItem>
+            <MenuItem as={Link} to="/TestSession" color="brand.500">Test Session</MenuItem>
+            <MenuItem as={Link} to="/FetchUsers" color="brand.500">Fetch Users</MenuItem>
+            <MenuItem as={Link} to="/login" color="brand.500">Login</MenuItem>
+            <MenuItem as={Link} to="/register" color="brand.500">Register</MenuItem>
           </MenuList>
         </Menu>
       </Flex>
 
-      {/* Drawer for mobile menu */}
-      <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+      {/* Drawer for mobile menu, now opening from the left */}
+      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
           <DrawerHeader>
@@ -149,4 +151,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
