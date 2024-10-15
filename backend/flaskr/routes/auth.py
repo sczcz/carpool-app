@@ -36,7 +36,7 @@ def register():
 
     if role == 'Vårdnadshavare':
         newUserRole = UserRole(user_id=new_user.user_id, role_id=1)
-    if role == 'Ledare':
+    elif role == 'Ledare':
         newUserRole = UserRole(user_id=new_user.user_id, role_id=2)
     else:
         return jsonify({"error": "Invalid role provided!"}), 400
@@ -70,7 +70,18 @@ def login():
 
     # Skicka JWT-tokenen som en HttpOnly-cookie
     response = make_response(jsonify({"message": "Login successful!"}))
-    response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='None')  # för lokal utveckling (ändra vid produktion)
+    response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax')  # för lokal utveckling (ändra vid produktion)
+    
+    return response
+
+
+@auth_bp.route('/api/logout', methods=['POST'])
+def logout():
+    # Create a response to send back to the user
+    response = make_response(jsonify({"message": "Logout successful!"}))
+    
+    # Clear the JWT token by setting the cookie with an expired date
+    response.set_cookie('jwt_token', '', expires=0, httponly=True, secure=False, samesite='Lax')  # For local dev
     
     return response
 
