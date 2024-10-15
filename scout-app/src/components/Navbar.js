@@ -19,12 +19,21 @@ import { HamburgerIcon } from '@chakra-ui/icons';
 
 const Navbar = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const links = [
+    { to: '/dashboard-leader', label: 'Dashboard Ledare' },
+    { to: '/dashboard-parent', label: 'Dashboard Vårdnadshavare' },
+    { to: '/login', label: 'Login' },
+    { to: '/register', label: 'Register' },
+    { to: '/FetchUsers', label: 'Fetch Users' },
+    { to: '/TestSession', label: 'Test Session' },
+    { to: '/logout', label: 'Logout' },
+  ];
 
   return (
     <Box as="nav" bg="brand.500" color="white" p={4}>
       <Flex alignItems="center">
         <Text fontSize="xl" fontWeight="bold" color="white">
-          <Link to="/">Home</Link>
+          <Link to="/">Hem</Link>
         </Text>
         <Spacer />
         
@@ -40,13 +49,11 @@ const Navbar = () => {
 
         {/* Desktop Buttons */}
         <Flex gap={4} display={{ base: 'none', md: 'flex' }}>
-          <Button as={Link} to="/dashboard-leader" variant="outline" colorScheme="whiteAlpha">Dashboard Ledare</Button> {/* Uppdatera länk till DashBoardLeader */}
-          <Button as={Link} to="/dashboard-parent" variant="outline" colorScheme="whiteAlpha">Dashboard Vårdnadshavare</Button>
-          <Button as={Link} to="/login" variant="outline" colorScheme="whiteAlpha">Login</Button>
-          <Button as={Link} to="/register" variant="outline" colorScheme="whiteAlpha">Register</Button>
-          <Button as={Link} to="/FetchUsers" variant="outline" colorScheme="whiteAlpha">Fetch Users</Button>
-          <Button as={Link} to="/TestSession" variant="outline" colorScheme="whiteAlpha">Test Session</Button>
-          <Button as={Link} to="/logout" variant="outline" colorScheme="whiteAlpha">Logout</Button>
+          {links.map(({ to, label }) => (
+            <Button key={to} as={Link} to={to} variant="outline" colorScheme="whiteAlpha">
+              {label}
+            </Button>
+          ))}
         </Flex>
       </Flex>
 
@@ -62,12 +69,11 @@ const Navbar = () => {
           </DrawerHeader>
           <DrawerBody>
             <Flex direction="column" gap={4}>
-              <Button as={Link} to="/dashboard-leader" variant="outline" colorScheme="brand" onClick={onClose}>Dashboard Ledare</Button> {/* Uppdatera länk till DashBoardLeader */}
-              <Button as={Link} to="/login" variant="outline" colorScheme="brand" onClick={onClose}>Login</Button>
-              <Button as={Link} to="/register" variant="outline" colorScheme="brand" onClick={onClose}>Register</Button>
-              <Button as={Link} to="/FetchUsers" variant="outline" colorScheme="brand" onClick={onClose}>Fetch Users</Button>
-              <Button as={Link} to="/TestSession" variant="outline" colorScheme="brand" onClick={onClose}>Test Session</Button>
-              <Button as={Link} to="/logout" variant="outline" colorScheme="brand" onClick={onClose}>Logout</Button>
+              {links.map(({ to, label }) => (
+                <Button key={to} as={Link} to={to} variant="outline" colorScheme="brand" onClick={onClose}>
+                  {label}
+                </Button>
+              ))}
             </Flex>
           </DrawerBody>
         </DrawerContent>
