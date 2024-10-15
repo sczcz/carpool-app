@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response, current_app
 from extensions import db
-from models.auth_model import User
+from models.auth_model import User, UserRole, Role
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -16,6 +16,9 @@ def register():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    firstName = data.get('firstName')
+    lastName = data.get('lastName')
+    role = data.get('role')
 
     # Kontrollera om användaren redan finns
     user_exists = User.query.filter_by(email=email).first()
@@ -27,8 +30,17 @@ def register():
     hashed_password = generate_password_hash(password)
 
     # Skapa och spara ny användare i databasen
-    new_user = User(email=email, password=hashed_password)
+    new_user = User(email=email, password=hashed_password, firstName=firstName, lastName=lastName)
     db.session.add(new_user)
+    db.session.commit()
+
+    if role == 'Vårdnadshavare':
+        newUserRole = UserRole(user_id=new_user.user_id, role_id=1)
+    if role == 'Ledare':
+        newUserRole = UserRole(user_id=new_user.user_id, role_id=2)
+    else:
+        return jsonify({"error": "Invalid role provided!"}), 400
+    db.session.add(newUserRole)
     db.session.commit()
     
     return jsonify({"message": f"User {email} created!"}), 201
@@ -58,18 +70,7 @@ def login():
 
     # Skicka JWT-tokenen som en HttpOnly-cookie
     response = make_response(jsonify({"message": "Login successful!"}))
-    response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax')  # för lokal utveckling (ändra vid produktion)
-    
-    return response
-
-
-@auth_bp.route('/api/logout', methods=['POST'])
-def logout():
-    # Create a response to send back to the user
-    response = make_response(jsonify({"message": "Logout successful!"}))
-    
-    # Clear the JWT token by setting the cookie with an expired date
-    response.set_cookie('jwt_token', '', expires=0, httponly=True, secure=False, samesite='Lax')  # For local dev
+    response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='None')  # för lokal utveckling (ändra vid produktion)
     
     return response
 
@@ -103,7 +104,6 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
 
     return decorated
-
 
 
 # Exempel på en skyddad route

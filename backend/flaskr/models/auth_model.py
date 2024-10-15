@@ -1,9 +1,11 @@
 from extensions import db
 
+
 class Role(db.Model):
     __tablename__ = 'roles'
     role_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False)
+
 
 # Användar-tabell
 class User(db.Model):
@@ -11,6 +13,8 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
+    firstName = db.Column(db.String(255), nullable=False)
+    lastName = db.Column(db.String(255), nullable=False)
 
 # Sambandstabell mellan User och Role
 class UserRole(db.Model):

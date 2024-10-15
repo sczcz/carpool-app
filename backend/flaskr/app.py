@@ -3,7 +3,7 @@ from flask_cors import CORS
 from routes.auth import auth_bp  # Import auth blueprint
 import os
 from extensions import db  # Import db instance
-from models.auth_model import User  # Import your User model
+from models.auth_model import User, Role  # Import your User model
 
 app = Flask(__name__)
 
@@ -48,6 +48,20 @@ def get_users():
     users = User.query.all()
     users_list = [{"id": user.user_id, "email": user.email} for user in users]
     return jsonify(users_list), 200
+
+@app.before_request
+def seed_roles():
+    # Kontrollera om rollerna redan finns för att undvika dubbletter
+    if not Role.query.filter_by(name='guardian').first():
+        guardian_role = Role(name='guardian')
+        db.session.add(guardian_role)
+    
+    if not Role.query.filter_by(name='leader').first():
+        leader_role = Role(name='leader')
+        db.session.add(leader_role)
+    
+    # Spara ändringarna
+    db.session.commit()
 
 
 if __name__ == '__main__':
