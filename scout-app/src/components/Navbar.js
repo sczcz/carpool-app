@@ -40,6 +40,8 @@ const Navbar = () => {
 
         {/* Desktop Buttons */}
         <Flex gap={4} display={{ base: 'none', md: 'flex' }}>
+          <Button as={Link} to="/dashboard-leader" variant="outline" colorScheme="whiteAlpha">Dashboard Ledare</Button> {/* Uppdatera länk till DashBoardLeader */}
+          <Button as={Link} to="/dashboard-parent" variant="outline" colorScheme="whiteAlpha">Dashboard Vårdnadshavare</Button>
           <Button as={Link} to="/login" variant="outline" colorScheme="whiteAlpha">Login</Button>
           <Button as={Link} to="/register" variant="outline" colorScheme="whiteAlpha">Register</Button>
           <Button as={Link} to="/FetchUsers" variant="outline" colorScheme="whiteAlpha">Fetch Users</Button>
@@ -60,6 +62,7 @@ const Navbar = () => {
           </DrawerHeader>
           <DrawerBody>
             <Flex direction="column" gap={4}>
+              <Button as={Link} to="/dashboard-leader" variant="outline" colorScheme="brand" onClick={onClose}>Dashboard Ledare</Button> {/* Uppdatera länk till DashBoardLeader */}
               <Button as={Link} to="/login" variant="outline" colorScheme="brand" onClick={onClose}>Login</Button>
               <Button as={Link} to="/register" variant="outline" colorScheme="brand" onClick={onClose}>Register</Button>
               <Button as={Link} to="/FetchUsers" variant="outline" colorScheme="brand" onClick={onClose}>Fetch Users</Button>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Text, List, ListItem, Flex, VStack, Alert } from '@chakra-ui/react';
+import { Button, Text, List, ListItem, Flex, VStack, Alert } from '@chakra-ui/react';
 
 const apiURL = "/api/users";
 

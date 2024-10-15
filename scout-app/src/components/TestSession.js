@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Text, Flex, Alert } from '@chakra-ui/react';
+import { Button, Text, Flex, Alert } from '@chakra-ui/react';
 
 const apiURL = "/api/protected";
 
