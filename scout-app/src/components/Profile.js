@@ -46,8 +46,8 @@ const Profile = () => {
           const user = data.user;
 
           // Sätt state med användarinformation
-          setFirstName(user.firstName);
-          setLastName(user.lastName);
+          setFirstName(user.first_name);
+          setLastName(user.last_name);
           setEmail(user.email);
           setRole(user.role);
           setAddress(user.address || '');
