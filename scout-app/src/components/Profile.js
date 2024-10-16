@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Heading,
@@ -14,11 +14,11 @@ import {
 } from '@chakra-ui/react';
 
 const Profile = () => {
-  // Användarinformation (placeholders)
-  const [firstName, setFirstName] = useState('Anna');
-  const [lastName, setLastName] = useState('Andersson');
-  const [email, setEmail] = useState('anna.andersson@example.com');
-  const [role, setRole] = useState('Vårdnadshavare');
+  // Användarinformation (autofyll från backend)
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
   
   // Adressinformation
   const [address, setAddress] = useState('');
@@ -30,6 +30,37 @@ const Profile = () => {
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
   const [childRole, setChildRole] = useState('Spårare');
+
+  // Hämta den inloggade användarens information när komponenten laddas
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/protected/user', {
+          method: 'GET',
+          credentials: 'include', // Include cookies for authentication
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const user = data.user;
+
+          // Sätt state med användarinformation
+          setFirstName(user.firstName);
+          setLastName(user.lastName);
+          setEmail(user.email);
+          setRole(user.role);
+          setAddress(user.address || '');
+          setPostcode(user.postcode || '');
+          setCity(user.city || '');
+        } else {
+          console.error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []); // Tom array ser till att det bara körs när komponenten mountas
 
   const handleSaveAddress = async () => {
     try {
@@ -195,11 +226,11 @@ const Profile = () => {
               onChange={(e) => handleUpdateChild(index, e.target.value)}
               width="150px"
             >
-              <option value="3">Spårare</option>
-              <option value="4">Upptäckare</option>
-              <option value="5">Äventyrare</option>
-              <option value="6">Utmanare</option>
-              <option value="7">Rövare</option>
+              <option value="Spårare">Spårare</option>
+              <option value="Upptäckare">Upptäckare</option>
+              <option value="Äventyrare">Äventyrare</option>
+              <option value="Utmanare">Utmanare</option>
+              <option value="Rövare">Rövare</option>
             </Select>
             <Button colorScheme="red" onClick={() => handleRemoveChild(index)}>
               Ta bort
