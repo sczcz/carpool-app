@@ -141,28 +141,3 @@ def token_required(f):
     return decorated
 
 
-# Exempel på en skyddad route
-@auth_bp.route('/api/protected', methods=['GET'])
-@token_required
-def protected_route(current_user):
-    return jsonify({"logged_in_as": current_user.email}), 200
-
-@auth_bp.route('/api/protected/add-user-address', methods=['POST'])
-@token_required
-def add_address(current_user):
-    
-    data = request.get_json()
-    address = data.get('address')
-    postcode = data.get('postcode')
-    city = data.get('city')
-
-    if not all([address, postcode, city]):
-        return jsonify({"error": "Address, postcode, and city are required!"}), 400
-    
-    current_user.address = address
-    current_user.postcode = postcode
-    current_user.city = city
-
-    db.session.commit()
-
-    return make_response(jsonify({"message": "Address updated!"}), 200)

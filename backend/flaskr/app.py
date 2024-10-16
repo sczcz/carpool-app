@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 from flask_cors import CORS
 from routes.auth import auth_bp  # Import auth blueprint
+from routes.user_handler import user_handler
 import os
 from extensions import db  # Import db instance
 from models.auth_model import User, Role  # Import your User model
@@ -36,6 +37,7 @@ with app.app_context():
 
 # Registrera auth blueprint
 app.register_blueprint(auth_bp)
+app.register_blueprint(user_handler)
 
 # Route för att rendera en grundläggande index.html
 @app.route('/')
