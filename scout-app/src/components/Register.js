@@ -1,9 +1,28 @@
 import React, { useState } from 'react';
-import { Box, Button, FormControl, FormLabel, Input, Text, Alert, RadioGroup, Radio, Stack } from '@chakra-ui/react';
+import {
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    ModalBody,
+    ModalFooter,
+    Button,
+    FormControl,
+    FormLabel,
+    Input,
+    Alert,
+    RadioGroup,
+    Radio,
+    Stack,
+    useBreakpointValue,
+    VStack,
+    Box,
+} from '@chakra-ui/react';
 
-const Register = () => {
+const Register = ({ isOpen, onClose }) => {
     const [first_name, setFirstName] = useState('');
-    const [last_name, setLastName] = useState(''); 
+    const [last_name, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('Vårdnadshavare');
@@ -12,13 +31,12 @@ const Register = () => {
     const handleRegister = (e) => {
         e.preventDefault();
 
-        
         fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ first_name, last_name, email, password, role }) // Skicka alla fält
+            body: JSON.stringify({ first_name, last_name, email, password, role })
         })
         .then(response => response.json())
         .then(data => {
@@ -26,13 +44,14 @@ const Register = () => {
                 setError(data.error);
             } else {
                 alert(data.message);
-                // Töm fälten efter lyckad registrering
+                // Clear fields after successful registration
                 setFirstName('');
                 setLastName('');
                 setEmail('');
                 setPassword('');
                 setRole('Vårdnadshavare');
                 setError('');
+                onClose(); // Close the modal upon successful registration
             }
         })
         .catch(error => {
@@ -40,73 +59,90 @@ const Register = () => {
         });
     };
 
+    const modalSize = useBreakpointValue({ base: "full", sm: "md" });
+    
     return (
-        <Box width="400px" mx="auto" mt={8} p={4} borderWidth={1} borderRadius="lg" bg="brand.300" boxShadow="md">
-            <Text fontSize="2xl" mb={4} color="brand.500">Registrera användare</Text>
-            <form onSubmit={handleRegister}>
-                {/* Förnamn */}
-                <FormControl mb={4}>
-                    <FormLabel>Förnamn:</FormLabel>
-                    <Input 
-                        type="text" 
-                        value={first_name} 
-                        onChange={(e) => setFirstName(e.target.value)} 
-                        required 
-                        bg="white"
-                    />
-                </FormControl>
-                
-                {/* Efternamn */}
-                <FormControl mb={4}>
-                    <FormLabel>Efternamn:</FormLabel>
-                    <Input 
-                        type="text" 
-                        value={last_name} 
-                        onChange={(e) => setLastName(e.target.value)} 
-                        required 
-                        bg="white"
-                    />
-                </FormControl>
+        <Modal isOpen={isOpen} onClose={onClose} isCentered size={modalSize}>
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>Registrera användare</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                    <Box width="full" p={4}>
+                        <form onSubmit={handleRegister}>
+                            <VStack spacing={4} align="stretch">
+                                {/* Förnamn */}
+                                <FormControl isRequired>
+                                    <FormLabel>Förnamn:</FormLabel>
+                                    <Input 
+                                        type="text" 
+                                        value={first_name} 
+                                        onChange={(e) => setFirstName(e.target.value)} 
+                                        required 
+                                        bg="white"
+                                    />
+                                </FormControl>
+                                
+                                {/* Efternamn */}
+                                <FormControl isRequired>
+                                    <FormLabel>Efternamn:</FormLabel>
+                                    <Input 
+                                        type="text" 
+                                        value={last_name} 
+                                        onChange={(e) => setLastName(e.target.value)} 
+                                        required 
+                                        bg="white"
+                                    />
+                                </FormControl>
 
-                {/* E-post */}
-                <FormControl mb={4}>
-                    <FormLabel>E-post:</FormLabel>
-                    <Input 
-                        type="email" 
-                        value={email} 
-                        onChange={(e) => setEmail(e.target.value)} 
-                        required 
-                        bg="white"
-                    />
-                </FormControl>
+                                {/* E-post */}
+                                <FormControl isRequired>
+                                    <FormLabel>E-post:</FormLabel>
+                                    <Input 
+                                        type="email" 
+                                        value={email} 
+                                        onChange={(e) => setEmail(e.target.value)} 
+                                        required 
+                                        bg="white"
+                                    />
+                                </FormControl>
 
-                {/* Lösenord */}
-                <FormControl mb={4}>
-                    <FormLabel>Lösenord:</FormLabel>
-                    <Input 
-                        type="password" 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        required 
-                        bg="white"
-                    />
-                </FormControl>
+                                {/* Lösenord */}
+                                <FormControl isRequired>
+                                    <FormLabel>Lösenord:</FormLabel>
+                                    <Input 
+                                        type="password" 
+                                        value={password} 
+                                        onChange={(e) => setPassword(e.target.value)} 
+                                        required 
+                                        bg="white"
+                                    />
+                                </FormControl>
 
-                {/* Roll (Vårdnadshavare/Ledare) */}
-                <FormControl mb={4}>
-                    <FormLabel>Roll:</FormLabel>
-                    <RadioGroup onChange={setRole} value={role} colorScheme="brand">
-                        <Stack direction="row">
-                            <Radio value="Vårdnadshavare">Vårdnadshavare</Radio>
-                            <Radio value="Ledare">Ledare</Radio>
-                        </Stack>
-                    </RadioGroup>
-                </FormControl>
+                                {/* Roll (Vårdnadshavare/Ledare) */}
+                                <FormControl isRequired>
+                                    <FormLabel>Roll:</FormLabel>
+                                    <RadioGroup onChange={setRole} value={role} colorScheme="brand">
+                                        <Stack direction="row">
+                                            <Radio value="Vårdnadshavare">Vårdnadshavare</Radio>
+                                            <Radio value="Ledare">Ledare</Radio>
+                                        </Stack>
+                                    </RadioGroup>
+                                </FormControl>
+                                
+                                {error && <Alert status="error" mt={4}>{error}</Alert>}
+                            </VStack>
+                        </form>
+                    </Box>
+                </ModalBody>
 
-                <Button type="submit" colorScheme="brand" width="full">Registrera</Button>
-            </form>
-            {error && <Alert status="error" mt={4}>{error}</Alert>}
-        </Box>
+                <ModalFooter>
+                    <Button type="submit" colorScheme="brand" width="full" onClick={handleRegister}>
+                        Registrera
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
     );
 };
 

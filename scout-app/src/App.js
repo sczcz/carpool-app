@@ -6,7 +6,6 @@ import Login from './components/Login';
 import Register from './components/Register';
 import FetchUsers from './components/FetchUsers';
 import TestSession from './components/TestSession';
-import Logout from './components/Logout';
 import Home from './components/Home'; // Importera Home
 import DashBoardLeader from './components/DashBoardLeader';
 import DashBoardParent from './components/DashBoardParent'; // Importera din nya dashboard
@@ -25,7 +24,6 @@ const App = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/FetchUsers" element={<FetchUsers />} />
         <Route path="/TestSession" element={<TestSession />} />
-        <Route path="/logout" element={<Logout />} />
         <Route path="/profile" element={<Profile />} /> {/* Ny rutt för Profile */}
       </Routes>
     </Router>
