@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import {
-    Box,
-    Grid,
-    GridItem,
-    Text,
-    Heading,
-    Flex,
-    Button,
-    VStack,
-    FormControl,
-    FormLabel,
-    Input,
-    Textarea,
-    Collapse,
-    Select,
-    Divider,
-    HStack, // Lägg till HStack här
-  } from '@chakra-ui/react';
+  Box,
+  Grid,
+  GridItem,
+  Text,
+  Heading,
+  Flex,
+  Button,
+  VStack,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
+  Collapse,
+  Select,
+  Divider,
+  HStack,
+} from '@chakra-ui/react';
 
 const Dashboard = () => {
   // Hanterar visning av aktivitetsskaparen
@@ -33,6 +33,9 @@ const Dashboard = () => {
   const [activityCity, setActivityCity] = useState('');
   const [activityDescription, setActivityDescription] = useState('');
   const [svenskaLagLink, setSvenskaLagLink] = useState('');
+  const [activityDate, setActivityDate] = useState('');
+  const [activityTime, setActivityTime] = useState('');
+  const [activityRole, setActivityRole] = useState('Spårare'); // Nytt rollval
 
   // Hanterar redigering av aktivitet
   const [editingActivity, setEditingActivity] = useState(null);
@@ -48,6 +51,9 @@ const Dashboard = () => {
       city: activityCity,
       description: activityDescription,
       svenskaLagLink,
+      date: activityDate,
+      time: activityTime,
+      role: activityRole, // Lägger till roll
     };
 
     if (editingActivity) {
@@ -74,6 +80,9 @@ const Dashboard = () => {
     setActivityCity(activity.city);
     setActivityDescription(activity.description);
     setSvenskaLagLink(activity.svenskaLagLink);
+    setActivityDate(activity.date);
+    setActivityTime(activity.time);
+    setActivityRole(activity.role);
     setIsActivityFormOpen(true); // Öppna formuläret för redigering
   };
 
@@ -86,6 +95,9 @@ const Dashboard = () => {
     setActivityCity('');
     setActivityDescription('');
     setSvenskaLagLink('');
+    setActivityDate('');
+    setActivityTime('');
+    setActivityRole('Spårare');
     setEditingActivity(null);
     setIsActivityFormOpen(false);
   };
@@ -167,6 +179,12 @@ const Dashboard = () => {
                     Plats: {activity.location}, {activity.address}, {activity.postcode}, {activity.city}
                   </Text>
                   <Text fontSize="md" color="brand.500">
+                    Datum: {activity.date}, Tid: {activity.time}
+                  </Text>
+                  <Text fontSize="md" color="brand.500"> {/* Här behöver kopplas till databasen för att visa rätt roll, eller? */}
+                    Roll: {activity.role}
+                  </Text>
+                  <Text fontSize="md" color="brand.500">
                     Beskrivning: {activity.description}
                   </Text>
                   <Text fontSize="md" color="brand.500">
@@ -239,12 +257,44 @@ const Dashboard = () => {
               </HStack>
 
               <FormControl>
+                <FormLabel>Datum för aktivitet</FormLabel>
+                <Input
+                  type="date"
+                  value={activityDate}
+                  onChange={(e) => setActivityDate(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Tid för aktivitet</FormLabel>
+                <Input
+                  type="time"
+                  value={activityTime}
+                  onChange={(e) => setActivityTime(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl>
                 <FormLabel>Beskrivning av aktivitet</FormLabel>
                 <Textarea
                   value={activityDescription}
                   onChange={(e) => setActivityDescription(e.target.value)}
                   placeholder="Beskrivning av aktivitet"
                 />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Välj roll</FormLabel>
+                <Select
+                  value={activityRole}
+                  onChange={(e) => setActivityRole(e.target.value)}
+                >
+                  <option value="3">Spårare</option>
+                  <option value="4">Upptäckare</option>
+                  <option value="5">Äventyrare</option>
+                  <option value="6">Utmanare</option>
+                  <option value="7">Rövare</option>
+                </Select>
               </FormControl>
 
               <FormControl>
