@@ -40,8 +40,8 @@ def register():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    firstName = data.get('firstName')
-    lastName = data.get('lastName')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
     role = data.get('role')
 
     # Kontrollera om användaren redan finns
@@ -54,7 +54,7 @@ def register():
     hashed_password = generate_password_hash(password)
 
     # Skapa och spara ny användare i databasen
-    new_user = User(email=email, password=hashed_password, firstName=firstName, lastName=lastName)
+    new_user = User(email=email, password=hashed_password, first_name=first_name, last_name=last_name)
     db.session.add(new_user)
     db.session.commit()
 

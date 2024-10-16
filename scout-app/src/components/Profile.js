@@ -30,6 +30,8 @@ const Profile = () => {
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
   const [childRole, setChildRole] = useState('Spårare');
+  const [membershipNumber, setMembershipNumber] = useState('');  // Nytt fält för medlemsnummer
+  const [childPhone, setChildPhone] = useState('');  // Nytt fält för telefonnummer
 
   // Hämta den inloggade användarens information när komponenten laddas
   useEffect(() => {
@@ -90,12 +92,46 @@ const Profile = () => {
     }
   };
 
-  const handleAddChild = () => {
-    if (childFirstName && childLastName) {
-      setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole }]);
-      setChildFirstName('');
-      setChildLastName('');
-      setChildRole('Spårare');
+  const handleAddChild = async () => {
+    if (childFirstName && childLastName && membershipNumber) {
+      try {
+        // Skicka POST-begäran till backend för att lägga till ett barn
+        const response = await fetch('/api/protected/add-child', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Skicka med cookies för autentisering
+          body: JSON.stringify({
+            membership_number: membershipNumber,  // Nytt fält
+            first_name: childFirstName,
+            last_name: childLastName,
+            phone: childPhone,  // Nytt fält för telefonnummer
+            role: childRole,  // Skicka rollen från dropdown-menyn
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          alert('Barn tillagt framgångsrikt!');
+          
+          // Lägg till barnet i listan efter att det framgångsrikt har lagts till i backend
+          setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
+          setChildFirstName('');
+          setChildLastName('');
+          setChildRole('Spårare');
+          setMembershipNumber('');  // Återställ medlemsnummerfältet
+          setChildPhone('');  // Återställ telefonnummerfältet
+        } else {
+          const error = await response.json();
+          alert(`Fel: ${error.message || 'Misslyckades att lägga till barn'}`);
+        }
+      } catch (error) {
+        console.error('Fel vid tillägg av barn:', error);
+        alert('Ett fel uppstod vid tillägg av barnet');
+      }
+    } else {
+      alert('Du måste fylla i förnamn, efternamn och medlemsnummer för barnet');
     }
   };
 
@@ -193,6 +229,22 @@ const Profile = () => {
           />
         </FormControl>
         <FormControl>
+          <FormLabel>Medlemsnummer</FormLabel>
+          <Input
+            value={membershipNumber}
+            onChange={(e) => setMembershipNumber(e.target.value)}
+            placeholder="Skriv in medlemsnummer"
+          />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Telefonnummer</FormLabel>
+          <Input
+            value={childPhone}
+            onChange={(e) => setChildPhone(e.target.value)}
+            placeholder="Skriv in telefonnummer"
+          />
+        </FormControl>
+        <FormControl>
           <FormLabel>Roll</FormLabel>
           <Select
             value={childRole}
@@ -219,7 +271,7 @@ const Profile = () => {
         {children.map((child, index) => (
           <HStack key={index} spacing={4} alignItems="center">
             <Text fontSize="lg" color="brand.600">
-              {child.firstName} {child.lastName} - {child.role}
+              {child.firstName} {child.lastName} - {child.role} (Medlemsnummer: {child.membershipNumber}) (Telefon: {child.phone})
             </Text>
             <Select
               value={child.role}

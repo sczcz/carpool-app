@@ -1,7 +1,7 @@
 # user_handler.py
 from flask import Blueprint, request, jsonify, make_response
 from extensions import db
-from models.auth_model import User, Role, UserRole
+from models.auth_model import User, Role, UserRole, Child
 from functools import wraps
 from routes.auth import token_required  # Import token_required decorator
 
@@ -51,8 +51,8 @@ def get_logged_in_user(current_user):
     user_data = {
         "id": current_user.user_id,
         "email": current_user.email,
-        "firstName": current_user.firstName,
-        "lastName": current_user.lastName,
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
         "address": current_user.address,
         "postcode": current_user.postcode,
         "city": current_user.city,
@@ -60,4 +60,55 @@ def get_logged_in_user(current_user):
     }
 
     return jsonify({"user": user_data}), 200
+
+
+# Route för att skapa eller uppdatera ett barn med parent_2_id
+@user_handler.route('/api/protected/add-child', methods=['POST'])
+@token_required
+def add_child(current_user):
+    data = request.get_json()
+
+    # Hämta data från frontend
+    membership_number = data.get('membership_number')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    phone = data.get('phone')
+    role = data.get('role').lower()  # Här får vi rollen som skickas från frontend
+
+    # Kontrollera att nödvändiga fält är ifyllda
+    if not all([membership_number, first_name, last_name, role]):
+        return jsonify({"error": "Membership number, firstName, lastName, and role are required!"}), 400
+
+    # Hitta role_id från rollnamnet
+    role_id = db.session.query(Role.role_id).filter_by(name=role).first()
+    if not role_id:
+        return jsonify({"error": "Invalid role provided!"}), 401
+
+    # Kontrollera om barnet redan finns baserat på membership_number
+    existing_child = Child.query.filter_by(membership_number=membership_number).first()
+
+    if existing_child:
+        # Om barnet redan finns, uppdatera parent_2_id om det är tomt
+        if not existing_child.parent_2_id:
+            existing_child.parent_2_id = current_user.user_id  # Sätt den nuvarande användaren som parent_2
+            db.session.commit()
+            return jsonify({"message": f"Parent 2 added to child {existing_child.firstName} {existing_child.lastName}!"}), 200
+        else:
+            return jsonify({"error": "This child already has two parents!"}), 402
+    else:
+        # Skapa ett nytt barn om det inte redan finns
+        new_child = Child(
+            membership_number=membership_number,
+            first_name=first_name,
+            last_name=last_name,
+            phone=phone,
+            role_id=role_id[0],  # role_id är en tuple så vi hämtar första elementet
+            parent_1_id=current_user.user_id  # Sätt parent_1_id till den inloggade användarens ID
+        )
+
+        # Spara barnet i databasen
+        db.session.add(new_child)
+        db.session.commit()
+
+        return jsonify({"message": f"Child {first_name} {last_name} created!"}), 201
 

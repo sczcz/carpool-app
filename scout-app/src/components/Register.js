@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Box, Button, FormControl, FormLabel, Input, Text, Alert, RadioGroup, Radio, Stack } from '@chakra-ui/react';
 
 const Register = () => {
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState(''); 
+    const [first_name, setFirstName] = useState('');
+    const [last_name, setLastName] = useState(''); 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('Vårdnadshavare');
@@ -18,7 +18,7 @@ const Register = () => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ firstName, lastName, email, password, role }) // Skicka alla fält
+            body: JSON.stringify({ first_name, last_name, email, password, role }) // Skicka alla fält
         })
         .then(response => response.json())
         .then(data => {
@@ -49,7 +49,7 @@ const Register = () => {
                     <FormLabel>Förnamn:</FormLabel>
                     <Input 
                         type="text" 
-                        value={firstName} 
+                        value={first_name} 
                         onChange={(e) => setFirstName(e.target.value)} 
                         required 
                         bg="white"
@@ -61,7 +61,7 @@ const Register = () => {
                     <FormLabel>Efternamn:</FormLabel>
                     <Input 
                         type="text" 
-                        value={lastName} 
+                        value={last_name} 
                         onChange={(e) => setLastName(e.target.value)} 
                         required 
                         bg="white"
