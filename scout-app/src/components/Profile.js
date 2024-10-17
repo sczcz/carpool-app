@@ -250,11 +250,12 @@ const Profile = () => {
             value={childRole}
             onChange={(e) => setChildRole(e.target.value)}
           >
-            <option value="Spårare">Spårare</option>
+            <option value="Spårare-Kutar">Kutar</option>
+            <option value="Spårare-Tumlare">Tumlare</option>
             <option value="Upptäckare">Upptäckare</option>
             <option value="Äventyrare">Äventyrare</option>
             <option value="Utmanare">Utmanare</option>
-            <option value="Rövare">Rövare</option>
+            <option value="Rover">Rover</option>
           </Select>
         </FormControl>
         <Button colorScheme="brand" onClick={handleAddChild}>

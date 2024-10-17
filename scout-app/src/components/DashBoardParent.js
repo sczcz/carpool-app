@@ -15,16 +15,11 @@ import {
   Icon,
   Divider,
   Flex,
-  FormControl,
-  FormLabel,
-  Input,
-  NumberInput,
-  NumberInputField,
   Collapse,
+  Tag,
+  TagLabel
 } from '@chakra-ui/react';
-import { FaCar, FaUserCircle } from 'react-icons/fa';
-
-
+import { FaUserCircle } from 'react-icons/fa';
 
 const DashBoardParent = ({ token }) => {
   const [userName, setUserName] = useState(''); // State för användarnamn
@@ -32,12 +27,6 @@ const DashBoardParent = ({ token }) => {
   const [loading, setLoading] = useState(true); // State för att hantera laddningsstatus
   const [error, setError] = useState(null); // State för att hantera fel
   const [openDescriptionIndex, setOpenDescriptionIndex] = useState(null); // För att hålla koll på vilken beskrivning som är öppen
-  const [carpoolingOptions, setCarpoolingOptions] = useState([
-    { id: 1, date: '2024-10-20', from: 'Jonstorp', to: 'Skogsdungen', spots: 2, joined: false },
-    { id: 2, date: '2024-11-05', from: 'Jonstorp', to: 'Scoutstugan', spots: 3, joined: false },
-  ]);
-  const [showCarForm, setShowCarForm] = useState(false); // Visa eller dölj formuläret
-  const [newCar, setNewCar] = useState({ date: '', from: '', to: '', spots: '' });
 
   // Hämta användarnamn från en säker källa när komponenten laddas
   useEffect(() => {
@@ -93,7 +82,7 @@ const DashBoardParent = ({ token }) => {
           const data = await response.json();
           const user = data.user;
 
-          setUserName(user.first_name + ' ' + user.last_name)
+          setUserName(user.first_name + ' ' + user.last_name);
 
         } else {
           console.error('Failed to fetch user data');
@@ -110,30 +99,8 @@ const DashBoardParent = ({ token }) => {
     setOpenDescriptionIndex(openDescriptionIndex === index ? null : index);
   };
 
-  // Hantera bilregistrering
-  const handleCarRegistration = () => {
-    const newCarOption = {
-      id: Date.now(), // Generera unikt id
-      ...newCar,
-      spots: parseInt(newCar.spots), // Konvertera antalet platser till ett nummer
-      joined: false, // Initialt har ingen anmält sig
-    };
-    setCarpoolingOptions([...carpoolingOptions, newCarOption]);
-    setNewCar({ date: '', from: '', to: '', spots: '' }); // Nollställ formuläret efter registrering
-    setShowCarForm(false); // Dölj formuläret efter registrering
-  };
-
-  // Hantera anmälning eller avanmäling till samåkning
-  const handleJoinCarpool = (id) => {
-    setCarpoolingOptions(
-      carpoolingOptions.map((option) =>
-        option.id === id
-          ? option.joined
-            ? { ...option, spots: option.spots + 1, joined: false } // Avanmäl
-            : { ...option, spots: option.spots - 1, joined: true }  // Anmäl
-          : option
-      )
-    );
+  const handleCarpoolRedirect = () => {
+    // Logik för att hantera redirect till /car-pool
   };
 
   if (loading) {
@@ -166,11 +133,12 @@ const DashBoardParent = ({ token }) => {
       {/* Kommande aktiviteter */}
       <Box mb={8}>
         <Heading as="h2" size="md" mb={4} color="brand.500">
-          Kommande Aktiviteter (Nästa 10)
+          Kommande Aktiviteter
         </Heading>
         <Table variant="simple">
           <Thead>
             <Tr>
+              <Th>Scoutlevel</Th>
               <Th>Datum & Tid</Th>
               <Th>Plats</Th>
               <Th>Beskrivning</Th>
@@ -180,22 +148,23 @@ const DashBoardParent = ({ token }) => {
           <Tbody>
             {activities.map((activity, index) => (
               <React.Fragment key={index}>
-                <Tr>
+                <Tr onClick={() => toggleDescription(index)} style={{ cursor: 'pointer' }}>
+                  <Td>
+                    <Tag size="lg" colorScheme="teal" borderRadius="full">
+                      <TagLabel>{activity.scout_level}</TagLabel>
+                    </Tag>
+                  </Td>
                   <Td>{new Date(activity.dtstart).toLocaleDateString()} {new Date(activity.dtstart).toLocaleTimeString()}</Td>
                   <Td>{activity.location}</Td>
+                  <Td>{activity.summary}</Td>
                   <Td>
-                    <Button size="sm" onClick={() => toggleDescription(index)}>
-                      {openDescriptionIndex === index ? 'Dölj Beskrivning' : 'Visa Beskrivning'}
-                    </Button>
-                  </Td>
-                  <Td>
-                    <Button colorScheme="brand" size="sm">
+                    <Button colorScheme="brand" size="sm" onClick={handleCarpoolRedirect}>
                       Samåkning
                     </Button>
                   </Td>
                 </Tr>
                 <Tr>
-                  <Td colSpan={4}>
+                  <Td colSpan={5}>
                     <Collapse in={openDescriptionIndex === index} animateOpacity>
                       <Box p={4} color="gray.600" borderWidth="1px" borderRadius="lg">
                         {activity.description}
@@ -207,99 +176,6 @@ const DashBoardParent = ({ token }) => {
             ))}
           </Tbody>
         </Table>
-      </Box>
-
-      <Divider mb={6} />
-
-      {/* Samåkning */}
-      <Box mb={8}>
-        <Heading as="h2" size="md" mb={4} color="brand.500">
-          Samåkningsmöjligheter
-        </Heading>
-        <VStack spacing={4}>
-          {carpoolingOptions.map((option, index) => (
-            <Box
-              key={index}
-              p={4}
-              borderWidth={1}
-              borderRadius="lg"
-              w="100%"
-              bg="gray.50"
-              boxShadow="sm"
-            >
-              <Flex justify="space-between" align="center">
-                <Box>
-                  <Text fontSize="md" color="brand.600">
-                    {option.date}: Från {option.from} till {option.to}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    Lediga platser: {option.spots}
-                  </Text>
-                </Box>
-                <Button
-                  leftIcon={<FaCar />}
-                  colorScheme="brand"
-                  size="sm"
-                  disabled={option.spots === 0 && !option.joined} // Avanmäl endast om man redan har anmält sig
-                  onClick={() => handleJoinCarpool(option.id)}
-                >
-                  {option.joined ? 'Avanmäl' : 'Anmäl'}
-                </Button>
-              </Flex>
-            </Box>
-          ))}
-        </VStack>
-      </Box>
-
-      <Divider mb={6} />
-
-      {/* Knapp för att visa formuläret för att registrera ny bil */}
-      <Box mb={8}>
-        <Button colorScheme="brand" onClick={() => setShowCarForm(!showCarForm)}>
-          {showCarForm ? 'Dölj' : 'Registrera bil för samåkning'}
-        </Button>
-        <Collapse in={showCarForm} animateOpacity>
-          <Box mt={4}>
-            <Heading as="h2" size="md" mb={4} color="brand.500">
-              Registrera bil för samåkning
-            </Heading>
-            <VStack spacing={4} align="stretch">
-              <FormControl id="date">
-                <FormLabel>Datum</FormLabel>
-                <Input
-                  type="date"
-                  value={newCar.date}
-                  onChange={(e) => setNewCar({ ...newCar, date: e.target.value })}
-                />
-              </FormControl>
-              <FormControl id="from">
-                <FormLabel>Från</FormLabel>
-                <Input
-                  placeholder="Utgångspunkt"
-                  value={newCar.from}
-                  onChange={(e) => setNewCar({ ...newCar, from: e.target.value })}
-                />
-              </FormControl>
-              <FormControl id="to">
-                <FormLabel>Till</FormLabel>
-                <Input
-                  placeholder="Destination"
-                  value={newCar.to}
-                  onChange={(e) => setNewCar({ ...newCar, to: e.target.value })}
-                />
-              </FormControl>
-              <FormControl id="spots">
-                <FormLabel>Platser</FormLabel>
-                <NumberInput min={1} value={newCar.spots} onChange={(value) => setNewCar({ ...newCar, spots: value })}>
-                  <NumberInputField />
-                </NumberInput>
-              </FormControl>
-              <Button colorScheme="brand" onClick={handleCarRegistration}>
-                Registrera bil
-              </Button>
-            </VStack>
-          </Box>
-        </Collapse>
       </Box>
     </Box>
   );
