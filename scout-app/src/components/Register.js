@@ -6,7 +6,6 @@ import {
     ModalHeader,
     ModalCloseButton,
     ModalBody,
-    ModalFooter,
     Button,
     FormControl,
     FormLabel,
@@ -130,17 +129,14 @@ const Register = ({ isOpen, onClose }) => {
                                     </RadioGroup>
                                 </FormControl>
                                 
-                                {error && <Alert status="error" mt={4}>{error}</Alert>}
+                                <Button type="submit" colorScheme="brand" width="full" onClick={handleRegister}>
+                                    Registrera
+                                </Button>
+                                {error && <Alert status="error" mt={4}>{error}</Alert>} {/* Error message below the button */}
                             </VStack>
                         </form>
                     </Box>
                 </ModalBody>
-
-                <ModalFooter>
-                    <Button type="submit" colorScheme="brand" width="full" onClick={handleRegister}>
-                        Registrera
-                    </Button>
-                </ModalFooter>
             </ModalContent>
         </Modal>
     );
