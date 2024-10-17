@@ -5,6 +5,7 @@ from routes.user_handler import user_handler
 import os
 from extensions import db  # Import db instance
 from models.auth_model import User, Role  # Import your User model
+from routes.activity import activity_bp
 
 app = Flask(__name__)
 
@@ -38,6 +39,7 @@ with app.app_context():
 # Registrera auth blueprint
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_handler)
+app.register_blueprint(activity_bp)
 
 # Route för att rendera en grundläggande index.html
 @app.route('/')

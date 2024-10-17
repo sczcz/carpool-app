@@ -20,29 +20,95 @@ import {
   Input,
   NumberInput,
   NumberInputField,
-  Select,
   Collapse,
 } from '@chakra-ui/react';
-import { FaCar, FaUserCircle } from 'react-icons/fa'; // Behåll den här importen för användarikonen
+import { FaCar, FaUserCircle } from 'react-icons/fa';
 
-const DashBoardParent = () => {
+
+
+const DashBoardParent = ({ token }) => {
   const [userName, setUserName] = useState(''); // State för användarnamn
-
-  // Hämta användarnamn från localStorage när komponenten laddas
-  useEffect(() => {
-    const name = localStorage.getItem('userName');
-    if (name) {
-      setUserName(name);
-    }
-  }, []);
-
+  const [activities, setActivities] = useState([]); // State för aktiviteter
+  const [loading, setLoading] = useState(true); // State för att hantera laddningsstatus
+  const [error, setError] = useState(null); // State för att hantera fel
+  const [openDescriptionIndex, setOpenDescriptionIndex] = useState(null); // För att hålla koll på vilken beskrivning som är öppen
   const [carpoolingOptions, setCarpoolingOptions] = useState([
     { id: 1, date: '2024-10-20', from: 'Jonstorp', to: 'Skogsdungen', spots: 2, joined: false },
     { id: 2, date: '2024-11-05', from: 'Jonstorp', to: 'Scoutstugan', spots: 3, joined: false },
   ]);
-
   const [showCarForm, setShowCarForm] = useState(false); // Visa eller dölj formuläret
   const [newCar, setNewCar] = useState({ date: '', from: '', to: '', spots: '' });
+
+  // Hämta användarnamn från en säker källa när komponenten laddas
+  useEffect(() => {
+    const name = "Användare"; // Placeholder, använd en säker källa här
+    setUserName(name);
+  }, []);
+
+  // Hämta aktiviteter från API när komponenten laddas
+  useEffect(() => {
+
+    const fetchActivities = async () => {
+      try {
+        const response = await fetch('/api/protected/activity/all', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`, // Använd token från prop
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Något gick fel vid hämtning av aktiviteter');
+        }
+
+        const data = await response.json();
+        
+        const currentDate = new Date(); // Dagens datum
+        
+        // Filtrera ut aktiviteter där startdatumet är i det förflutna
+        const upcomingActivities = data.events
+          .filter(activity => new Date(activity.dtstart) > currentDate) // Bara kommande aktiviteter
+          .sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart)) // Sortera efter startdatum
+          .slice(0, 10); // Visa de 10 närmsta
+
+        setActivities(upcomingActivities); // Sätt de 10 närmsta aktiviteterna i state
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchActivities(); // Kör hämtning av aktiviteter
+  }, [token]); // Lägg till token som en beroende så att det uppdateras när token ändras
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/protected/user', {
+          method: 'GET',
+          credentials: 'include', // Include cookies for authentication
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const user = data.user;
+
+          setUserName(user.first_name + ' ' + user.last_name)
+
+        } else {
+          console.error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []); // Tom array ser till att det bara körs när komponenten mountas
+
+  const toggleDescription = (index) => {
+    setOpenDescriptionIndex(openDescriptionIndex === index ? null : index);
+  };
 
   // Hantera bilregistrering
   const handleCarRegistration = () => {
@@ -70,11 +136,13 @@ const DashBoardParent = () => {
     );
   };
 
-  const activities = [
-    { date: '2024-10-20', location: 'Skogsdungen', status: 'Anmäld' },
-    { date: '2024-11-05', location: 'Scoutstugan', status: 'Inte anmäld' },
-    { date: '2024-12-01', location: 'Lägerplats', status: 'Anmäld' },
-  ];
+  if (loading) {
+    return <Text>Laddar aktiviteter...</Text>;
+  }
+
+  if (error) {
+    return <Text>Fel vid hämtning av aktiviteter: {error}</Text>;
+  }
 
   return (
     <Box p={5}>
@@ -98,29 +166,44 @@ const DashBoardParent = () => {
       {/* Kommande aktiviteter */}
       <Box mb={8}>
         <Heading as="h2" size="md" mb={4} color="brand.500">
-          Kommande Aktiviteter
+          Kommande Aktiviteter (Nästa 10)
         </Heading>
         <Table variant="simple">
           <Thead>
             <Tr>
-              <Th>Datum</Th>
+              <Th>Datum & Tid</Th>
               <Th>Plats</Th>
-              <Th>Status</Th>
-              <Th>Åtgärd</Th>
+              <Th>Beskrivning</Th>
+              <Th>Samåkning</Th>
             </Tr>
           </Thead>
           <Tbody>
             {activities.map((activity, index) => (
-              <Tr key={index}>
-                <Td>{activity.date}</Td>
-                <Td>{activity.location}</Td>
-                <Td>{activity.status}</Td>
-                <Td>
-                  <Button colorScheme="brand" size="sm">
-                    {activity.status === 'Anmäld' ? 'Ändra' : 'Anmäl'}
-                  </Button>
-                </Td>
-              </Tr>
+              <React.Fragment key={index}>
+                <Tr>
+                  <Td>{new Date(activity.dtstart).toLocaleDateString()} {new Date(activity.dtstart).toLocaleTimeString()}</Td>
+                  <Td>{activity.location}</Td>
+                  <Td>
+                    <Button size="sm" onClick={() => toggleDescription(index)}>
+                      {openDescriptionIndex === index ? 'Dölj Beskrivning' : 'Visa Beskrivning'}
+                    </Button>
+                  </Td>
+                  <Td>
+                    <Button colorScheme="brand" size="sm">
+                      Samåkning
+                    </Button>
+                  </Td>
+                </Tr>
+                <Tr>
+                  <Td colSpan={4}>
+                    <Collapse in={openDescriptionIndex === index} animateOpacity>
+                      <Box p={4} color="gray.600" borderWidth="1px" borderRadius="lg">
+                        {activity.description}
+                      </Box>
+                    </Collapse>
+                  </Td>
+                </Tr>
+              </React.Fragment>
             ))}
           </Tbody>
         </Table>
