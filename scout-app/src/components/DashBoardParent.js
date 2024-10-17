@@ -15,6 +15,13 @@ import {
   Icon,
   Divider,
   Flex,
+  FormControl,
+  FormLabel,
+  Input,
+  NumberInput,
+  NumberInputField,
+  Select,
+  Collapse,
 } from '@chakra-ui/react';
 import { FaCar, FaUserCircle } from 'react-icons/fa'; // Behåll den här importen för användarikonen
 
@@ -29,15 +36,44 @@ const DashBoardParent = () => {
     }
   }, []);
 
+  const [carpoolingOptions, setCarpoolingOptions] = useState([
+    { id: 1, date: '2024-10-20', from: 'Jonstorp', to: 'Skogsdungen', spots: 2, joined: false },
+    { id: 2, date: '2024-11-05', from: 'Jonstorp', to: 'Scoutstugan', spots: 3, joined: false },
+  ]);
+
+  const [showCarForm, setShowCarForm] = useState(false); // Visa eller dölj formuläret
+  const [newCar, setNewCar] = useState({ date: '', from: '', to: '', spots: '' });
+
+  // Hantera bilregistrering
+  const handleCarRegistration = () => {
+    const newCarOption = {
+      id: Date.now(), // Generera unikt id
+      ...newCar,
+      spots: parseInt(newCar.spots), // Konvertera antalet platser till ett nummer
+      joined: false, // Initialt har ingen anmält sig
+    };
+    setCarpoolingOptions([...carpoolingOptions, newCarOption]);
+    setNewCar({ date: '', from: '', to: '', spots: '' }); // Nollställ formuläret efter registrering
+    setShowCarForm(false); // Dölj formuläret efter registrering
+  };
+
+  // Hantera anmälning eller avanmäling till samåkning
+  const handleJoinCarpool = (id) => {
+    setCarpoolingOptions(
+      carpoolingOptions.map((option) =>
+        option.id === id
+          ? option.joined
+            ? { ...option, spots: option.spots + 1, joined: false } // Avanmäl
+            : { ...option, spots: option.spots - 1, joined: true }  // Anmäl
+          : option
+      )
+    );
+  };
+
   const activities = [
     { date: '2024-10-20', location: 'Skogsdungen', status: 'Anmäld' },
     { date: '2024-11-05', location: 'Scoutstugan', status: 'Inte anmäld' },
     { date: '2024-12-01', location: 'Lägerplats', status: 'Anmäld' },
-  ];
-
-  const carpoolingOptions = [
-    { date: '2024-10-20', from: 'Jonstorp', to: 'Skogsdungen', spots: 2 },
-    { date: '2024-11-05', from: 'Jonstorp', to: 'Scoutstugan', spots: 3 },
   ];
 
   return (
@@ -93,7 +129,7 @@ const DashBoardParent = () => {
       <Divider mb={6} />
 
       {/* Samåkning */}
-      <Box>
+      <Box mb={8}>
         <Heading as="h2" size="md" mb={4} color="brand.500">
           Samåkningsmöjligheter
         </Heading>
@@ -121,14 +157,66 @@ const DashBoardParent = () => {
                   leftIcon={<FaCar />}
                   colorScheme="brand"
                   size="sm"
-                  disabled={option.spots === 0}
+                  disabled={option.spots === 0 && !option.joined} // Avanmäl endast om man redan har anmält sig
+                  onClick={() => handleJoinCarpool(option.id)}
                 >
-                  Anmäl
+                  {option.joined ? 'Avanmäl' : 'Anmäl'}
                 </Button>
               </Flex>
             </Box>
           ))}
         </VStack>
+      </Box>
+
+      <Divider mb={6} />
+
+      {/* Knapp för att visa formuläret för att registrera ny bil */}
+      <Box mb={8}>
+        <Button colorScheme="brand" onClick={() => setShowCarForm(!showCarForm)}>
+          {showCarForm ? 'Dölj' : 'Registrera bil för samåkning'}
+        </Button>
+        <Collapse in={showCarForm} animateOpacity>
+          <Box mt={4}>
+            <Heading as="h2" size="md" mb={4} color="brand.500">
+              Registrera bil för samåkning
+            </Heading>
+            <VStack spacing={4} align="stretch">
+              <FormControl id="date">
+                <FormLabel>Datum</FormLabel>
+                <Input
+                  type="date"
+                  value={newCar.date}
+                  onChange={(e) => setNewCar({ ...newCar, date: e.target.value })}
+                />
+              </FormControl>
+              <FormControl id="from">
+                <FormLabel>Från</FormLabel>
+                <Input
+                  placeholder="Utgångspunkt"
+                  value={newCar.from}
+                  onChange={(e) => setNewCar({ ...newCar, from: e.target.value })}
+                />
+              </FormControl>
+              <FormControl id="to">
+                <FormLabel>Till</FormLabel>
+                <Input
+                  placeholder="Destination"
+                  value={newCar.to}
+                  onChange={(e) => setNewCar({ ...newCar, to: e.target.value })}
+                />
+              </FormControl>
+              <FormControl id="spots">
+                <FormLabel>Platser</FormLabel>
+                <NumberInput min={1} value={newCar.spots} onChange={(value) => setNewCar({ ...newCar, spots: value })}>
+                  <NumberInputField />
+                </NumberInput>
+              </FormControl>
+              <Button colorScheme="brand" onClick={handleCarRegistration}>
+                Registrera bil
+              </Button>
+            </VStack>
+          </Box>
+        </Collapse>
       </Box>
     </Box>
   );
