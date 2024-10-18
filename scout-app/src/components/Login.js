@@ -1,5 +1,20 @@
 import React, { useState } from 'react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, FormControl, FormLabel, Input, Box, Text, useBreakpointValue, VStack } from '@chakra-ui/react';
+import {
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    ModalBody,
+    Button,
+    FormControl,
+    FormLabel,
+    Input,
+    Box,
+    Text,
+    useBreakpointValue,
+    VStack
+} from '@chakra-ui/react';
 
 const apiURL = "/api/login";
 
@@ -68,17 +83,14 @@ const Login = ({ isOpen, onClose }) => {
                                         bg="white"
                                     />
                                 </FormControl>
-                                {error && <Text color="red.500">{error}</Text>}
+                                <Button colorScheme="brand" width="full" onClick={handleLogin}>
+                                    Logga in
+                                </Button>
+                                {error && <Text color="red.500">{error}</Text>} {/* Error message below the button */}
                             </VStack>
                         </form>
                     </Box>
                 </ModalBody>
-
-                <ModalFooter>
-                    <Button colorScheme="brand" width="full" onClick={handleLogin}>
-                        Logga in
-                    </Button>
-                </ModalFooter>
             </ModalContent>
         </Modal>
     );
