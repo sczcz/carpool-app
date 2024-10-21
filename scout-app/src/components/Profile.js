@@ -61,7 +61,34 @@ const Profile = () => {
       }
     };
 
+    const fetchChildren = async () => {
+      try {
+        const response = await fetch('/api/protected/get-children', {
+          method: 'GET',
+          credentials: 'include', // Include cookies for authentication
+        });
+        if (response.ok) {
+          const data = await response.json();
+      // Mappa backend-data till frontend-formatet
+      const mappedChildren = data.children.map(child => ({
+        firstName: child.first_name,
+        lastName: child.last_name,
+        role: child.role,
+        membershipNumber: child.membership_number,
+        phone: child.phone
+      }));
+
+      setChildren(mappedChildren);  // Sätt state med de mappade barnen
+    } else {
+      console.error('Failed to fetch children data');
+    }
+  } catch (error) {
+    console.error('Error fetching children data:', error);
+  }
+};
     fetchUserData();
+    fetchChildren();  // Hämta barn när komponenten mountas
+    
   }, []); // Tom array ser till att det bara körs när komponenten mountas
 
   const handleSaveAddress = async () => {
