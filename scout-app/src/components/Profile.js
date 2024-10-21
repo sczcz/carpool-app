@@ -29,7 +29,7 @@ const Profile = () => {
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
-  const [childRole, setChildRole] = useState('Spårare');
+  const [childRole, setChildRole] = useState('Kutar');
   const [membershipNumber, setMembershipNumber] = useState('');  // Nytt fält för medlemsnummer
   const [childPhone, setChildPhone] = useState('');  // Nytt fält för telefonnummer
 
@@ -119,7 +119,7 @@ const Profile = () => {
           setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
           setChildFirstName('');
           setChildLastName('');
-          setChildRole('Spårare');
+          setChildRole('Kutar');
           setMembershipNumber('');  // Återställ medlemsnummerfältet
           setChildPhone('');  // Återställ telefonnummerfältet
         } else {
@@ -250,8 +250,8 @@ const Profile = () => {
             value={childRole}
             onChange={(e) => setChildRole(e.target.value)}
           >
-            <option value="Spårare-Kutar">Kutar</option>
-            <option value="Spårare-Tumlare">Tumlare</option>
+            <option value="Kutar">Kutar</option>
+            <option value="Tumlare">Tumlare</option>
             <option value="Upptäckare">Upptäckare</option>
             <option value="Äventyrare">Äventyrare</option>
             <option value="Utmanare">Utmanare</option>
@@ -279,11 +279,12 @@ const Profile = () => {
               onChange={(e) => handleUpdateChild(index, e.target.value)}
               width="150px"
             >
-              <option value="Spårare">Spårare</option>
-              <option value="Upptäckare">Upptäckare</option>
-              <option value="Äventyrare">Äventyrare</option>
-              <option value="Utmanare">Utmanare</option>
-              <option value="Rövare">Rövare</option>
+            <option value="Kutar">Kutar</option>
+            <option value="Tumlare">Tumlare</option>
+            <option value="Upptäckare">Upptäckare</option>
+            <option value="Äventyrare">Äventyrare</option>
+            <option value="Utmanare">Utmanare</option>
+            <option value="Rover">Rover</option>
             </Select>
             <Button colorScheme="red" onClick={() => handleRemoveChild(index)}>
               Ta bort
