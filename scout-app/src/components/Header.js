@@ -5,38 +5,39 @@ import LilyBlueIcon from '../assets/lily-blue.svg';
 const Header = () => {
     return (
         <Box as="header" bg="white" p={4}>
-            <Flex justifyContent="space-between" alignItems="center">
+            <Flex alignItems="center" justifyContent="center">
+                {/* Scouterna Link on the left with margin */}
                 <Link 
                     href="https://www.scouterna.se" 
                     isExternal 
-                    color="brand.500" // Change text color to match previous background color
+                    color="brand.500"
                     fontSize="lg" 
                     fontWeight="bold"
-                    display={["none", "none", "inline-flex"]} // Hide on all screens except desktop
-                    alignItems="center" // Vertically centers them
+                    display={["none", "none", "flex"]} // Hide on mobile and tablet screens
+                    alignItems="center" 
+                    mr={8} // Adjust this margin to move it further left, as it was on the left side
                 >
                     Scouterna
                     <Image 
-                        src={LilyBlueIcon} // Use your imported SVG
+                        src={LilyBlueIcon} 
                         alt="External Link" 
-                        ml={2} // Adds left margin between text and icon
-                        boxSize="1.5em" // Adjust the size of the icon as needed
+                        ml={2} 
+                        boxSize="1.5em" 
                     />
                 </Link>
 
+                {/* Main Title */}
                 <Link 
-                    href="/" // This should match the path of the old "Hem" link
+                    href="/" 
                     style={{ textDecoration: 'none' }} // Remove underline from link
-                    flexGrow={1} // Allow this to take up the remaining space
+                    textAlign="center" // Center text alignment
                 >
                     <Heading 
                         as="h1" 
                         size="xl" 
-                        color="brand.500" // Change text color to match previous background color
+                        color="brand.500" 
                         fontFamily="'Pacifico', cursive" 
                         fontWeight="400"
-                        textAlign="center" // Center text alignment
-                        mr={20} // Add horizontal margin to adjust positioning
                     >
                         Jonstorps Kustscoutkår
                     </Heading>
@@ -47,4 +48,3 @@ const Header = () => {
 };
 
 export default Header;
-

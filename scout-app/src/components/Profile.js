@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import customTheme from '../Theme';
 import {
   Box,
   Heading,
@@ -11,41 +12,66 @@ import {
   Divider,
   Select,
   HStack,
+  Avatar,
+  Flex,
+  useColorModeValue,
+  Stack,
+  SimpleGrid,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 
 const Profile = () => {
-  // Användarinformation (autofyll från backend)
+  // User information (auto-fill from backend)
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
-  
-  // Adressinformation
+
+  // Address information
   const [address, setAddress] = useState('');
   const [postcode, setPostcode] = useState('');
   const [city, setCity] = useState('');
 
-  // Barninformation
+  // Children information
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
   const [childRole, setChildRole] = useState('Spårare');
-  const [membershipNumber, setMembershipNumber] = useState('');  // Nytt fält för medlemsnummer
-  const [childPhone, setChildPhone] = useState('');  // Nytt fält för telefonnummer
+  const [membershipNumber, setMembershipNumber] = useState('');
+  const [childPhone, setChildPhone] = useState('');
 
-  // Hämta den inloggade användarens information när komponenten laddas
+  // Modal states
+  const [isAddChildOpen, setAddChildOpen] = useState(false);
+  const [isAddressInfoOpen, setAddressInfoOpen] = useState(false);
+
+  const roleColors = {
+    Spårare: 'cyan.400',     
+    Upptäckare: 'green.400', 
+    Äventyrare: 'yellow.400', 
+    Utmanare: 'orange.400',   
+    Rövare: 'purple.400',        
+  };
+
+  // Fetch logged-in user information on component mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await fetch('/api/protected/user', {
           method: 'GET',
-          credentials: 'include', // Include cookies for authentication
+          credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();
           const user = data.user;
 
-          // Sätt state med användarinformation
+          // Set state with user information
           setFirstName(user.first_name);
           setLastName(user.last_name);
           setEmail(user.email);
@@ -62,7 +88,7 @@ const Profile = () => {
     };
 
     fetchUserData();
-  }, []); // Tom array ser till att det bara körs när komponenten mountas
+  }, []);
 
   const handleSaveAddress = async () => {
     try {
@@ -71,14 +97,14 @@ const Profile = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies if your authentication uses them
+        credentials: 'include',
         body: JSON.stringify({
           address,
           postcode,
           city,
         }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         alert('Address updated successfully!');
@@ -89,50 +115,26 @@ const Profile = () => {
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred while updating the address');
-    }
+    } 
+    setAddressInfoOpen(false); // Close the modal after saving
   };
 
-  const handleAddChild = async () => {
-    if (childFirstName && childLastName && membershipNumber) {
-      try {
-        // Skicka POST-begäran till backend för att lägga till ett barn
-        const response = await fetch('/api/protected/add-child', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Skicka med cookies för autentisering
-          body: JSON.stringify({
-            membership_number: membershipNumber,  // Nytt fält
-            first_name: childFirstName,
-            last_name: childLastName,
-            phone: childPhone,  // Nytt fält för telefonnummer
-            role: childRole,  // Skicka rollen från dropdown-menyn
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          alert('Barn tillagt framgångsrikt!');
-          
-          // Lägg till barnet i listan efter att det framgångsrikt har lagts till i backend
-          setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
-          setChildFirstName('');
-          setChildLastName('');
-          setChildRole('Spårare');
-          setMembershipNumber('');  // Återställ medlemsnummerfältet
-          setChildPhone('');  // Återställ telefonnummerfältet
-        } else {
-          const error = await response.json();
-          alert(`Fel: ${error.message || 'Misslyckades att lägga till barn'}`);
-        }
-      } catch (error) {
-        console.error('Fel vid tillägg av barn:', error);
-        alert('Ett fel uppstod vid tillägg av barnet');
-      }
-    } else {
-      alert('Du måste fylla i förnamn, efternamn och medlemsnummer för barnet');
-    }
+  const handleAddChild = () => {
+    const newChild = {
+      firstName: childFirstName,
+      lastName: childLastName,
+      role: childRole,
+      membershipNumber,
+      phone: childPhone,
+    };
+    setChildren([...children, newChild]);
+    setAddChildOpen(false); // Close the modal after adding
+    // Reset child fields
+    setChildFirstName('');
+    setChildLastName('');
+    setMembershipNumber('');
+    setChildPhone('');
+    setChildRole('Spårare');
   };
 
   const handleRemoveChild = (index) => {
@@ -150,147 +152,212 @@ const Profile = () => {
   };
 
   return (
-    <Box p={5}>
-      <Heading as="h2" size="lg" mb={4} color="brand.500">
-        Profil
-      </Heading>
+  <Box
+        p={5}
+        bg={useColorModeValue('gray.100', 'gray.800')}
+        borderRadius="lg"
+        boxShadow="lg"
+        maxW="1000px"
+        ml={[0, 50, 100, 225]} // Responsive margins
+        mr={[0, 50, 100]} // Responsive margins
+        mb={50}
+        mt={50}
+      >      
+    <Flex direction={['column', 'column', 'row']} align="center" mb={8}>
+        <Avatar
+          size="2xl"
+          name={`${firstName} ${lastName}`}
+          src="https://your-avatar-url.com/avatar.png" // Replace with your avatar URL
+          bg="#043A63" // Background color when no image is provided
+          color="white" // Text color for initials
+        />
+        <Stack spacing={1} ml={[0, 0, 4]} textAlign={['center', 'center', 'left']}>
+          <Heading as="h2" size="lg" colorScheme="brand">
+            {firstName} {lastName}
+          </Heading>
+          <Text fontSize="lg" color="gray.600">
+            {email}
+          </Text>
+          <Text fontSize="lg" color="gray.600">
+            Adress: {address}, {postcode}, {city}
+          </Text>
+          <Text fontSize="md" color="gray.500">
+            Roll: {role}
+          </Text>
+        </Stack>
+      </Flex>
+
+      {/* Children Section */}
+      <VStack spacing={2} align="start" mt={[4, 4, 0]}>
+        <Heading as="h4" size="md" mb={10} colorScheme="brand" >
+        {firstName} {lastName} Barn: 
+        </Heading>
+        <SimpleGrid columns={[1, 1, 2]} spacing={4} width="full">
+          {children.map((child, index) => (
+            <Box
+              key={index}
+              borderWidth="1px"
+              borderRadius="lg"
+              overflow="hidden"
+              boxShadow="lg"
+              p={4}
+              bg={roleColors[child.role] || 'gray.200'} // Set background color based on role
+              transition="0.2s"
+              _hover={{ boxShadow: 'xl', transform: 'scale(1.02)' }} // Card hover effect
+            >
+              <Text fontSize="lg" color="white"> {/* Change text color to white */}
+                {child.firstName} {child.lastName} - {child.role} (Medlemsnummer: {child.membershipNumber}) (Telefon: {child.phone})
+              </Text>
+              <HStack mt={2} justifyContent="space-between">
+                <Select
+                  value={child.role}
+                  onChange={(e) => handleUpdateChild(index, e.target.value)}
+                  width="150px"
+                  color="black" // Set text color for Select
+                  bg="white" // Optional: Set background color for better visibility
+                >
+                  <option value="Spårare">Spårare</option>
+                  <option value="Upptäckare">Upptäckare</option>
+                  <option value="Äventyrare">Äventyrare</option>
+                  <option value="Utmanare">Utmanare</option>
+                  <option value="Rövare">Rövare</option>
+                </Select>
+                <Button colorScheme="red" onClick={() => handleRemoveChild(index)} color="white">
+                  Ta bort
+                </Button>
+              </HStack>
+            </Box>
+          ))}
+        </SimpleGrid>
+      </VStack>
+
       <Divider mb={6} />
 
-      <VStack spacing={4} align="start">
-        <Text fontSize="lg" color="brand.600">
-          <strong>Namn:</strong> {firstName} {lastName}
-        </Text>
-        <Text fontSize="lg" color="brand.600">
-          <strong>E-post:</strong> {email}
-        </Text>
-        <Text fontSize="lg" color="brand.600">
-          <strong>Roll:</strong> {role}
-        </Text>
-        <Text fontSize="lg" color="brand.600">
-          <strong>Adress:</strong> {address}, {postcode}, {city}
-        </Text>
-      </VStack>
-
-      <Divider my={6} />
-
-      <Heading as="h3" size="md" mb={4} color="brand.500">
-        Uppdatera Adress
-      </Heading>
-      <VStack spacing={4} align="start">
-        <FormControl>
-          <FormLabel>Adress</FormLabel>
-          <Input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Skriv in din adress"
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Postnummer</FormLabel>
-          <Input
-            value={postcode}
-            onChange={(e) => setPostcode(e.target.value)}
-            placeholder="Skriv in ditt postnummer"
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Ort</FormLabel>
-          <Input
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="Skriv in din ort"
-          />
-        </FormControl>
-        <Button colorScheme="brand" onClick={handleSaveAddress}>
-          Spara Adress
-        </Button>
-      </VStack>
-
-      <Divider my={6} />
-
-      <Heading as="h3" size="md" mb={4} color="brand.500">
-        Lägg till Barn
-      </Heading>
-      <VStack spacing={4} align="start">
-        <FormControl>
-          <FormLabel>Förnamn</FormLabel>
-          <Input
-            value={childFirstName}
-            onChange={(e) => setChildFirstName(e.target.value)}
-            placeholder="Förnamn"
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Efternamn</FormLabel>
-          <Input
-            value={childLastName}
-            onChange={(e) => setChildLastName(e.target.value)}
-            placeholder="Efternamn"
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Medlemsnummer</FormLabel>
-          <Input
-            value={membershipNumber}
-            onChange={(e) => setMembershipNumber(e.target.value)}
-            placeholder="Skriv in medlemsnummer"
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Telefonnummer</FormLabel>
-          <Input
-            value={childPhone}
-            onChange={(e) => setChildPhone(e.target.value)}
-            placeholder="Skriv in telefonnummer"
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Roll</FormLabel>
-          <Select
-            value={childRole}
-            onChange={(e) => setChildRole(e.target.value)}
-          >
-            <option value="Spårare-Kutar">Kutar</option>
-            <option value="Spårare-Tumlare">Tumlare</option>
-            <option value="Upptäckare">Upptäckare</option>
-            <option value="Äventyrare">Äventyrare</option>
-            <option value="Utmanare">Utmanare</option>
-            <option value="Rover">Rover</option>
-          </Select>
-        </FormControl>
-        <Button colorScheme="brand" onClick={handleAddChild}>
+      {/* Buttons for Adding Child and Address Information */}
+      <HStack spacing={4} align="start" mt={20} mb={50}>
+        <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
           Lägg till Barn
         </Button>
-      </VStack>
+        <Button colorScheme="brand" onClick={() => setAddressInfoOpen(true)}>
+          Adressinformation
+        </Button>
+      </HStack>
 
-      <Divider my={6} />
+      <Divider mb={3} />
 
-      <Heading as="h4" size="md" mb={4} color="brand.500">
-        Barn tillagd
-      </Heading>
-      <VStack spacing={2} align="start">
-        {children.map((child, index) => (
-          <HStack key={index} spacing={4} alignItems="center">
-            <Text fontSize="lg" color="brand.600">
-              {child.firstName} {child.lastName} - {child.role} (Medlemsnummer: {child.membershipNumber}) (Telefon: {child.phone})
-            </Text>
-            <Select
-              value={child.role}
-              onChange={(e) => handleUpdateChild(index, e.target.value)}
-              width="150px"
-            >
-              <option value="Spårare">Spårare</option>
-              <option value="Upptäckare">Upptäckare</option>
-              <option value="Äventyrare">Äventyrare</option>
-              <option value="Utmanare">Utmanare</option>
-              <option value="Rövare">Rövare</option>
-            </Select>
-            <Button colorScheme="red" onClick={() => handleRemoveChild(index)}>
-              Ta bort
+      {/* Modal for Adding Child */}
+      <Modal isOpen={isAddChildOpen} onClose={() => setAddChildOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Lägg till Barn</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>Förnamn</FormLabel>
+              <Input
+                value={childFirstName}
+                onChange={(e) => setChildFirstName(e.target.value)}
+                placeholder="Förnamn"
+                isRequired // Accessibility enhancement
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Efternamn</FormLabel>
+              <Input
+                value={childLastName}
+                onChange={(e) => setChildLastName(e.target.value)}
+                placeholder="Efternamn"
+                isRequired // Accessibility enhancement
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Roll</FormLabel>
+              <Select
+                value={childRole}
+                onChange={(e) => setChildRole(e.target.value)}
+              >
+                <option value="Spårare">Spårare</option>
+                <option value="Upptäckare">Upptäckare</option>
+                <option value="Äventyrare">Äventyrare</option>
+                <option value="Utmanare">Utmanare</option>
+                <option value="Rövare">Rövare</option>
+              </Select>
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Medlemsnummer</FormLabel>
+              <Input
+                value={membershipNumber}
+                onChange={(e) => setMembershipNumber(e.target.value)}
+                placeholder="Skriv in medlemsnummer"
+                isRequired // Accessibility enhancement
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Telefonnummer</FormLabel>
+              <Input
+                value={childPhone}
+                onChange={(e) => setChildPhone(e.target.value)}
+                placeholder="Skriv in telefonnummer"
+                isRequired // Accessibility enhancement
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="brand" onClick={handleAddChild}>
+              Spara
             </Button>
-          </HStack>
-        ))}
-      </VStack>
+            <Button ml={3} onClick={() => setAddChildOpen(false)}>
+              Avbryt
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal for Address Information */}
+      <Modal isOpen={isAddressInfoOpen} onClose={() => setAddressInfoOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Adressinformation</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>Adress</FormLabel>
+              <Input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Skriv in din adress"
+                isRequired // Accessibility enhancement
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Postnummer</FormLabel>
+              <Input
+                value={postcode}
+                onChange={(e) => setPostcode(e.target.value)}
+                placeholder="Skriv in postnummer"
+                isRequired // Accessibility enhancement
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Stad</FormLabel>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="Skriv in stad"
+                isRequired // Accessibility enhancement
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="brand" onClick={handleSaveAddress}>
+              Spara
+            </Button>
+            <Button ml={3} onClick={() => setAddressInfoOpen(false)}>
+              Avbryt
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };

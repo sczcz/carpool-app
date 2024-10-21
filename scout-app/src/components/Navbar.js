@@ -58,7 +58,6 @@ const Navbar = () => {
     };
   }, [isScrolled]);
 
-
   const handleLogout = async () => {
     try {
       const response = await fetch('/api/logout', {
@@ -68,15 +67,12 @@ const Navbar = () => {
       
       if (response.ok) {
         alert('Logout successful!');
-        // Optionally, redirect to login page or reset state
         window.location.reload(); // Reload the page to reflect logout
       }
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
-
-
 
   return (
     <Box 
@@ -89,34 +85,48 @@ const Navbar = () => {
       zIndex={1000} 
       transition="background 0.3s, color 0.3s" // Smooth transition
     >
-      <Flex alignItems="center" justifyContent="space-between">
+      <Flex alignItems="center" justifyContent="space-between" maxW="1200px" mx="auto" width="100%">
         {/* Hamburger Icon Button for Mobile on the left side */}
         <IconButton
           aria-label="Open Menu"
           icon={<HamburgerIcon />}
           variant="outline"
-          colorScheme={isScrolled ? "white" : "brand"} // Blue when not scrolled, white when scrolled
+          colorScheme={isScrolled ? "white" : "brand"} // Change color based on scroll
           onClick={onOpen}
           display={{ base: 'flex', md: 'none' }} 
           boxSize="40px" 
           mr="4"
         />
 
-        <LilyWhiteIcon style={{ width: '30px', height: '30px', marginRight: '8px' }} />
-        
-        {isScrolled && (
-          <Text fontSize="xl" fontWeight="bold" mr="auto" as={Link} to="/" >
-            Jonstorps Kustscoutkår
-          </Text>
-        )}
+        <Flex alignItems="center" justifyContent="center" flexGrow={1}> {/* Centering title and buttons */}
+          {isScrolled && (
+            <>
+              <LilyWhiteIcon style={{ width: '30px', height: '30px', marginRight: '8px' }} />
+              <Text fontSize="xl" fontWeight="bold" as={Link} to="/" ml="2" marginRight="4">
+                Jonstorps Kustscoutkår
+              </Text>
+            </>
+          )}
 
-        {/* Desktop buttons */}
-        <Flex gap={4} display={{ base: 'none', md: 'flex' }} justifyContent="center" flexGrow={1}>
-          {links.map(({ to, label }) => (
-            <Button key={to} as={Link} to={to} variant="outline" colorScheme={isScrolled ? "white" : "brand"}>
-              {label}
-            </Button>
-          ))}
+          {/* Desktop buttons */}
+          <Flex gap={4} display={{ base: 'none', md: 'flex' }} justifyContent="center">
+            {links.map(({ to, label }) => (
+              <Button 
+                key={to} 
+                as={Link} 
+                to={to} 
+                variant="solid" // Change variant to solid for a filled button style
+                colorScheme={isScrolled ? "white" : "brand"} 
+                size="md" // Size of the button
+                borderRadius="full" // Full rounded corners
+                ml={5}
+                _hover={{ bg: isScrolled ? "whiteAlpha.300" : "brand.600", color: "white" }} // Hover effect
+                _active={{ bg: "brand.600", transform: 'scale(0.95)' }} // Active effect
+              >
+                {label}
+              </Button>
+            ))}
+          </Flex>
         </Flex>
 
         {/* Profile Icon with Dropdown */}
@@ -126,9 +136,8 @@ const Navbar = () => {
           </MenuButton>
           <MenuList>
             <MenuItem as={Link} to="/profile" color="brand.500">Profile</MenuItem>
-            <MenuItem as={Link} to="/TestSession" color="brand.500">Test Session</MenuItem> {/* Test Session */}
-            <MenuItem as={Link} to="/FetchUsers" color="brand.500">Fetch Users</MenuItem>  {/* Fetch Users */}
-            
+            <MenuItem as={Link} to="/TestSession" color="brand.500">Test Session</MenuItem> 
+            <MenuItem as={Link} to="/FetchUsers" color="brand.500">Fetch Users</MenuItem> 
             <MenuItem color="brand.500" onClick={onLoginOpen}>
               Login
             </MenuItem>
@@ -159,6 +168,17 @@ const Navbar = () => {
                   {label}
                 </Button>
               ))}
+              <Button 
+                as="a" 
+                href="https://www.scouterna.se" 
+                target="_blank" 
+                variant="solid" 
+                colorScheme="brand" 
+                onClick={onClose}
+              >
+                Scouterna.se
+              </Button>
+
             </Flex>
           </DrawerBody>
         </DrawerContent>
