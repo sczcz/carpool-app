@@ -1,5 +1,6 @@
 from backend.flaskr.extensions import db
 from datetime import datetime
+from sqlalchemy import Enum
 
 class Carpool(db.Model):
     __tablename__ = 'carpool'
@@ -13,6 +14,10 @@ class Carpool(db.Model):
     departure_postcode = db.Column(db.String(20), nullable=False)  # Postnummer för utgångsplats
     departure_city = db.Column(db.String(100), nullable=False)  # Ort för utgångsplats
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # När carpoolen skapades
+
+    # New column for carpool type
+    carpool_type = db.Column(Enum('drop-off', 'pick-up', 'both', name='carpool_type_enum'), nullable=False)
+
 
 # Passagerar-tabell
 class Passenger(db.Model):

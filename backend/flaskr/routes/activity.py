@@ -13,14 +13,14 @@ activity_bp = Blueprint('activity', __name__)
 
 # Updated role mapping
 role_mapping = {
-    'Vårdnadshavare': 1,
-    'Ledare': 2,
-    'Kutar': 3,
-    'Tumlare': 4,
-    'Upptäckare': 5,
-    'Äventyrare': 6,
-    'Utmanare': 7,
-    'Rover': 8
+    'vårdnadshavare': 1,
+    'ledare': 2,
+    'kutar': 3,
+    'tumlare': 4,
+    'upptäckare': 5,
+    'äventyrare': 6,
+    'utmanare': 7,
+    'rover': 8
 }
 
 @activity_bp.route('/api/protected/activity/all', methods=['GET'])
@@ -54,7 +54,7 @@ def get_all_activities(current_user):
         'dtend': str(activity.end_date),
         'location': activity.address,
         'description': activity.description,
-        'scout_level': children_roles[activity.role_id - 1]  # Assuming role_id is mapped correctly
+        'scout_level': list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]  # Assuming role_id is mapped correctly
     } for activity in activities]
 
     # Check if any new activities need to be fetched from the external calendar
@@ -72,7 +72,7 @@ def get_all_activities(current_user):
                     scout_level = summary.split("//")[-1].split('-')[0].strip()
                 
                 # If scout_level matches one of the children's roles, process the event
-                if scout_level and scout_level.lower() in role_mapping:
+                if scout_level.lower() in role_mapping:
                     start_date = component.get('dtstart').dt
                     existing_activity = Activity.query.filter_by(
                         name=summary,
