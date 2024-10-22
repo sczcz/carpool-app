@@ -52,7 +52,7 @@ const Profile = () => {
   const [isAddressInfoOpen, setAddressInfoOpen] = useState(false);
 
   const roleColors = {
-    tumlare: 'cyan.400',
+    tumlare: 'blue.400',
     kutar: 'cyan.400',     
     upptäckare: 'green.400', 
     äventyrare: 'yellow.400', 
