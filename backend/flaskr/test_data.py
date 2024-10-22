@@ -16,6 +16,7 @@ def add_test_data():
         # Lägg till testanvändare
         test_user = User(
             email='test@example.com',
+            #password: 123
             password='scrypt:32768:8:1$B761g5cnxchvKqNo$9c143fc1c9bc712f4ddc5f1dc14c60c6be9b35134458e2fcb6999f0c6ecd50f037888d7b633e70ef50d6b48107b77cf1311d2cec252955b94fd71dc8ed873b58',  # Ensure this is hashed if you're actually going to use it.
             first_name='Test',
             last_name='User',
