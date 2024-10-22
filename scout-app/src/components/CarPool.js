@@ -66,34 +66,35 @@ const CarpoolComponent = () => {
     fetchCars(); // Call the fetchCars function
   }, [toast]);
 
-  // Fetch carpooling options from the backend
-  useEffect(() => {
-    const fetchCarpools = async () => {
-      try {
-        const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
-          method: 'GET',
-          credentials: 'include', // include cookies for authentication
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setCarpoolingOptions(data.carpools); // Populate with fetched carpool data
-        } else {
-          throw new Error('Failed to fetch carpools');
-        }
-      } catch (error) {
-        console.error('Error fetching carpool data:', error);
-        toast({
-          title: 'Error fetching carpools.',
-          description: error.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
+  // Flytta fetchCarpools utanför useEffect så att den är tillgänglig överallt
+  const fetchCarpools = async () => {
+    try {
+      const response = await fetch('/api/carpool/list', {
+        method: 'GET',
+        credentials: 'include', // include cookies for authentication
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCarpoolingOptions(data.carpools);
+      } else {
+        throw new Error('Failed to fetch carpools');
       }
-    };
+    } catch (error) {
+      console.error('Error fetching carpool data:', error);
+      toast({
+        title: 'Error fetching carpools.',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
+  // Nu kan du kalla fetchCarpools både från useEffect och andra funktioner
+  useEffect(() => {
     fetchCarpools();
-  }, [activityId, toast]);
+  }, [toast]);
 
   // Handle joining or leaving a carpool
   const handleJoinCarpool = async (id, joined) => {
@@ -172,6 +173,7 @@ const CarpoolComponent = () => {
           duration: 5000,
           isClosable: true,
         });
+        fetchCarpools();
       } else {
         throw new Error('Failed to create carpool');
       }
