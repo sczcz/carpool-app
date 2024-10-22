@@ -61,52 +61,55 @@ def get_logged_in_user(current_user):
 
     return jsonify({"user": user_data}), 200
 
-
-# Route för att skapa eller uppdatera ett barn med parent_2_id
 @user_handler.route('/api/protected/add-child', methods=['POST'])
 @token_required
 def add_child(current_user):
     data = request.get_json()
 
-    # Hämta data från frontend
+    # Get the membership number from the request
     membership_number = data.get('membership_number')
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    phone = data.get('phone')
-    role = data.get('role').lower()  # Här får vi rollen som skickas från frontend
 
-    # Kontrollera att nödvändiga fält är ifyllda
-    if not all([membership_number, first_name, last_name, role]):
-        return jsonify({"error": "Membership number, firstName, lastName, and role are required!"}), 400
+    if not membership_number:
+        return jsonify({"error": "Membership number is required!"}), 400
 
-    # Hitta role_id från rollnamnet
-    role_id = db.session.query(Role.role_id).filter_by(name=role).first()
-    if not role_id:
-        return jsonify({"error": "Invalid role provided!"}), 401
-
-    # Kontrollera om barnet redan finns baserat på membership_number
+    # Check if the child already exists based on membership_number
     existing_child = Child.query.filter_by(membership_number=membership_number).first()
 
     if existing_child:
-        # Om barnet redan finns, uppdatera parent_2_id om det är tomt
+        # If the child exists, update parent_2_id if it's empty
         if not existing_child.parent_2_id:
-            existing_child.parent_2_id = current_user.user_id  # Sätt den nuvarande användaren som parent_2
+            existing_child.parent_2_id = current_user.user_id
             db.session.commit()
-            return jsonify({"message": f"Parent 2 added to child {existing_child.firstName} {existing_child.lastName}!"}), 200
+            return jsonify({"message": f"Parent 2 added to child {existing_child.first_name} {existing_child.last_name}!"}), 200
         else:
             return jsonify({"error": "This child already has two parents!"}), 402
     else:
-        # Skapa ett nytt barn om det inte redan finns
+        # If the child doesn't exist and only membership number is provided, return an error
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        phone = data.get('phone')
+        role = data.get('role')
+
+        # If only the membership number is provided but the child doesn't exist, return an error
+        if not all([first_name, last_name, role]):
+            return jsonify({"error": "Child not found. First name, last name, and role are required to create a new child!"}), 400
+
+        # Get role_id from the role name
+        role_id = db.session.query(Role.role_id).filter_by(name=role.lower()).first()
+        if not role_id:
+            return jsonify({"error": "Invalid role provided!"}), 401
+
+        # Create a new child
         new_child = Child(
             membership_number=membership_number,
             first_name=first_name,
             last_name=last_name,
             phone=phone,
-            role_id=role_id[0],  # role_id är en tuple så vi hämtar första elementet
-            parent_1_id=current_user.user_id  # Sätt parent_1_id till den inloggade användarens ID
+            role_id=role_id[0],  # role_id is a tuple, so we get the first element
+            parent_1_id=current_user.user_id  # Set current user as parent_1
         )
 
-        # Spara barnet i databasen
+        # Save the child to the database
         db.session.add(new_child)
         db.session.commit()
 

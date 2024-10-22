@@ -88,37 +88,35 @@ const Profile = () => {
       }
     };
 
-    const fetchChildren = async () => {
-      try {
-        const response = await fetch('/api/protected/get-children', {
-          method: 'GET',
-          credentials: 'include', // Include cookies for authentication
-        });
-        if (response.ok) {
-          const data = await response.json();
-    
-          const mappedChildren = data.children.map(child => ({
-            firstName: child.first_name,
-            lastName: child.last_name,
-            role: child.role, // Ensure this value is correct
-            membershipNumber: child.membership_number,
-            phone: child.phone
-          }));
-    
-          setChildren(mappedChildren);  // Set state with the mapped children
-        } else {
-          console.error('Failed to fetch children data');
-        }
-      } catch (error) {
-        console.error('Error fetching children data:', error);
-      }
-    };
-    
-
     fetchUserData();
     fetchChildren();
   }, []);
+
+  const fetchChildren = async () => {
+    try {
+      const response = await fetch('/api/protected/get-children', {
+        method: 'GET',
+        credentials: 'include', // Include cookies for authentication
+      });
+      if (response.ok) {
+        const data = await response.json();
   
+        const mappedChildren = data.children.map(child => ({
+          firstName: child.first_name,
+          lastName: child.last_name,
+          role: child.role, // Ensure this value is correct
+          membershipNumber: child.membership_number,
+          phone: child.phone
+        }));
+  
+        setChildren(mappedChildren);  // Set state with the mapped children
+      } else {
+        console.error('Failed to fetch children data');
+      }
+    } catch (error) {
+      console.error('Error fetching children data:', error);
+    }
+  };
 
   const handleSaveAddress = async () => {
     try {
@@ -150,48 +148,53 @@ const Profile = () => {
   };
 
   const handleAddChild = async () => {
-    if (childFirstName && childLastName && membershipNumber) {
-      try {
-        // Skicka POST-begäran till backend för att lägga till ett barn
-        const response = await fetch('/api/protected/add-child', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Skicka med cookies för autentisering
-          body: JSON.stringify({
-            membership_number: membershipNumber,  // Nytt fält
-            first_name: childFirstName,
-            last_name: childLastName,
-            phone: childPhone,  // Nytt fält för telefonnummer
-            role: childRole,  // Skicka rollen från dropdown-menyn
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          alert('Barn tillagt framgångsrikt!');
-          setAddChildOpen(false);
-          
-          // Lägg till barnet i listan efter att det framgångsrikt har lagts till i backend
-          setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
-          setChildFirstName('');
-          setChildLastName('');
-          setChildRole('Kutar');
-          setMembershipNumber('');  // Återställ medlemsnummerfältet
-          setChildPhone('');  // Återställ telefonnummerfältet
-        } else {
-          const error = await response.json();
-          alert(`Fel: ${error.message || 'Misslyckades att lägga till barn'}`);
-        }
-      } catch (error) {
-        console.error('Fel vid tillägg av barn:', error);
-        alert('Ett fel uppstod vid tillägg av barnet');
+    if (!membershipNumber) {
+      alert('Du måste fylla i medlemsnummer för barnet');
+      return;
+    }
+  
+    // Check if the user is creating a new child (all fields filled)
+    const isNewChild = childFirstName && childLastName && childRole;
+  
+    try {
+      const response = await fetch('/api/protected/add-child', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify({
+          membership_number: membershipNumber,
+          first_name: isNewChild ? childFirstName : '', // Send empty if not creating a new child
+          last_name: isNewChild ? childLastName : '',
+          phone: childPhone || '',  // Optional field
+          role: isNewChild ? childRole : '',  // Role is required for a new child
+        }),
+      });
+  
+      if (response.ok) {
+        alert('Barn tillagt framgångsrikt!');
+        setAddChildOpen(false);
+  
+        // Refetch the children from the backend after successful addition
+        await fetchChildren(); // Call the function that fetches children
+  
+        // Reset the form fields
+        setChildFirstName('');
+        setChildLastName('');
+        setChildRole('Kutar');
+        setMembershipNumber(''); // Reset the membership number field
+        setChildPhone(''); // Reset the phone number field
+      } else {
+        const error = await response.json();
+        alert(`Fel: ${error.message || 'Misslyckades att lägga till barn'}`);
       }
-    } else {
-      alert('Du måste fylla i förnamn, efternamn och medlemsnummer för barnet');
+    } catch (error) {
+      console.error('Fel vid tillägg av barn:', error);
+      alert('Ett fel uppstod vid tillägg av barnet');
     }
   };
+    
 
   const handleRemoveChild = async (index) => {
     const childToRemove = children[index]; // Get the child to be deleted
