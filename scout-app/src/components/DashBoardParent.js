@@ -20,6 +20,7 @@ import {
   TagLabel
 } from '@chakra-ui/react';
 import { FaUserCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const DashBoardParent = ({ token }) => {
   const [userName, setUserName] = useState(''); 
@@ -28,6 +29,7 @@ const DashBoardParent = ({ token }) => {
   const [error, setError] = useState(null); 
   const [openDescriptionIndex, setOpenDescriptionIndex] = useState(null); 
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     const name = "Användare"; 
@@ -89,6 +91,7 @@ const DashBoardParent = ({ token }) => {
 
   const handleCarpoolRedirect = (activityId) => {
     console.log(`Redirect to carpool for activity with id: ${activityId}`);
+    navigate(`/carpool/${activityId}`); // Redirect to carpool page with activityId
   };
 
   const capitalizeFirstLetter = (str) => {

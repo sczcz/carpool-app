@@ -26,7 +26,7 @@ const App = () => {
         <Route path="/FetchUsers" element={<FetchUsers />} />
         <Route path="/TestSession" element={<TestSession />} />
         <Route path="/profile" element={<Profile />} /> {/* Ny rutt för Profile */}
-        <Route path="/car-pool" element={<CarPool />}/>
+        <Route path="/carpool/:activityId" element={<CarPool />}/>
       </Routes>
       <Footer />
     </Router>

@@ -6,6 +6,7 @@ import os
 from extensions import db  # Import db instance
 from models.auth_model import User, Role  # Import your User model
 from routes.activity import activity_bp
+from routes.carpool import carpool_bp
 
 app = Flask(__name__)
 
@@ -40,6 +41,7 @@ with app.app_context():
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_handler)
 app.register_blueprint(activity_bp)
+app.register_blueprint(carpool_bp)
 
 # Route för att rendera en grundläggande index.html
 @app.route('/')
