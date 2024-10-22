@@ -50,29 +50,28 @@ def create_carpool(current_user):
 def list_carpools(current_user):
     activity_id = request.args.get('activity_id')
 
-    if activity_id:
-        carpools = Carpool.query.filter_by(activity_id=activity_id).all()
-    else:
-        carpools = Carpool.query.all()
+    if not activity_id:
+        return jsonify({"error": "Activity ID is required!"}), 400
 
-    # Serialize carpools
-    carpool_data = [
+    # Hämta carpools baserat på activity_id
+    carpools = Carpool.query.filter_by(activity_id=activity_id).all()
+
+    carpool_list = [
         {
             "id": carpool.id,
             "driver_id": carpool.driver_id,
             "car_id": carpool.car_id,
-            "activity_id": carpool.activity_id,
             "available_seats": carpool.available_seats,
             "departure_address": carpool.departure_address,
             "departure_postcode": carpool.departure_postcode,
             "departure_city": carpool.departure_city,
-            "carpool_type": carpool.carpool_type,
-            "created_at": carpool.created_at
+            "carpool_type": carpool.carpool_type
         }
         for carpool in carpools
     ]
 
-    return jsonify({"carpools": carpool_data}), 200
+    return jsonify({"carpools": carpool_list}), 200
+
 
 # Endpoint to add a passenger to a carpool
 @carpool_bp.route('/api/carpool/<int:carpool_id>/add-passenger', methods=['POST'])

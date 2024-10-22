@@ -66,16 +66,16 @@ const CarpoolComponent = () => {
     fetchCars(); // Call the fetchCars function
   }, [toast]);
 
-  // Flytta fetchCarpools utanför useEffect så att den är tillgänglig överallt
   const fetchCarpools = async () => {
     try {
-      const response = await fetch('/api/carpool/list', {
-        method: 'GET',
-        credentials: 'include', // include cookies for authentication
+      const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
+        method: 'GET', // Behåll GET
+        credentials: 'include', // Inkludera cookies för autentisering
       });
+  
       if (response.ok) {
         const data = await response.json();
-        setCarpoolingOptions(data.carpools);
+        setCarpoolingOptions(data.carpools); // Uppdatera state med carpools för den specifika aktiviteten
       } else {
         throw new Error('Failed to fetch carpools');
       }
@@ -89,7 +89,7 @@ const CarpoolComponent = () => {
         isClosable: true,
       });
     }
-  };
+  };  
 
   // Nu kan du kalla fetchCarpools både från useEffect och andra funktioner
   useEffect(() => {
