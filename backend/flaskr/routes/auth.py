@@ -14,11 +14,12 @@ auth_bp = Blueprint('auth', __name__)
 role_mapping = {
     'Vårdnadshavare': 1,
     'Ledare': 2,
-    'Spårare': 3,
-    'Upptäckare': 4,
-    'Äventyrare': 5,
-    'Utmanare': 6,
-    'Rövare': 7
+    'Kutar': 3,
+    'Tumlare': 4,
+    'Upptäckare': 5,
+    'Äventyrare': 6,
+    'Utmanare': 7,
+    'Rover': 8
 }
 
 def assign_user_role(role, user_id):

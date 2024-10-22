@@ -111,4 +111,28 @@ def add_child(current_user):
         db.session.commit()
 
         return jsonify({"message": f"Child {first_name} {last_name} created!"}), 201
+    
+    # Route för att hämta en lista över barn för den inloggade användaren
+@user_handler.route('/api/protected/get-children', methods=['GET'])
+@token_required
+def get_children(current_user):
+    # Hämta alla barn där den inloggade användaren är förälder
+    children = Child.query.filter(
+        (Child.parent_1_id == current_user.user_id) | 
+        (Child.parent_2_id == current_user.user_id)
+    ).all()
+
+    # Skapa en lista med barnens data
+    children_data = [
+        {
+            "first_name": child.first_name,
+            "last_name": child.last_name,
+            "membership_number": child.membership_number,
+            "role": db.session.query(Role.name).filter_by(role_id=child.role_id).first()[0],  # Hämta rollnamn
+            "phone": child.phone,
+        }
+        for child in children
+    ]
+
+    return jsonify({"children": children_data}), 200
 

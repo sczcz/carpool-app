@@ -22,27 +22,25 @@ import {
 import { FaUserCircle } from 'react-icons/fa';
 
 const DashBoardParent = ({ token }) => {
-  const [userName, setUserName] = useState(''); // State för användarnamn
-  const [activities, setActivities] = useState([]); // State för aktiviteter
-  const [loading, setLoading] = useState(true); // State för att hantera laddningsstatus
-  const [error, setError] = useState(null); // State för att hantera fel
-  const [openDescriptionIndex, setOpenDescriptionIndex] = useState(null); // För att hålla koll på vilken beskrivning som är öppen
+  const [userName, setUserName] = useState(''); 
+  const [activities, setActivities] = useState([]); 
+  const [loading, setLoading] = useState(true); 
+  const [error, setError] = useState(null); 
+  const [openDescriptionIndex, setOpenDescriptionIndex] = useState(null); 
+  const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10); 
 
-  // Hämta användarnamn från en säker källa när komponenten laddas
   useEffect(() => {
-    const name = "Användare"; // Placeholder, använd en säker källa här
+    const name = "Användare"; 
     setUserName(name);
   }, []);
 
-  // Hämta aktiviteter från API när komponenten laddas
   useEffect(() => {
-
     const fetchActivities = async () => {
       try {
         const response = await fetch('/api/protected/activity/all', {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, // Använd token från prop
+            Authorization: `Bearer ${token}`, 
           },
         });
 
@@ -51,16 +49,8 @@ const DashBoardParent = ({ token }) => {
         }
 
         const data = await response.json();
-        
-        const currentDate = new Date(); // Dagens datum
-        
-        // Filtrera ut aktiviteter där startdatumet är i det förflutna
-        const upcomingActivities = data.events
-          .filter(activity => new Date(activity.dtstart) > currentDate) // Bara kommande aktiviteter
-          .sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart)) // Sortera efter startdatum
-          .slice(0, 10); // Visa de 10 närmsta
-
-        setActivities(upcomingActivities); // Sätt de 10 närmsta aktiviteterna i state
+        const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
+        setActivities(sortedActivities);
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -68,22 +58,20 @@ const DashBoardParent = ({ token }) => {
       }
     };
 
-    fetchActivities(); // Kör hämtning av aktiviteter
-  }, [token]); // Lägg till token som en beroende så att det uppdateras när token ändras
+    fetchActivities();
+  }, [token]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await fetch('/api/protected/user', {
           method: 'GET',
-          credentials: 'include', // Include cookies for authentication
+          credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();
           const user = data.user;
-
           setUserName(user.first_name + ' ' + user.last_name);
-
         } else {
           console.error('Failed to fetch user data');
         }
@@ -93,15 +81,27 @@ const DashBoardParent = ({ token }) => {
     };
 
     fetchUserData();
-  }, []); // Tom array ser till att det bara körs när komponenten mountas
+  }, []);
 
   const toggleDescription = (index) => {
     setOpenDescriptionIndex(openDescriptionIndex === index ? null : index);
   };
 
-  const handleCarpoolRedirect = () => {
-    // Logik för att hantera redirect till /car-pool
+  const handleCarpoolRedirect = (activityId) => {
+    console.log(`Redirect to carpool for activity with id: ${activityId}`);
   };
+
+  const capitalizeFirstLetter = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  const handleLoadMore = () => {
+    setVisibleActivitiesCount(visibleActivitiesCount + 10);
+  };
+
+  // Debugging logs
+  console.log("Total activities: ", activities.length);
+  console.log("Visible activities count: ", visibleActivitiesCount);
 
   if (loading) {
     return <Text>Laddar aktiviteter...</Text>;
@@ -121,7 +121,7 @@ const DashBoardParent = ({ token }) => {
         </HStack>
       </Flex>
 
-      {/* Välkomstmeddelande */}
+      {/* Welcome message */}
       <Box mb={6}>
         <Text fontSize="lg" color="brand.600">
           Hej {userName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
@@ -130,7 +130,7 @@ const DashBoardParent = ({ token }) => {
 
       <Divider mb={6} />
 
-      {/* Kommande aktiviteter */}
+      {/* Upcoming activities */}
       <Box mb={8}>
         <Heading as="h2" size="md" mb={4} color="brand.500">
           Kommande Aktiviteter
@@ -146,19 +146,19 @@ const DashBoardParent = ({ token }) => {
             </Tr>
           </Thead>
           <Tbody>
-            {activities.map((activity, index) => (
-              <React.Fragment key={index}>
+            {activities.slice(0, visibleActivitiesCount).map((activity, index) => (
+              <React.Fragment key={activity.activity_id}>
                 <Tr onClick={() => toggleDescription(index)} style={{ cursor: 'pointer' }}>
                   <Td>
                     <Tag size="lg" colorScheme="teal" borderRadius="full">
-                      <TagLabel>{activity.scout_level}</TagLabel>
+                      <TagLabel>{capitalizeFirstLetter(activity.scout_level)}</TagLabel>
                     </Tag>
                   </Td>
                   <Td>{new Date(activity.dtstart).toLocaleDateString()} {new Date(activity.dtstart).toLocaleTimeString()}</Td>
                   <Td>{activity.location}</Td>
-                  <Td>{activity.summary}</Td>
+                  <Td>{activity.summary.split('//')[0]}</Td>
                   <Td>
-                    <Button colorScheme="brand" size="sm" onClick={handleCarpoolRedirect}>
+                    <Button colorScheme="brand" size="sm" onClick={() => handleCarpoolRedirect(activity.activity_id)}>
                       Samåkning
                     </Button>
                   </Td>
@@ -176,6 +176,11 @@ const DashBoardParent = ({ token }) => {
             ))}
           </Tbody>
         </Table>
+
+        {/* Render "Ladda fler" button regardless of condition */}
+        <Button mt={4} onClick={handleLoadMore} colorScheme="teal">
+          Ladda fler ↓
+        </Button>
       </Box>
     </Box>
   );
