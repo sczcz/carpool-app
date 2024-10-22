@@ -40,9 +40,9 @@ const DashBoardParent = ({ token }) => {
     const fetchActivities = async () => {
       try {
         const response = await fetch('/api/protected/activity/all', {
+          credentials: 'include',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, 
+            'Content-Type': 'application/json', 
           },
         });
 
