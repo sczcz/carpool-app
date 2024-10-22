@@ -139,9 +139,35 @@ def list_passengers(current_user, carpool_id):
 
     return jsonify({"passengers": passenger_data}), 200
 
+@carpool_bp.route('/api/protected/add-car', methods=['POST'])
+@token_required
+def add_car(current_user):
+    data = request.get_json()
+
+    reg_number = data.get('reg_number')
+    fuel_type = data.get('fuel_type')
+    consumption = data.get('consumption')
+    model_name = data.get('model_name')
+
+    if not all([reg_number, fuel_type, consumption, model_name]):
+        return jsonify({"error": "All fields are required!"}), 400
+
+    # Create a new car
+    new_car = Car(
+        owner_id=current_user.user_id,
+        reg_number=reg_number,
+        fuel_type=fuel_type,
+        consumption=consumption,
+        model_name=model_name
+    )
+
+    db.session.add(new_car)
+    db.session.commit()
+
+    return jsonify({"message": "Car added successfully!"}), 201
 
 # Endpoint to retrieve the cars of the logged-in user
-@carpool_bp.route('/api/user/cars', methods=['GET'])
+@carpool_bp.route('/api/protected/get-cars', methods=['GET'])
 @token_required
 def get_user_cars(current_user):
     # Query to get all cars for the logged-in user
@@ -164,3 +190,19 @@ def get_user_cars(current_user):
     ]
 
     return jsonify({"message": "User cars retrieved successfully", "cars": cars_data}), 200
+
+# Endpoint to delete a car by car_id
+@carpool_bp.route('/api/protected/delete-car/<int:car_id>', methods=['DELETE'])
+@token_required
+def delete_car(current_user, car_id):
+    # Query the car to delete
+    car = Car.query.filter_by(car_id=car_id, owner_id=current_user.user_id).first()
+
+    if not car:
+        return jsonify({"error": "Car not found or not authorized to delete this car"}), 404
+
+    # Delete the car
+    db.session.delete(car)
+    db.session.commit()
+
+    return jsonify({"message": "Car deleted successfully!"}), 200

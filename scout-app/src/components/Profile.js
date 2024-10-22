@@ -50,6 +50,16 @@ const Profile = () => {
   // Modal states
   const [isAddChildOpen, setAddChildOpen] = useState(false);
   const [isAddressInfoOpen, setAddressInfoOpen] = useState(false);
+  const [isAddCarOpen, setAddCarOpen] = useState(false);
+
+  // Car information
+  const [regNumber, setRegNumber] = useState('');
+  const [fuelType, setFuelType] = useState('Gas');
+  const [consumption, setConsumption] = useState('');
+  const [modelName, setModelName] = useState('');
+
+  // Car information (this was missing in your code)
+  const [cars, setCars] = useState([]);  // Now defined as state for cars
 
   const roleColors = {
     tumlare: 'cyan.400',
@@ -59,6 +69,24 @@ const Profile = () => {
     utmanare: 'orange.400',   
     rover: 'purple.400',        
   };
+
+    // Fetch user, children, and cars data
+    const fetchCars = async () => {
+      try {
+        const response = await fetch('/api/protected/get-cars', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCars(data.cars);  // Set the fetched cars in state
+        } else {
+          console.error('Failed to fetch cars data');
+        }
+      } catch (error) {
+        console.error('Error fetching cars data:', error);
+      }
+    };
 
   // Fetch logged-in user information on component mount
   useEffect(() => {
@@ -113,10 +141,10 @@ const Profile = () => {
         console.error('Error fetching children data:', error);
       }
     };
-    
 
     fetchUserData();
     fetchChildren();
+    fetchCars();  // Fetch cars on mount
   }, []);
   
 
@@ -246,6 +274,69 @@ const Profile = () => {
     setChildren(updatedChildren);
   };
 
+  const handleRemoveCar = async (carId) => {
+    if (window.confirm('Are you sure you want to delete this car?')) {
+      try {
+        const response = await fetch(`/api/protected/delete-car/${carId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          alert('Car deleted successfully!');
+          fetchCars(); // Refresh car list after deletion
+        } else {
+          console.error('Failed to delete car');
+        }
+      } catch (error) {
+        console.error('Error deleting car:', error);
+      }
+    }
+  };
+
+  const handleAddCar = async () => {
+    if (regNumber && fuelType && consumption && modelName) {
+      try {
+        const response = await fetch('/api/protected/add-car', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            reg_number: regNumber,
+            fuel_type: fuelType,
+            consumption: consumption,
+            model_name: modelName,
+          }),
+        });
+  
+        if (response.ok) {
+          const data = await response.json();
+          alert('Car added successfully!');
+
+          fetchCars();
+
+          // Close the modal after successful car addition
+          setAddCarOpen(false);
+  
+          // Clear form fields after saving
+          setRegNumber('');
+          setFuelType('Gas');
+          setConsumption('');
+          setModelName('');
+        } else {
+          const error = await response.json();
+          alert(`Error: ${error.message || 'Failed to add car'}`);
+        }
+      } catch (error) {
+        console.error('Error adding car:', error);
+        alert('An error occurred while adding the car');
+      }
+    } else {
+      alert('Please fill in all fields');
+    }
+  };
+
   return (
   <Box
         p={5}
@@ -325,6 +416,32 @@ const Profile = () => {
             </Box>
           ))}
         </SimpleGrid>
+          {/* Render the cars below children */}
+          <Heading as="h4" size="md" mt={6} colorScheme="brand">
+          Bilar:
+        </Heading>
+        <SimpleGrid columns={[1, 1, 2]} spacing={4} width="full">
+          {cars.map((car, index) => (
+            <Box
+              key={index}
+              borderWidth="1px"
+              borderRadius="lg"
+              overflow="hidden"
+              boxShadow="lg"
+              p={4}
+              bg="gray.200"
+            >
+              <Text fontSize="lg">
+                {car.model_name} - {car.reg_number} ({car.fuel_type}, {car.consumption} l/kWh)
+              </Text>
+              <HStack mt={2} justifyContent="space-between">
+                <Button colorScheme="red" onClick={() => handleRemoveCar(car.car_id)} color="white">
+                  Ta bort bil
+                </Button>
+              </HStack>
+            </Box>
+          ))}
+        </SimpleGrid>
       </VStack>
 
       <Divider mb={6} />
@@ -336,6 +453,9 @@ const Profile = () => {
         </Button>
         <Button colorScheme="brand" onClick={() => setAddressInfoOpen(true)}>
           Adressinformation
+        </Button>
+        <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
+          Lägg till Bil
         </Button>
       </HStack>
 
@@ -450,6 +570,66 @@ const Profile = () => {
               Spara
             </Button>
             <Button ml={3} onClick={() => setAddressInfoOpen(false)}>
+              Avbryt
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal for Adding Car */}
+      <Modal isOpen={isAddCarOpen} onClose={() => setAddCarOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Lägg till Bil</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>Registeringsnummer</FormLabel>
+              <Input
+                value={regNumber}
+                onChange={(e) => setRegNumber(e.target.value)}
+                placeholder="Skriv in registreringsnummer"
+                isRequired
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Bränsletyp</FormLabel>
+              <Select
+                value={fuelType}
+                onChange={(e) => setFuelType(e.target.value)}
+                isRequired
+              >
+                <option value="Electric">Electric</option>
+                <option value="Gas">Gas</option>
+                <option value="Hybrid">Hybrid</option>
+              </Select>
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Konsumption (L or kWh)</FormLabel>
+              <Input
+                value={consumption}
+                onChange={(e) => setConsumption(e.target.value)}
+                placeholder="Ange bränslekonsumption"
+                type="number"
+                step="0.1"
+                isRequired
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Model Name</FormLabel>
+              <Input
+                value={modelName}
+                onChange={(e) => setModelName(e.target.value)}
+                placeholder="Ange bilmodell"
+                isRequired
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" onClick={handleAddCar}>
+              Lägg till bil
+            </Button>
+            <Button ml={3} onClick={() => setAddCarOpen(false)}>
               Avbryt
             </Button>
           </ModalFooter>
