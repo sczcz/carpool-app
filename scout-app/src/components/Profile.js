@@ -43,7 +43,7 @@ const Profile = () => {
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
-  const [childRole, setChildRole] = useState('Kutar');
+  const [childRole, setChildRole] = useState('');
   const [membershipNumber, setMembershipNumber] = useState('');
   const [childPhone, setChildPhone] = useState('');
 
@@ -52,12 +52,12 @@ const Profile = () => {
   const [isAddressInfoOpen, setAddressInfoOpen] = useState(false);
 
   const roleColors = {
-    Tumlare: 'cyan.400',
-    Kutar: 'cyan.400',     
-    Upptäckare: 'green.400', 
-    Äventyrare: 'yellow.400', 
-    Utmanare: 'orange.400',   
-    Rövare: 'purple.400',        
+    tumlare: 'cyan.400',
+    kutar: 'cyan.400',     
+    upptäckare: 'green.400', 
+    äventyrare: 'yellow.400', 
+    utmanare: 'orange.400',   
+    rover: 'purple.400',        
   };
 
   // Fetch logged-in user information on component mount
@@ -88,31 +88,32 @@ const Profile = () => {
       }
     };
 
-      const fetchChildren = async () => {
-        try {
-          const response = await fetch('/api/protected/get-children', {
-            method: 'GET',
-            credentials: 'include', // Include cookies for authentication
-          });
-          if (response.ok) {
-            const data = await response.json();
-        // Mappa backend-data till frontend-formatet
-        const mappedChildren = data.children.map(child => ({
-          firstName: child.first_name,
-          lastName: child.last_name,
-          role: child.role,
-          membershipNumber: child.membership_number,
-          phone: child.phone
-        }));
-
-        setChildren(mappedChildren);  // Sätt state med de mappade barnen
-      } else {
-        console.error('Failed to fetch children data');
+    const fetchChildren = async () => {
+      try {
+        const response = await fetch('/api/protected/get-children', {
+          method: 'GET',
+          credentials: 'include', // Include cookies for authentication
+        });
+        if (response.ok) {
+          const data = await response.json();
+    
+          const mappedChildren = data.children.map(child => ({
+            firstName: child.first_name,
+            lastName: child.last_name,
+            role: child.role, // Ensure this value is correct
+            membershipNumber: child.membership_number,
+            phone: child.phone
+          }));
+    
+          setChildren(mappedChildren);  // Set state with the mapped children
+        } else {
+          console.error('Failed to fetch children data');
+        }
+      } catch (error) {
+        console.error('Error fetching children data:', error);
       }
-    } catch (error) {
-      console.error('Error fetching children data:', error);
-    }
-  };
+    };
+    
 
     fetchUserData();
     fetchChildren();
@@ -171,6 +172,7 @@ const Profile = () => {
         if (response.ok) {
           const data = await response.json();
           alert('Barn tillagt framgångsrikt!');
+          setAddChildOpen(false);
           
           // Lägg till barnet i listan efter att det framgångsrikt har lagts till i backend
           setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
@@ -271,12 +273,12 @@ const Profile = () => {
                   color="black" // Set text color for Select
                   bg="white" // Optional: Set background color for better visibility
                 >
-                  <option value="Kutar">Kutar</option>
-                  <option value="Tumlare">Tumlare</option>
-                  <option value="Upptäckare">Upptäckare</option>
-                  <option value="Äventyrare">Äventyrare</option>
-                  <option value="Utmanare">Utmanare</option>
-                  <option value="Rover">Rover</option>
+                  <option value="kutar">Kutar</option>
+                  <option value="tumlare">Tumlare</option>
+                  <option value="upptäckare">Upptäckare</option>
+                  <option value="äventyrare">Äventyrare</option>
+                  <option value="utmanare">Utmanare</option>
+                  <option value="rover">Rover</option>
                 </Select>
                 <Button colorScheme="red" onClick={() => handleRemoveChild(index)} color="white">
                   Ta bort
@@ -332,12 +334,12 @@ const Profile = () => {
                 value={childRole}
                 onChange={(e) => setChildRole(e.target.value)}
               >
-                <option value="Kutar">Kutar</option>
-                <option value="Tumlare">Tumlare</option>
-                <option value="Upptäckare">Upptäckare</option>
-                <option value="Äventyrare">Äventyrare</option>
-                <option value="Utmanare">Utmanare</option>
-                <option value="Rover">Rover</option>
+                <option value="kutar">Kutar</option>
+                <option value="tumlare">Tumlare</option>
+                <option value="upptäckare">Upptäckare</option>
+                <option value="äventyrare">Äventyrare</option>
+                <option value="utmanare">Utmanare</option>
+                <option value="rover">Rover</option>
               </Select>
             </FormControl>
             <FormControl mt={4}>

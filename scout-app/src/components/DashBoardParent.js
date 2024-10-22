@@ -99,9 +99,6 @@ const DashBoardParent = ({ token }) => {
     setVisibleActivitiesCount(visibleActivitiesCount + 10);
   };
 
-  // Debugging logs
-  console.log("Total activities: ", activities.length);
-  console.log("Visible activities count: ", visibleActivitiesCount);
 
   if (loading) {
     return <Text>Laddar aktiviteter...</Text>;
