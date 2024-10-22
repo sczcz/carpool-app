@@ -43,7 +43,7 @@ const Profile = () => {
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
-  const [childRole, setChildRole] = useState('Spårare');
+  const [childRole, setChildRole] = useState('Kutar');
   const [membershipNumber, setMembershipNumber] = useState('');
   const [childPhone, setChildPhone] = useState('');
 
@@ -52,7 +52,8 @@ const Profile = () => {
   const [isAddressInfoOpen, setAddressInfoOpen] = useState(false);
 
   const roleColors = {
-    Spårare: 'cyan.400',     
+    Tumlare: 'cyan.400',
+    Kutar: 'cyan.400',     
     Upptäckare: 'green.400', 
     Äventyrare: 'yellow.400', 
     Utmanare: 'orange.400',   
@@ -87,8 +88,37 @@ const Profile = () => {
       }
     };
 
+      const fetchChildren = async () => {
+        try {
+          const response = await fetch('/api/protected/get-children', {
+            method: 'GET',
+            credentials: 'include', // Include cookies for authentication
+          });
+          if (response.ok) {
+            const data = await response.json();
+        // Mappa backend-data till frontend-formatet
+        const mappedChildren = data.children.map(child => ({
+          firstName: child.first_name,
+          lastName: child.last_name,
+          role: child.role,
+          membershipNumber: child.membership_number,
+          phone: child.phone
+        }));
+
+        setChildren(mappedChildren);  // Sätt state med de mappade barnen
+      } else {
+        console.error('Failed to fetch children data');
+      }
+    } catch (error) {
+      console.error('Error fetching children data:', error);
+    }
+  };
+
     fetchUserData();
+    fetchChildren();
   }, []);
+
+  
 
   const handleSaveAddress = async () => {
     try {
@@ -119,22 +149,47 @@ const Profile = () => {
     setAddressInfoOpen(false); // Close the modal after saving
   };
 
-  const handleAddChild = () => {
-    const newChild = {
-      firstName: childFirstName,
-      lastName: childLastName,
-      role: childRole,
-      membershipNumber,
-      phone: childPhone,
-    };
-    setChildren([...children, newChild]);
-    setAddChildOpen(false); // Close the modal after adding
-    // Reset child fields
-    setChildFirstName('');
-    setChildLastName('');
-    setMembershipNumber('');
-    setChildPhone('');
-    setChildRole('Spårare');
+  const handleAddChild = async () => {
+    if (childFirstName && childLastName && membershipNumber) {
+      try {
+        // Skicka POST-begäran till backend för att lägga till ett barn
+        const response = await fetch('/api/protected/add-child', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Skicka med cookies för autentisering
+          body: JSON.stringify({
+            membership_number: membershipNumber,  // Nytt fält
+            first_name: childFirstName,
+            last_name: childLastName,
+            phone: childPhone,  // Nytt fält för telefonnummer
+            role: childRole,  // Skicka rollen från dropdown-menyn
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          alert('Barn tillagt framgångsrikt!');
+          
+          // Lägg till barnet i listan efter att det framgångsrikt har lagts till i backend
+          setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
+          setChildFirstName('');
+          setChildLastName('');
+          setChildRole('Kutar');
+          setMembershipNumber('');  // Återställ medlemsnummerfältet
+          setChildPhone('');  // Återställ telefonnummerfältet
+        } else {
+          const error = await response.json();
+          alert(`Fel: ${error.message || 'Misslyckades att lägga till barn'}`);
+        }
+      } catch (error) {
+        console.error('Fel vid tillägg av barn:', error);
+        alert('Ett fel uppstod vid tillägg av barnet');
+      }
+    } else {
+      alert('Du måste fylla i förnamn, efternamn och medlemsnummer för barnet');
+    }
   };
 
   const handleRemoveChild = (index) => {
@@ -216,11 +271,12 @@ const Profile = () => {
                   color="black" // Set text color for Select
                   bg="white" // Optional: Set background color for better visibility
                 >
-                  <option value="Spårare">Spårare</option>
+                  <option value="Kutar">Kutar</option>
+                  <option value="Tumlare">Tumlare</option>
                   <option value="Upptäckare">Upptäckare</option>
                   <option value="Äventyrare">Äventyrare</option>
                   <option value="Utmanare">Utmanare</option>
-                  <option value="Rövare">Rövare</option>
+                  <option value="Rover">Rover</option>
                 </Select>
                 <Button colorScheme="red" onClick={() => handleRemoveChild(index)} color="white">
                   Ta bort
@@ -276,11 +332,12 @@ const Profile = () => {
                 value={childRole}
                 onChange={(e) => setChildRole(e.target.value)}
               >
-                <option value="Spårare">Spårare</option>
+                <option value="Kutar">Kutar</option>
+                <option value="Tumlare">Tumlare</option>
                 <option value="Upptäckare">Upptäckare</option>
                 <option value="Äventyrare">Äventyrare</option>
                 <option value="Utmanare">Utmanare</option>
-                <option value="Rövare">Rövare</option>
+                <option value="Rover">Rover</option>
               </Select>
             </FormControl>
             <FormControl mt={4}>
