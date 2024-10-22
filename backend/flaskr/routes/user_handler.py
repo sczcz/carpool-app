@@ -136,3 +136,29 @@ def get_children(current_user):
 
     return jsonify({"children": children_data}), 200
 
+# Route för att ta bort ett barn baserat på medlemsnummer
+@user_handler.route('/api/protected/delete-child', methods=['DELETE'])
+@token_required
+def delete_child(current_user):
+    data = request.get_json()
+
+    # Hämta medlemsnumret från frontend
+    membership_number = data.get('membership_number')
+
+    if not membership_number:
+        return jsonify({"error": "Membership number is required!"}), 400
+
+    # Hitta barnet baserat på medlemsnummer och kontrollera om den inloggade användaren är en av föräldrarna
+    child_to_delete = Child.query.filter(
+        (Child.membership_number == membership_number) &
+        ((Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id))
+    ).first()
+
+    if not child_to_delete:
+        return jsonify({"error": "Child not found or you do not have permission to delete this child!"}), 404
+
+    # Ta bort barnet från databasen
+    db.session.delete(child_to_delete)
+    db.session.commit()
+
+    return jsonify({"message": f"Child with membership number {membership_number} has been deleted!"}), 200

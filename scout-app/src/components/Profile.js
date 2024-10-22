@@ -118,7 +118,6 @@ const Profile = () => {
     fetchUserData();
     fetchChildren();
   }, []);
-
   
 
   const handleSaveAddress = async () => {
@@ -194,9 +193,48 @@ const Profile = () => {
     }
   };
 
-  const handleRemoveChild = (index) => {
-    setChildren(children.filter((_, i) => i !== index));
+  const handleRemoveChild = async (index) => {
+    const childToRemove = children[index]; // Get the child to be deleted
+  
+    if (childToRemove && childToRemove.membershipNumber) {
+      // Confirm before deleting
+      if (window.confirm(`Are you sure you want to delete ${childToRemove.firstName} ${childToRemove.lastName}?`)) {
+        // Call the delete API
+        await deleteChild(childToRemove.membershipNumber);
+  
+        // After successful deletion, remove the child from state
+        setChildren(children.filter((_, i) => i !== index));
+      }
+    } else {
+      alert("Failed to identify child for deletion.");
+    }
   };
+  
+  // Delete API function (already written)
+  const deleteChild = async (membershipNumber) => {
+    try {
+      const response = await fetch('/api/protected/delete-child', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // This ensures cookies are included for authentication
+        body: JSON.stringify({ membership_number: membershipNumber }) // Send the membership number
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Success: ${data.message}`);
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.message || 'Failed to delete child'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting child:', error);
+      alert('An error occurred while trying to delete the child.');
+    }
+  };
+  
 
   const handleUpdateChild = (index, updatedRole) => {
     const updatedChildren = children.map((child, i) => {
