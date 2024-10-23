@@ -64,38 +64,40 @@ const CarpoolComponent = () => {
       }
     };
 
-    const fetchCarpools = async () => {
-      setFetching(true); // Start fetching state
-      try {
-        const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setCarpoolingOptions(data.carpools); // Update carpools
-        } else {
-          throw new Error('Failed to fetch carpools');
-        }
-      } catch (error) {
-        console.error('Error fetching carpool data:', error);
-        toast({
-          title: 'Error fetching carpools.',
-          description: error.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      } finally {
-        setFetching(false); // End fetching state
-      }
-    };
 
     // Fetch data when the component mounts
     setLoading(true);
     Promise.all([fetchCars(), fetchCarpools()]).finally(() => setLoading(false));
   }, [activityId, toast]);
+
+
+  const fetchCarpools = async () => {
+    setFetching(true); // Start fetching state
+    try {
+      const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCarpoolingOptions(data.carpools); // Update carpools
+      } else {
+        throw new Error('Failed to fetch carpools');
+      }
+    } catch (error) {
+      console.error('Error fetching carpool data:', error);
+      toast({
+        title: 'Error fetching carpools.',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setFetching(false); // End fetching state
+    }
+  };
 
   // Validate form data before submitting
   const handleCarRegistration = async () => {
@@ -148,6 +150,7 @@ const CarpoolComponent = () => {
           duration: 5000,
           isClosable: true,
         });
+        fetchCarpools();
       } else {
         throw new Error('Failed to create carpool');
       }
@@ -338,7 +341,7 @@ const CarpoolComponent = () => {
               <Flex justify="space-between" align="center">
                 <Box>
                   <Text fontSize="md" color="brand.600">
-                    {option.departure_address} - {option.destination} , ({option.carpool_type})
+                    From: {option.departure_address}, {option.departure_city} {option.departure_postcode} , ({option.carpool_type})
                   </Text>
                   <Text fontSize="sm" color="gray.500">
                     Available Seats: {option.available_seats}
