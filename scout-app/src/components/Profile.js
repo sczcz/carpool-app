@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import customTheme from '../Theme';
+import { FaTrash } from "react-icons/fa"; // Import trash can icon from react-icons library
 import {
   Box,
   Heading,
+  Icon,
   Text,
   Button,
   FormControl,
@@ -68,6 +70,12 @@ const Profile = () => {
     äventyrare: 'yellow.400', 
     utmanare: 'orange.400',   
     rover: 'purple.400',        
+  };
+
+  const fuelTypeColors = {
+    Gas: 'yellow.400',
+    Hybrid: 'orange.400',
+    Electric: 'teal.400',
   };
 
     // Fetch user, children, and cars data
@@ -381,37 +389,77 @@ const Profile = () => {
         <SimpleGrid columns={[1, 1, 2]} spacing={4} width="full">
           {children.map((child, index) => (
             <Box
-              key={index}
-              borderWidth="1px"
-              borderRadius="lg"
-              overflow="hidden"
-              boxShadow="lg"
-              p={4}
-              bg={roleColors[child.role] || 'gray.200'} // Set background color based on role
-              transition="0.2s"
+            key={index}
+            borderWidth="1px"
+            borderTopRadius="lg" // Rounded top corners
+            borderBottomLeftRadius="lg" // Rounded bottom left corner
+            borderBottomRightRadius="lg" // Rounded bottom right corner
+            overflow="hidden"
+            boxShadow="lg"
+            p={0}
+            pb={4}
+            bg="white" // Set background color to white
+            transition="0.2s"
             >
-              <Text fontSize="lg" color="white"> {/* Change text color to white */}
-                {child.firstName} {child.lastName} - {child.role} (Medlemsnummer: {child.membershipNumber}) (Telefon: {child.phone})
-              </Text>
-              <HStack mt={2} justifyContent="space-between">
+            {/* Colored Top Box */}
+            <Box
+                bg={roleColors[child.role] || 'gray.200'} // Set the color for the top part of the card
+                borderTopRadius="lg" // Ensure the top remains rounded
+                p={4} // Adjust padding for the colored box for better fit
+            >
+                {/* You can also add content here if needed */}
+            </Box>
+
+            {/* Role in the White Box */}
+            <Text
+            fontSize={{ base: "md", sm: "lg" }} // Responsive font sizes
+            fontWeight="bold" // Make the role text thicker
+            color={roleColors[child.role] || 'gray.200'} // Set color based on role
+            mt={2} // Margin top for spacing
+            pl={4}
+            >
+            {child.role.charAt(0).toUpperCase() + child.role.slice(1).toLowerCase()}: {child.firstName}
+            </Text>
+
+            {/* Other Text in the White Box */}
+            <Text 
+                fontSize={{ base: "sm", sm: "md" }} // Responsive font sizes
+                color="black" 
+                mt={1} // Margin top for spacing
+                noOfLines={2} // Limit lines to avoid overflow
+                pl={4}
+                pr={4}
+            >
+            Medlemsnummer: {child.membershipNumber} (Telefon: {child.phone})
+            </Text>
+
+            <HStack mt={2} justifyContent="space-between">
                 <Select
-                  value={child.role}
-                  onChange={(e) => handleUpdateChild(index, e.target.value)}
-                  width="150px"
-                  color="black" // Set text color for Select
-                  bg="white" // Optional: Set background color for better visibility
+                value={child.role}
+                onChange={(e) => handleUpdateChild(index, e.target.value)}
+                width={{ base: "100%", md: "150px" }} // Responsive width
+                color="black" // Set text color for Select
+                bg="white" // Optional: Set background color for better visibility
+                pl={4}
+                
                 >
-                  <option value="kutar">Kutar</option>
-                  <option value="tumlare">Tumlare</option>
-                  <option value="upptäckare">Upptäckare</option>
-                  <option value="äventyrare">Äventyrare</option>
-                  <option value="utmanare">Utmanare</option>
-                  <option value="rover">Rover</option>
+                <option value="kutar">Kutar</option>
+                <option value="tumlare">Tumlare</option>
+                <option value="upptäckare">Upptäckare</option>
+                <option value="äventyrare">Äventyrare</option>
+                <option value="utmanare">Utmanare</option>
+                <option value="rover">Rover</option>
                 </Select>
-                <Button colorScheme="red" onClick={() => handleRemoveChild(index)} color="white">
-                  Ta bort
+                <Button
+                colorScheme="red"
+                onClick={() => handleRemoveChild(index)}
+                variant="outline" // Use outline variant if you want a border
+                aria-label="Remove Child" // Accessibility label
+                mr={4}
+                >
+                <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
                 </Button>
-              </HStack>
+            </HStack>
             </Box>
           ))}
         </SimpleGrid>
@@ -419,26 +467,51 @@ const Profile = () => {
           <Heading as="h4" size="md" mt={6} colorScheme="brand">
           Bilar:
         </Heading>
-        <SimpleGrid columns={[1, 1, 2]} spacing={4} width="full">
+        <SimpleGrid mt={3} columns={[1, 1, 2]} spacing={4} width="full">
           {cars.map((car, index) => (
+
             <Box
-              key={index}
-              borderWidth="1px"
-              borderRadius="lg"
-              overflow="hidden"
-              boxShadow="lg"
-              p={4}
-              bg="gray.200"
+            key={index}
+            borderWidth="1px"
+            borderTopRadius="lg" // Rounded top corners
+            borderBottomRadius="lg" // Rounded bottom corners
+            overflow="hidden"
+            boxShadow="lg"
+            p={4}
+            bg="white" // Background color of the card
+            borderColor="gray.300" // Border color
             >
-              <Text fontSize="lg">
-                {car.model_name} - {car.reg_number} ({car.fuel_type}, {car.consumption} l/kWh)
-              </Text>
-              <HStack mt={2} justifyContent="space-between">
-                <Button colorScheme="red" onClick={() => handleRemoveCar(car.car_id)} color="white">
-                  Ta bort bil
-                </Button>
-              </HStack>
-            </Box>
+          {/* Colored Header for the Car Information */}
+          <Box
+                bg={fuelTypeColors[car.fuel_type] || 'gray.200'} // Set background color based on fuel type
+                borderTopRadius="lg"
+                p={3}
+              >
+                <Text fontSize="lg" fontWeight="bold" color="black">
+                  {car.model_name} - {car.reg_number.toUpperCase()}
+                </Text>
+              </Box>
+
+          {/* Main Content with Centered Text and Delete Button */}
+          <HStack justifyContent="space-between" mt={3} alignItems="center"> {/* Align items center */}
+            <Text
+              fontSize={{ base: "sm", sm: "md" }} // Responsive font sizes
+              color="black" // Text color
+            >
+              Fuel Type: {car.fuel_type}, Consumption: {car.consumption} l/kWh
+            </Text>
+
+            {/* Button Section */}
+            <Button
+              colorScheme="red"
+              onClick={() => handleRemoveCar(car.car_id)}
+              variant="outline" // Use outline variant if you want a border
+              aria-label="Remove Car" // Accessibility label
+            >
+              <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
+            </Button>
+          </HStack>
+        </Box>
           ))}
         </SimpleGrid>
       </VStack>
@@ -446,7 +519,7 @@ const Profile = () => {
       <Divider mb={6} />
 
       {/* Buttons for Adding Child and Address Information */}
-      <HStack spacing={4} align="start" mt={20} mb={50}>
+      <HStack spacing={4} align="start" mt={10} mb={50}>
         <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
           Lägg till Barn
         </Button>
