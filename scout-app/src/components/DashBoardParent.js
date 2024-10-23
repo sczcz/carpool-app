@@ -16,7 +16,7 @@ import {
   SimpleGrid,
   useToast,
 } from '@chakra-ui/react';
-import { FaUserCircle, FaCar } from 'react-icons/fa';
+import { FaUserCircle, FaCar, FaPlus } from 'react-icons/fa'; // Import FaPlus ikonen
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns'; // Import date-fns for date formatting
 
@@ -27,8 +27,9 @@ const DashBoardParent = ({ token }) => {
   const [error, setError] = useState(null);
   const [openCarpoolIndex, setOpenCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
-  const navigate = useNavigate();
+  const [fetchingCarpools, setFetchingCarpools] = useState(false); // For fetching carpools
   const toast = useToast();
+  const navigate = useNavigate();
 
   // Fetch activities from the API
   const fetchActivities = async () => {
@@ -52,6 +53,43 @@ const DashBoardParent = ({ token }) => {
     } catch (err) {
       setError(err.message);
       setLoading(false);
+    }
+  };
+
+  // Fetch carpools for a specific activity
+  const fetchCarpoolsForActivity = async (activityId) => {
+    setFetchingCarpools(true); // Start fetching state
+    try {
+      const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Uppdatera carpools för den specifika aktiviteten
+        setActivities((prevActivities) =>
+          prevActivities.map((activity) => {
+            if (activity.activity_id === activityId) {
+              return { ...activity, carpools: data.carpools }; // Lägg till carpools
+            }
+            return activity;
+          })
+        );
+      } else {
+        throw new Error('Failed to fetch carpools');
+      }
+    } catch (error) {
+      console.error('Error fetching carpools:', error);
+      toast({
+        title: 'Error fetching carpools.',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setFetchingCarpools(false); // End fetching state
     }
   };
 
@@ -87,57 +125,18 @@ const DashBoardParent = ({ token }) => {
     fetchUserData();
   }, []);
 
-  // Toggle carpool visibility
-  const toggleCarpool = (index) => {
-    setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
-  };
-
-  // Handle joining/leaving carpools
-  const handleJoinCarpool = async (id, joined) => {
-    try {
-      const endpoint = joined ? '/api/carpool/leave' : '/api/carpool/join';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ carpool_id: id }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: `Successfully ${joined ? 'left' : 'joined'} carpool.`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        throw new Error('Failed to join/leave carpool');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update carpool status.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+  // Toggle carpool visibility and fetch carpools if needed
+  const toggleCarpool = (index, activityId) => {
+    if (openCarpoolIndex === index) {
+      setOpenCarpoolIndex(null); // Stäng om samma expanderas igen
+    } else {
+      setOpenCarpoolIndex(index);
+      fetchCarpoolsForActivity(activityId); // Hämta carpools för den här aktiviteten
     }
   };
 
-  // Handle the booking toggle
-  const toggleBooking = (activityId) => {
-    setActivities((prevActivities) =>
-      prevActivities.map((activity) => {
-        if (activity.activity_id === activityId) {
-          return {
-            ...activity,
-            booked: !activity.booked, // Toggle booked state
-          };
-        }
-        return activity;
-      })
-    );
+  const handleNavigateToCarpool = (activityId) => {
+    navigate(`/carpool/${activityId}`);
   };
 
   const handleLoadMore = () => {
@@ -198,7 +197,7 @@ const DashBoardParent = ({ token }) => {
                 <Button
                   colorScheme="brand"
                   size="sm"
-                  onClick={() => toggleCarpool(index)}
+                  onClick={() => toggleCarpool(index, activity.activity_id)}
                 >
                   {openCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
                 </Button>
@@ -212,9 +211,20 @@ const DashBoardParent = ({ token }) => {
               {/* Available Carpools Collapse */}
               <Collapse in={openCarpoolIndex === index} animateOpacity>
                 <Box mt={2}>
-                  <Heading as="h3" size="sm" color="brand.500">Tillgängliga Samåkningar</Heading>
-                  <VStack spacing={4} mt={2}>
-                    {Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
+                  <VStack spacing={4}>
+                    <Button
+                      leftIcon={<FaPlus />}
+                      colorScheme="brand"
+                      size="sm"
+                      onClick={() => handleNavigateToCarpool(activity.activity_id)}
+                    >
+                      Lägg till Carpool
+                    </Button>
+                    
+                    {/* Visa befintliga carpools */}
+                    {fetchingCarpools ? (
+                      <Spinner />
+                    ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
                       activity.carpools.map((carpool) => (
                         <Box
                           key={carpool.id}
@@ -234,25 +244,7 @@ const DashBoardParent = ({ token }) => {
                                 Tillgängliga Platser: {carpool.available_seats}
                               </Text>
                             </Box>
-                            <Button
-                              leftIcon={<FaCar />}
-                              colorScheme="brand"
-                              size="sm"
-                              disabled={carpool.available_seats === 0}
-                              onClick={() => handleJoinCarpool(carpool.id, carpool.joined)}
-                            >
-                              {carpool.joined ? 'Lämna' : 'Gå med'}
-                            </Button>
                           </Flex>
-                          {/* Booking button */}
-                          <Button
-                            mt={2}
-                            colorScheme={carpool.booked ? 'gray' : 'green'}
-                            onClick={() => toggleBooking(activity.activity_id)}
-                            size="sm"
-                          >
-                            {carpool.booked ? 'Platser Bokade' : 'Boka'}
-                          </Button>
                         </Box>
                       ))
                     ) : (
