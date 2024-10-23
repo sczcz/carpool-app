@@ -15,10 +15,18 @@ import {
   Spinner,
   SimpleGrid,
   useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from '@chakra-ui/react';
-import { FaUserCircle, FaCar, FaPlus } from 'react-icons/fa'; // Import FaPlus ikonen
-import { useNavigate } from 'react-router-dom';
+import { FaUserCircle, FaCar, FaPlus } from 'react-icons/fa'; // Import FaPlus icon
 import { format, parseISO } from 'date-fns'; // Import date-fns for date formatting
+import CarpoolComponent from './CarPoolComponent';
 
 const DashBoardParent = ({ token }) => {
   const [userName, setUserName] = useState('');
@@ -28,8 +36,9 @@ const DashBoardParent = ({ token }) => {
   const [openCarpoolIndex, setOpenCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
   const [fetchingCarpools, setFetchingCarpools] = useState(false); // For fetching carpools
+  const [selectedActivityId, setSelectedActivityId] = useState(null); // Store selected activity for modal
+  const { isOpen, onOpen, onClose } = useDisclosure(); // Modal controls
   const toast = useToast();
-  const navigate = useNavigate();
 
   // Fetch activities from the API
   const fetchActivities = async () => {
@@ -67,11 +76,11 @@ const DashBoardParent = ({ token }) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Uppdatera carpools för den specifika aktiviteten
+        // Update carpools for the specific activity
         setActivities((prevActivities) =>
           prevActivities.map((activity) => {
             if (activity.activity_id === activityId) {
-              return { ...activity, carpools: data.carpools }; // Lägg till carpools
+              return { ...activity, carpools: data.carpools }; // Add carpools
             }
             return activity;
           })
@@ -128,15 +137,17 @@ const DashBoardParent = ({ token }) => {
   // Toggle carpool visibility and fetch carpools if needed
   const toggleCarpool = (index, activityId) => {
     if (openCarpoolIndex === index) {
-      setOpenCarpoolIndex(null); // Stäng om samma expanderas igen
+      setOpenCarpoolIndex(null); // Close if the same is clicked again
     } else {
       setOpenCarpoolIndex(index);
-      fetchCarpoolsForActivity(activityId); // Hämta carpools för den här aktiviteten
+      fetchCarpoolsForActivity(activityId); // Fetch carpools for the selected activity
     }
   };
 
-  const handleNavigateToCarpool = (activityId) => {
-    navigate(`/carpool/${activityId}`);
+  // Handle opening the modal to register a carpool
+  const openCarpoolModal = (activityId) => {
+    setSelectedActivityId(activityId);
+    onOpen(); // Open the modal
   };
 
   const handleLoadMore = () => {
@@ -216,12 +227,12 @@ const DashBoardParent = ({ token }) => {
                       leftIcon={<FaPlus />}
                       colorScheme="brand"
                       size="sm"
-                      onClick={() => handleNavigateToCarpool(activity.activity_id)}
+                      onClick={() => openCarpoolModal(activity.activity_id)} // Open modal instead of navigating
                     >
                       Lägg till Carpool
                     </Button>
-                    
-                    {/* Visa befintliga carpools */}
+
+                    {/* Display existing carpools */}
                     {fetchingCarpools ? (
                       <Spinner />
                     ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
@@ -262,6 +273,23 @@ const DashBoardParent = ({ token }) => {
           Ladda fler ↓
         </Button>
       </Box>
+
+      {/* Modal for Carpool Registration */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Registrera Carpool</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <CarpoolComponent activityId={selectedActivityId} />
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={onClose}>
+              Stäng
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };

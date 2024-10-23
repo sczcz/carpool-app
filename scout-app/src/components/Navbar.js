@@ -32,7 +32,6 @@ const Navbar = () => {
   const links = [
     { to: '/dashboard-leader', label: 'Dashboard Ledare' },
     { to: '/dashboard-parent', label: 'Dashboard Vårdnadshavare' },
-    { to: '/carpool/', label: 'Carpool' }, // New Carpool link added
   ];
 
   // Effect to handle scroll events
