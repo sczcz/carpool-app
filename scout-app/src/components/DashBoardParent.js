@@ -24,8 +24,8 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
-import { FaUserCircle, FaCar, FaPlus } from 'react-icons/fa'; // Import FaPlus icon
-import { format, parseISO } from 'date-fns'; // Import date-fns for date formatting
+import { FaUserCircle, FaPlus } from 'react-icons/fa';
+import { format, parseISO } from 'date-fns';
 import CarpoolComponent from './CarPoolComponent';
 
 const DashBoardParent = ({ token }) => {
@@ -35,14 +35,23 @@ const DashBoardParent = ({ token }) => {
   const [error, setError] = useState(null);
   const [openCarpoolIndex, setOpenCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
-  const [fetchingCarpools, setFetchingCarpools] = useState(false); // For fetching carpools
-  const [selectedActivityId, setSelectedActivityId] = useState(null); // Store selected activity for modal
-  const { isOpen, onOpen, onClose } = useDisclosure(); // Modal controls
+  const [fetchingCarpools, setFetchingCarpools] = useState(false);
+  const [selectedActivityId, setSelectedActivityId] = useState(null);
+  const [joinedCarpools, setJoinedCarpools] = useState({});
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
-  // Fetch activities from the API
+  useEffect(() => {
+    const name = 'Användare';
+    setUserName(name);
+  }, []);
+
+  useEffect(() => {
+    fetchActivities();
+  }, [token]);
+
   const fetchActivities = async () => {
-    setLoading(true); // Set loading state before fetching
+    setLoading(true);
     try {
       const response = await fetch('/api/protected/activity/all', {
         credentials: 'include',
@@ -65,9 +74,8 @@ const DashBoardParent = ({ token }) => {
     }
   };
 
-  // Fetch carpools for a specific activity
   const fetchCarpoolsForActivity = async (activityId) => {
-    setFetchingCarpools(true); // Start fetching state
+    setFetchingCarpools(true);
     try {
       const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
         method: 'GET',
@@ -76,11 +84,10 @@ const DashBoardParent = ({ token }) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Update carpools for the specific activity
         setActivities((prevActivities) =>
           prevActivities.map((activity) => {
             if (activity.activity_id === activityId) {
-              return { ...activity, carpools: data.carpools }; // Add carpools
+              return { ...activity, carpools: data.carpools };
             }
             return activity;
           })
@@ -89,7 +96,6 @@ const DashBoardParent = ({ token }) => {
         throw new Error('Failed to fetch carpools');
       }
     } catch (error) {
-      console.error('Error fetching carpools:', error);
       toast({
         title: 'Error fetching carpools.',
         description: error.message,
@@ -98,60 +104,33 @@ const DashBoardParent = ({ token }) => {
         isClosable: true,
       });
     } finally {
-      setFetchingCarpools(false); // End fetching state
+      setFetchingCarpools(false);
     }
   };
 
-  // Fetch user data
-  useEffect(() => {
-    const name = 'Användare';
-    setUserName(name);
-  }, []);
-
-  useEffect(() => {
-    fetchActivities();
-  }, [token]);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch('/api/protected/user', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const user = data.user;
-          setUserName(`${user.first_name} ${user.last_name}`);
-        } else {
-          console.error('Failed to fetch user data');
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  // Toggle carpool visibility and fetch carpools if needed
   const toggleCarpool = (index, activityId) => {
     if (openCarpoolIndex === index) {
-      setOpenCarpoolIndex(null); // Close if the same is clicked again
+      setOpenCarpoolIndex(null);
     } else {
       setOpenCarpoolIndex(index);
-      fetchCarpoolsForActivity(activityId); // Fetch carpools for the selected activity
+      fetchCarpoolsForActivity(activityId);
     }
   };
 
-  // Handle opening the modal to register a carpool
   const openCarpoolModal = (activityId) => {
     setSelectedActivityId(activityId);
-    onOpen(); // Open the modal
+    onOpen();
   };
 
   const handleLoadMore = () => {
     setVisibleActivitiesCount(visibleActivitiesCount + 10);
+  };
+
+  const handleJoinCarpool = (carpoolId) => {
+    setJoinedCarpools((prevJoined) => ({
+      ...prevJoined,
+      [carpoolId]: !prevJoined[carpoolId], // Toggle the join state
+    }));
   };
 
   if (loading) {
@@ -174,122 +153,130 @@ const DashBoardParent = ({ token }) => {
 
   return (
     <Box p={5}>
-      {/* Header */}
-      <Flex justify="space-between" align="center" mb={5}>
-        <HStack>
-          <Icon as={FaUserCircle} w={8} h={8} color="brand.500" />
-          <Heading as="h1" size="lg" color="brand.500">Välkommen, {userName}</Heading>
-        </HStack>
-      </Flex>
+      <Flex justify="center">
+        <Box maxWidth="1200px" width="100%">
+          {/* Header */}
+          <Flex justify="space-between" align="center" mb={5}>
+            <HStack>
+              <Icon as={FaUserCircle} w={8} h={8} color="brand.500" />
+              <Heading as="h1" size="lg" color="brand.500">Välkommen, {userName}</Heading>
+            </HStack>
+          </Flex>
 
-      {/* Welcome message */}
-      <Box mb={6}>
-        <Text fontSize="lg" color="brand.600">
-          Hej {userName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
-        </Text>
-      </Box>
+          {/* Welcome message */}
+          <Box mb={6}>
+            <Text fontSize="lg" color="brand.600">
+              Hej {userName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
+            </Text>
+          </Box>
 
-      <Divider mb={6} />
+          <Divider mb={6} />
 
-      {/* Upcoming activities */}
-      <Box mb={8}>
-        <Heading as="h2" size="md" mb={4} color="brand.500">
-          Kommande Aktiviteter
-        </Heading>
+          {/* Upcoming activities */}
+          <Box mb={8}>
+            <Heading as="h2" size="md" mb={4} color="brand.500">
+              Kommande Aktiviteter
+            </Heading>
 
-        {/* Using SimpleGrid for responsive cards */}
-        <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-          {activities.slice(0, visibleActivitiesCount).map((activity, index) => (
-            <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="white">
-              <Flex justify="space-between" align="center" mb={2}>
-                <Tag size="lg" colorScheme="teal" borderRadius="full">
-                  <TagLabel>{activity.scout_level}</TagLabel>
-                </Tag>
-                <Button
-                  colorScheme="brand"
-                  size="sm"
-                  onClick={() => toggleCarpool(index, activity.activity_id)}
-                >
-                  {openCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
-                </Button>
-              </Flex>
-              <Text fontWeight="bold">
-                {format(parseISO(activity.dtstart), 'P p')}
-              </Text>
-              <Text>{activity.location}</Text>
-              <Text mt={2}>{activity.summary.split('//')[0]}</Text>
-
-              {/* Available Carpools Collapse */}
-              <Collapse in={openCarpoolIndex === index} animateOpacity>
-                <Box mt={2}>
-                  <VStack spacing={4}>
+            <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+              {activities.slice(0, visibleActivitiesCount).map((activity, index) => (
+                <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="white">
+                  <Flex justify="space-between" align="center" mb={2}>
+                    <Tag size="lg" colorScheme="teal" borderRadius="full">
+                      <TagLabel>{activity.scout_level}</TagLabel>
+                    </Tag>
                     <Button
-                      leftIcon={<FaPlus />}
                       colorScheme="brand"
                       size="sm"
-                      onClick={() => openCarpoolModal(activity.activity_id)} // Open modal instead of navigating
+                      onClick={() => toggleCarpool(index, activity.activity_id)}
                     >
-                      Lägg till Carpool
+                      {openCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
                     </Button>
+                  </Flex>
+                  <Text fontWeight="bold">
+                    {format(parseISO(activity.dtstart), 'P p')}
+                  </Text>
+                  <Text>{activity.location}</Text>
+                  <Text mt={2}>{activity.summary.split('//')[0]}</Text>
 
-                    {/* Display existing carpools */}
-                    {fetchingCarpools ? (
-                      <Spinner />
-                    ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
-                      activity.carpools.map((carpool) => (
-                        <Box
-                          key={carpool.id}
-                          p={4}
-                          borderWidth={1}
-                          borderRadius="lg"
-                          w="100%"
-                          bg="gray.50"
-                          boxShadow="sm"
+                  <Collapse in={openCarpoolIndex === index} animateOpacity>
+                    <Box mt={2} maxHeight="250px" overflowY="auto">
+                      <VStack spacing={4}>
+                        <Button
+                          leftIcon={<FaPlus />}
+                          colorScheme="brand"
+                          size="sm"
+                          onClick={() => openCarpoolModal(activity.activity_id)}
                         >
-                          <Flex justify="space-between" align="center">
-                            <Box>
-                              <Text fontSize="md" color="brand.600">
-                                {carpool.departure_address} - {carpool.departure_city} ({carpool.carpool_type})
-                              </Text>
-                              <Text fontSize="sm" color="gray.500">
-                                Tillgängliga Platser: {carpool.available_seats}
-                              </Text>
+                          Lägg till Carpool
+                        </Button>
+
+                        {fetchingCarpools ? (
+                          <Spinner />
+                        ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
+                          activity.carpools.slice(0, 3).map((carpool) => (
+                            <Box
+                              key={carpool.id}
+                              p={4}
+                              borderWidth={1}
+                              borderRadius="lg"
+                              w="100%"
+                              bg="gray.50"
+                              boxShadow="sm"
+                              fontSize={{ base: 'sm', sm: 'md' }} // Smaller font on mobile
+                            >
+                              <Flex justify="space-between" align="center">
+                                <Box>
+                                  <Text fontSize="md" color="brand.600">
+                                    {carpool.departure_address} - {carpool.departure_city} ({carpool.carpool_type})
+                                  </Text>
+                                  <Text fontSize="sm" color="gray.500">
+                                    Tillgängliga Platser: {carpool.available_seats}
+                                  </Text>
+                                </Box>
+                                <Button
+                                  colorScheme={joinedCarpools[carpool.id] ? 'green' : 'blue'}
+                                  size="sm"
+                                  onClick={() => handleJoinCarpool(carpool.id)}
+                                >
+                                  {joinedCarpools[carpool.id] ? 'Joined' : 'Join'}
+                                </Button>
+                              </Flex>
                             </Box>
-                          </Flex>
-                        </Box>
-                      ))
-                    ) : (
-                      <Text>Inga tillgängliga samåkningar för denna aktivitet.</Text>
-                    )}
-                  </VStack>
+                          ))
+                        ) : (
+                          <Text>Inga tillgängliga samåkningar för denna aktivitet.</Text>
+                        )}
+                      </VStack>
+                    </Box>
+                  </Collapse>
                 </Box>
-              </Collapse>
-            </Box>
-          ))}
-        </SimpleGrid>
+              ))}
+            </SimpleGrid>
 
-        {/* Load More Button */}
-        <Button mt={4} onClick={handleLoadMore} colorScheme="teal">
-          Ladda fler ↓
-        </Button>
-      </Box>
-
-      {/* Modal for Carpool Registration */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Registrera Carpool</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <CarpoolComponent activityId={selectedActivityId} />
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={onClose}>
-              Stäng
+            <Button mt={4} onClick={handleLoadMore} colorScheme="teal">
+              Ladda fler ↓
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </Box>
+
+          {/* Modal for Carpool Registration */}
+          <Modal isOpen={isOpen} onClose={onClose} size={{ base: 'xs', md: 'md', lg: 'lg' }} isCentered>
+            <ModalOverlay />
+            <ModalContent maxW={{ base: '95%', md: '500px' }} mx="auto">
+              <ModalHeader fontSize={{ base: 'lg', md: 'xl' }} textAlign="center">
+                Registrera Carpool
+              </ModalHeader>
+              <ModalCloseButton size={{ base: 'sm', md: 'md' }} />
+              <ModalBody p={{ base: 2, md: 4 }} maxH={{ base: '60vh', md: 'none' }} overflowY={{ base: 'auto', md: 'visible' }}>
+                {/* CarpoolComponent adjusted for compact view */}
+                <CarpoolComponent activityId={selectedActivityId} />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+
+
+        </Box>
+      </Flex>
     </Box>
   );
 };

@@ -62,7 +62,7 @@ const Profile = () => {
   const [cars, setCars] = useState([]);  // Now defined as state for cars
 
   const roleColors = {
-    tumlare: 'cyan.400',
+    tumlare: 'blue.400',
     kutar: 'cyan.400',     
     upptäckare: 'green.400', 
     äventyrare: 'yellow.400', 
@@ -345,7 +345,7 @@ const Profile = () => {
         boxShadow="lg"
         maxW="1000px"
         ml={[0, 50, 100, 225]} // Responsive margins
-        mr={[0, 50, 100]} // Responsive margins
+        mr={[0, 50, 100, 225]} // Responsive margins
         mb={50}
         mt={50}
       >      
@@ -375,7 +375,7 @@ const Profile = () => {
 
       {/* Children Section */}
       <VStack spacing={2} align="start" mt={[4, 4, 0]}>
-        <Heading as="h4" size="md" mb={10} colorScheme="brand" >
+        <Heading as="h4" size="md" mb={4} colorScheme="brand" >
         {firstName} {lastName} Barn: 
         </Heading>
         <SimpleGrid columns={[1, 1, 2]} spacing={4} width="full">
@@ -389,7 +389,6 @@ const Profile = () => {
               p={4}
               bg={roleColors[child.role] || 'gray.200'} // Set background color based on role
               transition="0.2s"
-              _hover={{ boxShadow: 'xl', transform: 'scale(1.02)' }} // Card hover effect
             >
               <Text fontSize="lg" color="white"> {/* Change text color to white */}
                 {child.firstName} {child.lastName} - {child.role} (Medlemsnummer: {child.membershipNumber}) (Telefon: {child.phone})

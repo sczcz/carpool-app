@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Heading,
-  Text,
   VStack,
   Grid,
   GridItem,
@@ -15,6 +14,7 @@ import {
   Button,
   useToast,
   Spinner,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 
 const CarpoolComponent = ({ activityId }) => {
@@ -30,6 +30,9 @@ const CarpoolComponent = ({ activityId }) => {
   const [cars, setCars] = useState([]); // List of cars for selection
   const [loading, setLoading] = useState(false); // Loading state for registration
   const toast = useToast();
+
+  // Responsive grid columns: 1fr on small screens, 1fr 1fr on larger screens
+  const gridTemplateColumns = useBreakpointValue({ base: '1fr', md: '1fr 1fr' });
 
   // Fetch available cars for the user
   useEffect(() => {
@@ -99,6 +102,7 @@ const CarpoolComponent = ({ activityId }) => {
           duration: 5000,
           isClosable: true,
         });
+        // Reset the form after success
         setNewCar({
           from: '',
           destination: '',
@@ -107,7 +111,7 @@ const CarpoolComponent = ({ activityId }) => {
           carpool_type: 'drop-off',
           departure_postcode: '',
           departure_city: '',
-        }); // Reset the form after success
+        });
       } else {
         throw new Error('Failed to create carpool');
       }
@@ -126,7 +130,7 @@ const CarpoolComponent = ({ activityId }) => {
   };
 
   return (
-    <Box p={5}>
+    <Box p={{ base: 2, md: 5 }}>
       <Heading as="h3" size="lg" mb={4}>
         Registrera Ny Carpool
       </Heading>
@@ -135,11 +139,12 @@ const CarpoolComponent = ({ activityId }) => {
         <Spinner />
       ) : (
         <VStack spacing={4}>
-          <Grid templateColumns={['1fr', '1fr 1fr']} gap={4} w="100%">
+          <Grid templateColumns={gridTemplateColumns} gap={4} w="100%">
             <GridItem>
               <FormControl isRequired>
-                <FormLabel>From</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>From</FormLabel>
                 <Input
+                  size="sm"
                   type="text"
                   placeholder="Departure Address"
                   value={newCar.from}
@@ -150,8 +155,9 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel>Destination</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Destination</FormLabel>
                 <Input
+                  size="sm"
                   type="text"
                   placeholder="Destination"
                   value={newCar.destination}
@@ -162,8 +168,9 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel>Departure Postcode</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Departure Postcode</FormLabel>
                 <Input
+                  size="sm"
                   type="text"
                   placeholder="Postcode"
                   value={newCar.departure_postcode}
@@ -174,8 +181,9 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel>Departure City</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Departure City</FormLabel>
                 <Input
+                  size="sm"
                   type="text"
                   placeholder="City"
                   value={newCar.departure_city}
@@ -186,8 +194,13 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel>Available Seats</FormLabel>
-                <NumberInput min={1} value={newCar.spots} onChange={(value) => setNewCar({ ...newCar, spots: value })}>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Available Seats</FormLabel>
+                <NumberInput
+                  size="sm"
+                  min={1}
+                  value={newCar.spots}
+                  onChange={(value) => setNewCar({ ...newCar, spots: value })}
+                >
                   <NumberInputField />
                 </NumberInput>
               </FormControl>
@@ -195,8 +208,9 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl id="car_id">
-                <FormLabel>Select Car</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Select Car</FormLabel>
                 <Select
+                  size="sm"
                   placeholder="Select a car"
                   value={newCar.car_id}
                   onChange={(e) => setNewCar({ ...newCar, car_id: e.target.value })}
@@ -212,8 +226,9 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel>Carpool Type</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Carpool Type</FormLabel>
                 <Select
+                  size="sm"
                   value={newCar.carpool_type}
                   onChange={(e) => setNewCar({ ...newCar, carpool_type: e.target.value })}
                 >
@@ -229,6 +244,8 @@ const CarpoolComponent = ({ activityId }) => {
             onClick={handleCarRegistration}
             isLoading={loading}
             isDisabled={loading}
+            size="sm" // Smaller button for compact view
+            w="100%"  // Button stretches to 100% of the container on mobile
           >
             Register Carpool
           </Button>
