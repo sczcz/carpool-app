@@ -42,7 +42,7 @@ const CarpoolComponent = () => {
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        const response = await fetch('/api/user/cars', {
+        const response = await fetch('/api/protected/get-cars', {
           method: 'GET',
           credentials: 'include',
         });
