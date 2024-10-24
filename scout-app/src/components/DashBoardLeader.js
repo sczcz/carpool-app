@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -8,125 +8,152 @@ import {
   Flex,
   Button,
   VStack,
-  FormControl,
-  FormLabel,
-  Input,
-  Textarea,
   Collapse,
-  Select,
-  HStack,
+  Spinner,
+  useToast,
+  Select
 } from '@chakra-ui/react';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 
-const Dashboard = () => {
-  // Hanterar visning av aktivitetsskaparen
-  const [isActivityFormOpen, setIsActivityFormOpen] = useState(false);
-
-  // Statisk lista över sparade aktiviteter
+const Dashboard = ({ token }) => {
   const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [openActivityId, setOpenActivityId] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(3); // Startar med 3
+  const [fetchingCarpools, setFetchingCarpools] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('Alla roller'); // Filtrering
+  const toast = useToast();
 
-  // Formulärfält för ny aktivitet
-  const [activityName, setActivityName] = useState('');
-  const [activityLocation, setActivityLocation] = useState('');
-  const [activityAddress, setActivityAddress] = useState('');
-  const [activityPostcode, setActivityPostcode] = useState('');
-  const [activityCity, setActivityCity] = useState('');
-  const [activityDescription, setActivityDescription] = useState('');
-  const [svenskaLagLink, setSvenskaLagLink] = useState('');
-  const [activityDate, setActivityDate] = useState('');
-  const [activityTime, setActivityTime] = useState('');
-  const [activityRole, setActivityRole] = useState('Spårare'); // Nytt rollval
+  // Hämta aktiviteter från API när komponenten laddas
+  useEffect(() => {
+    fetchActivities();
+  }, [token]);
 
-  // Hanterar redigering av aktivitet
-  const [editingActivity, setEditingActivity] = useState(null);
+  // Funktion för att hämta aktiviteter
+  const fetchActivities = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/protected/activity/all', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-  // Lägger till eller uppdaterar en aktivitet
-  const handleSaveActivity = () => {
-    const newActivity = {
-      id: editingActivity ? editingActivity.id : Date.now(), // Använd unikt id
-      name: activityName,
-      location: activityLocation,
-      address: activityAddress,
-      postcode: activityPostcode,
-      city: activityCity,
-      description: activityDescription,
-      svenskaLagLink,
-      date: activityDate,
-      time: activityTime,
-      role: activityRole, // Lägger till roll
-    };
+      if (!response.ok) {
+        throw new Error('Något gick fel vid hämtning av aktiviteter');
+      }
 
-    if (editingActivity) {
-      setActivities(
-        activities.map((activity) =>
-          activity.id === editingActivity.id ? newActivity : activity
-        )
-      );
-    } else {
-      setActivities([...activities, newActivity]);
+      const data = await response.json();
+      const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
+      setActivities(sortedActivities);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    // Återställ formulär och redigeringsläge
-    resetForm();
   };
 
-  // Hanterar redigering
-  const handleEditActivity = (activity) => {
-    setEditingActivity(activity);
-    setActivityName(activity.name);
-    setActivityLocation(activity.location);
-    setActivityAddress(activity.address);
-    setActivityPostcode(activity.postcode);
-    setActivityCity(activity.city);
-    setActivityDescription(activity.description);
-    setSvenskaLagLink(activity.svenskaLagLink);
-    setActivityDate(activity.date);
-    setActivityTime(activity.time);
-    setActivityRole(activity.role);
-    setIsActivityFormOpen(true); // Öppna formuläret för redigering
+  // Funktion för att hämta samåkningar för en specifik aktivitet
+  const fetchCarpoolsForActivity = async (activityId) => {
+    setFetchingCarpools(true);
+    try {
+      const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setActivities((prevActivities) =>
+          prevActivities.map((activity) => {
+            if (activity.activity_id === activityId) {
+              return { ...activity, carpools: data.carpools };
+            }
+            return activity;
+          })
+        );
+      } else {
+        throw new Error('Misslyckades med att hämta samåkningar');
+      }
+    } catch (error) {
+      toast({
+        title: 'Fel vid hämtning av samåkningar.',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setFetchingCarpools(false);
+    }
   };
 
-  // Återställer formuläret efter sparning eller avbrytande
-  const resetForm = () => {
-    setActivityName('');
-    setActivityLocation('');
-    setActivityAddress('');
-    setActivityPostcode('');
-    setActivityCity('');
-    setActivityDescription('');
-    setSvenskaLagLink('');
-    setActivityDate('');
-    setActivityTime('');
-    setActivityRole('Spårare');
-    setEditingActivity(null);
-    setIsActivityFormOpen(false);
+  const toggleActivity = (activityId) => {
+    setOpenActivityId(openActivityId === activityId ? null : activityId);
+    if (openActivityId !== activityId) {
+      fetchCarpoolsForActivity(activityId); // Ladda samåkningar när aktivitet öppnas
+    }
   };
+
+  const loadMoreActivities = () => {
+    setVisibleCount((prevCount) => prevCount + 3); // Ladda tre nya varje gång
+  };
+
+  // Filtrering av aktiviteter baserat på scout_level
+  const filteredActivities = activities.filter((activity) => {
+    if (selectedRole === 'Alla roller') {
+      return true; // Visa alla om ingen specifik roll är vald
+    }
+    return activity.scout_level === selectedRole; // Visa bara aktiviteter som matchar vald roll
+  });
+
+  const handleRoleChange = (e) => {
+    setSelectedRole(e.target.value); // Uppdatera vald roll
+    setVisibleCount(3); // Återställ till 3 synliga aktiviteter vid rollbyte
+  };
+
+  // Hämta unika roller för dropdown
+  const uniqueRoles = [...new Set(activities.map(activity => activity.scout_level))];
+
+  if (loading) {
+    return (
+      <VStack>
+        <Spinner size="xl" color="brand.500" />
+        <Text>Laddar aktiviteter...</Text>
+      </VStack>
+    );
+  }
+
+  if (error) {
+    return (
+      <VStack>
+        <Text color="red.500">Fel vid hämtning av aktiviteter: {error}</Text>
+        <Button onClick={() => { setError(null); fetchActivities(); }} colorScheme="blue">Försök igen</Button>
+      </VStack>
+    );
+  }
 
   return (
     <Flex direction="column" align="center" justify="center" p={8}>
-      {/* Rubrik */}
       <Heading as="h1" size="xl" mb={8} color="brand.500">
         Dashboard för ledare
       </Heading>
 
-      {/* Huvudsektion med översikt */}
       <Grid
         templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
         gap={6}
         width="100%"
         maxW="1200px"
       >
-        {/* Statistik kort */}
         <GridItem w="100%">
           <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
             <Heading as="h3" size="lg" mb={4} color="brand.600">
               Användare
             </Heading>
-            <Text fontSize="xl" color="brand.500">
-              Totalt: 123
-            </Text>
-            <Text fontSize="md" color="brand.400">
-              Aktiva användare: 89
-            </Text>
+            <Text fontSize="xl" color="brand.500">Totalt: 123</Text>
+            <Text fontSize="md" color="brand.400">Aktiva användare: 89</Text>
           </Box>
         </GridItem>
 
@@ -135,12 +162,8 @@ const Dashboard = () => {
             <Heading as="h3" size="lg" mb={4} color="brand.600">
               Notifikationer
             </Heading>
-            <Text fontSize="xl" color="brand.500">
-              Nya notifikationer: 5
-            </Text>
-            <Text fontSize="md" color="brand.400">
-              Olästa: 3
-            </Text>
+            <Text fontSize="xl" color="brand.500">Nya notifikationer: 5</Text>
+            <Text fontSize="md" color="brand.400">Olästa: 3</Text>
           </Box>
         </GridItem>
 
@@ -149,172 +172,79 @@ const Dashboard = () => {
             <Heading as="h3" size="lg" mb={4} color="brand.600">
               Transporter
             </Heading>
-            <Text fontSize="xl" color="brand.500">
-              Samåkningar: 12
-            </Text>
-            <Text fontSize="md" color="brand.400">
-              Kommande transporter: 4
-            </Text>
+            <Text fontSize="xl" color="brand.500">Samåkningar: 12</Text>
+            <Text fontSize="md" color="brand.400">Kommande transporter: 4</Text>
           </Box>
         </GridItem>
 
-        {/* Aktivitetssektionen */}
-        <GridItem w="100%">
+        <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
           <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
             <Heading as="h3" size="lg" mb={4} color="brand.600">
               Aktiviteter
             </Heading>
-            {activities.length === 0 ? (
+
+            {/* Rollfiltrering */}
+            <Select placeholder="Välj roll" onChange={handleRoleChange} mb={6} value={selectedRole}>
+              <option value="Alla roller">Alla roller</option>
+              {uniqueRoles.map((role, index) => (
+                <option key={index} value={role}>{role}</option>
+              ))}
+            </Select>
+
+            {filteredActivities.length === 0 ? (
               <Text fontSize="md" color="brand.400">
-                Inga aktiviteter skapade än.
+                Inga aktiviteter tillgängliga för denna roll.
               </Text>
             ) : (
-              activities.map((activity) => (
-                <Box key={activity.id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="sm">
-                  <Text fontSize="lg" fontWeight="bold" color="brand.600">
-                    {activity.name}
-                  </Text>
-                  <Text fontSize="md" color="brand.500">
-                    Plats: {activity.location}, {activity.address}, {activity.postcode}, {activity.city}
-                  </Text>
-                  <Text fontSize="md" color="brand.500">
-                    Datum: {activity.date}, Tid: {activity.time}
-                  </Text>
-                  <Text fontSize="md" color="brand.500"> {/* Här behöver kopplas till databasen för att visa rätt roll, eller? */}
-                    Roll: {activity.role}
-                  </Text>
-                  <Text fontSize="md" color="brand.500">
-                    Beskrivning: {activity.description}
-                  </Text>
-                  <Text fontSize="md" color="brand.500">
-                    Svenska Lag URL: <a href={activity.svenskaLagLink} target="_blank" rel="noopener noreferrer">{activity.svenskaLagLink}</a>
-                  </Text>
-                  <Button mt={2} size="sm" colorScheme="blue" onClick={() => handleEditActivity(activity)}>
-                    Redigera
+              <>
+                {filteredActivities.slice(0, visibleCount).map((activity) => (
+                  <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="sm">
+                    <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary}</Text>
+                    <Text fontSize="md" color="brand.500">
+                      Plats: {activity.location}
+                    </Text>
+                    <Text fontSize="md" color="brand.500">Datum: {new Date(activity.dtstart).toLocaleString()}</Text>
+
+                    <Button
+                      mt={2}
+                      size="sm"
+                      colorScheme="blue"
+                      onClick={() => toggleActivity(activity.activity_id)}
+                      rightIcon={openActivityId === activity.activity_id ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                    >
+                      {openActivityId === activity.activity_id ? 'Dölj samåkningar' : 'Visa samåkningar'}
+                    </Button>
+
+                    <Collapse in={openActivityId === activity.activity_id}>
+                      <Box mt={4}>
+                        {activity.carpools ? (
+                          activity.carpools.length > 0 ? (
+                            activity.carpools.map((carpool) => (
+                              <Text key={carpool.id} color="brand.400">
+                                {carpool.description}
+                              </Text>
+                            ))
+                          ) : (
+                            <Text>Inga tillgängliga samåkningar.</Text>
+                          )
+                        ) : (
+                          <Text>Laddar samåkningar...</Text>
+                        )}
+                      </Box>
+                    </Collapse>
+                  </Box>
+                ))}
+
+                {visibleCount < filteredActivities.length && (
+                  <Button mt={6} onClick={loadMoreActivities} colorScheme="teal">
+                    Ladda fler
                   </Button>
-                </Box>
-              ))
+                )}
+              </>
             )}
           </Box>
         </GridItem>
       </Grid>
-
-      {/* Sektion för att skapa ny aktivitet */}
-      <VStack spacing={4} mt={8} width="100%" maxW="600px">
-        <Button width="100%" colorScheme="brand" onClick={() => setIsActivityFormOpen(!isActivityFormOpen)}>
-          {isActivityFormOpen ? 'Stäng formulär' : 'Skapa ny aktivitet'}
-        </Button>
-
-        <Collapse in={isActivityFormOpen} animateOpacity>
-          <Box bg="white" p={6} rounded="md" shadow="md" width="100%">
-            <VStack spacing={4} align="start">
-              <FormControl>
-                <FormLabel>Namn på aktivitet</FormLabel>
-                <Input
-                  value={activityName}
-                  onChange={(e) => setActivityName(e.target.value)}
-                  placeholder="Namn på aktivitet"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Plats</FormLabel>
-                <Input
-                  value={activityLocation}
-                  onChange={(e) => setActivityLocation(e.target.value)}
-                  placeholder="Plats"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Adress</FormLabel>
-                <Input
-                  value={activityAddress}
-                  onChange={(e) => setActivityAddress(e.target.value)}
-                  placeholder="Adress"
-                />
-              </FormControl>
-
-              <HStack spacing={4}>
-                <FormControl>
-                  <FormLabel>Postnummer</FormLabel>
-                  <Input
-                    value={activityPostcode}
-                    onChange={(e) => setActivityPostcode(e.target.value)}
-                    placeholder="Postnummer"
-                  />
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel>Ort</FormLabel>
-                  <Input
-                    value={activityCity}
-                    onChange={(e) => setActivityCity(e.target.value)}
-                    placeholder="Ort"
-                  />
-                </FormControl>
-              </HStack>
-
-              <FormControl>
-                <FormLabel>Datum för aktivitet</FormLabel>
-                <Input
-                  type="date"
-                  value={activityDate}
-                  onChange={(e) => setActivityDate(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Tid för aktivitet</FormLabel>
-                <Input
-                  type="time"
-                  value={activityTime}
-                  onChange={(e) => setActivityTime(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Beskrivning av aktivitet</FormLabel>
-                <Textarea
-                  value={activityDescription}
-                  onChange={(e) => setActivityDescription(e.target.value)}
-                  placeholder="Beskrivning av aktivitet"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Välj roll</FormLabel>
-                <Select
-                  value={activityRole}
-                  onChange={(e) => setActivityRole(e.target.value)}
-                >
-                  <option value="3">Spårare</option>
-                  <option value="4">Upptäckare</option>
-                  <option value="5">Äventyrare</option>
-                  <option value="6">Utmanare</option>
-                  <option value="7">Rövare</option>
-                </Select>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Länk till Svenska Lag</FormLabel>
-                <Input
-                  value={svenskaLagLink}
-                  onChange={(e) => setSvenskaLagLink(e.target.value)}
-                  placeholder="Länk till Svenska Lag"
-                />
-              </FormControl>
-
-              <Button colorScheme="brand" onClick={handleSaveActivity}>
-                {editingActivity ? 'Uppdatera aktivitet' : 'Spara aktivitet'}
-              </Button>
-              <Button variant="ghost" onClick={resetForm}>
-                Avbryt
-              </Button>
-            </VStack>
-          </Box>
-        </Collapse>
-      </VStack>
     </Flex>
   );
 };

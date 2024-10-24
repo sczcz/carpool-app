@@ -27,14 +27,14 @@ const CarpoolComponent = ({ activityId }) => {
     car_id: '',
     carpool_type: 'drop-off',
   });
-  const [cars, setCars] = useState([]); // List of cars for selection
-  const [loading, setLoading] = useState(false); // Loading state for registration
+  const [cars, setCars] = useState([]); // Lista över bilar för val
+  const [loading, setLoading] = useState(false); // Laddningsstatus för registrering
   const toast = useToast();
 
-  // Responsive grid columns: 1fr on small screens, 1fr 1fr on larger screens
+  // Responsiva grid-kolumner: 1fr på små skärmar, 1fr 1fr på större skärmar
   const gridTemplateColumns = useBreakpointValue({ base: '1fr', md: '1fr 1fr' });
 
-  // Fetch available cars for the user
+  // Hämta tillgängliga bilar för användaren
   useEffect(() => {
     const fetchCars = async () => {
       try {
@@ -44,14 +44,14 @@ const CarpoolComponent = ({ activityId }) => {
         });
         if (response.ok) {
           const data = await response.json();
-          setCars(data.cars); // Set cars from the response
+          setCars(data.cars); // Sätt bilar från svaret
         } else {
-          throw new Error('Failed to fetch cars');
+          throw new Error('Misslyckades med att hämta bilar');
         }
       } catch (error) {
-        console.error('Error fetching cars:', error);
+        console.error('Fel vid hämtning av bilar:', error);
         toast({
-          title: 'Error fetching cars',
+          title: 'Fel vid hämtning av bilar',
           description: error.message,
           status: 'error',
           duration: 5000,
@@ -63,12 +63,12 @@ const CarpoolComponent = ({ activityId }) => {
     fetchCars();
   }, [toast]);
 
-  // Validate and register the carpool
+  // Validera och registrera carpools
   const handleCarRegistration = async () => {
     if (!newCar.from || !newCar.destination || !newCar.spots || !newCar.car_id || !newCar.departure_postcode || !newCar.departure_city) {
       toast({
-        title: 'Error',
-        description: 'Please fill in all the required fields.',
+        title: 'Fel',
+        description: 'Fyll i alla obligatoriska fält.',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -76,14 +76,14 @@ const CarpoolComponent = ({ activityId }) => {
       return;
     }
 
-    setLoading(true); // Start loading when registering carpool
+    setLoading(true); // Starta laddning vid registrering
     try {
       const response = await fetch('/api/carpool/create', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          driver_id: 1, // Replace with actual user ID from context or auth
+          driver_id: 1, // Ersätt med verkligt användar-ID från kontext eller auth
           car_id: newCar.car_id,
           activity_id: activityId,
           available_seats: parseInt(newCar.spots),
@@ -96,13 +96,13 @@ const CarpoolComponent = ({ activityId }) => {
 
       if (response.ok) {
         toast({
-          title: 'Carpool created.',
-          description: 'Your carpool was created successfully.',
+          title: 'Samåkning skapad.',
+          description: 'Din samåkning har skapats.',
           status: 'success',
           duration: 5000,
           isClosable: true,
         });
-        // Reset the form after success
+        // Återställ formuläret efter framgång
         setNewCar({
           from: '',
           destination: '',
@@ -113,26 +113,26 @@ const CarpoolComponent = ({ activityId }) => {
           departure_city: '',
         });
       } else {
-        throw new Error('Failed to create carpool');
+        throw new Error('Misslyckades med att skapa samåkning');
       }
     } catch (error) {
-      console.error('Error registering car:', error);
+      console.error('Fel vid registrering:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to register carpool.',
+        title: 'Fel',
+        description: 'Misslyckades med att registrera samåkning.',
         status: 'error',
         duration: 5000,
         isClosable: true,
       });
     } finally {
-      setLoading(false); // Stop loading when done
+      setLoading(false); // Stoppa laddning när det är klart
     }
   };
 
   return (
     <Box p={{ base: 2, md: 5 }}>
       <Heading as="h3" size="lg" mb={4}>
-        Registrera Ny Carpool
+        Registrera ny samåkning
       </Heading>
 
       {loading ? (
@@ -142,11 +142,11 @@ const CarpoolComponent = ({ activityId }) => {
           <Grid templateColumns={gridTemplateColumns} gap={4} w="100%">
             <GridItem>
               <FormControl isRequired>
-                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>From</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Från</FormLabel>
                 <Input
                   size="sm"
                   type="text"
-                  placeholder="Departure Address"
+                  placeholder="Avreseadress"
                   value={newCar.from}
                   onChange={(e) => setNewCar({ ...newCar, from: e.target.value })}
                 />
@@ -168,11 +168,11 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Departure Postcode</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Avresans postnummer</FormLabel>
                 <Input
                   size="sm"
                   type="text"
-                  placeholder="Postcode"
+                  placeholder="Postnummer"
                   value={newCar.departure_postcode}
                   onChange={(e) => setNewCar({ ...newCar, departure_postcode: e.target.value })}
                 />
@@ -181,11 +181,11 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Departure City</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Avresans stad</FormLabel>
                 <Input
                   size="sm"
                   type="text"
-                  placeholder="City"
+                  placeholder="Stad"
                   value={newCar.departure_city}
                   onChange={(e) => setNewCar({ ...newCar, departure_city: e.target.value })}
                 />
@@ -194,7 +194,7 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Available Seats</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Antal tillgängliga platser</FormLabel>
                 <NumberInput
                   size="sm"
                   min={1}
@@ -208,10 +208,10 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl id="car_id">
-                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Select Car</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Välj bil</FormLabel>
                 <Select
                   size="sm"
-                  placeholder="Select a car"
+                  placeholder="Välj en bil"
                   value={newCar.car_id}
                   onChange={(e) => setNewCar({ ...newCar, car_id: e.target.value })}
                 >
@@ -226,15 +226,15 @@ const CarpoolComponent = ({ activityId }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Carpool Type</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Typ av samåkning</FormLabel>
                 <Select
                   size="sm"
                   value={newCar.carpool_type}
                   onChange={(e) => setNewCar({ ...newCar, carpool_type: e.target.value })}
                 >
-                  <option value="drop-off">Drop Off</option>
-                  <option value="pick-up">Pick Up</option>
-                  <option value="both">Both</option>
+                  <option value="drop-off">Avlämning</option>
+                  <option value="pick-up">Upphämtning</option>
+                  <option value="both">Båda</option>
                 </Select>
               </FormControl>
             </GridItem>
@@ -244,10 +244,10 @@ const CarpoolComponent = ({ activityId }) => {
             onClick={handleCarRegistration}
             isLoading={loading}
             isDisabled={loading}
-            size="sm" // Smaller button for compact view
-            w="100%"  // Button stretches to 100% of the container on mobile
+            size="sm" // Mindre knapp för kompakt vy
+            w="100%"  // Knappen sträcker sig till 100% av behållaren på mobiler
           >
-            Register Carpool
+            Registrera samåkning
           </Button>
         </VStack>
       )}
