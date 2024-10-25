@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models.carpool_model import Carpool, Passenger, Car  # Import your models
+from models.auth_model import Child
+from models.activity_model import Activity
 from datetime import datetime
 from routes.auth import token_required  # Assuming you're using the token for authorization
 
@@ -77,35 +79,89 @@ def list_carpools(current_user):
 @carpool_bp.route('/api/carpool/add-passenger', methods=['POST'])
 @token_required
 def add_passenger(current_user):
-    # Retrieve carpool_id from the query parameters
-    carpool_id = request.args.get('carpool_id')
     data = request.get_json()
+    carpool_id = request.args.get('carpool_id')
     child_id = data.get('child_id')
 
     if not carpool_id:
         return jsonify({"error": "Carpool ID is required!"}), 400
-    if not child_id:
-        return jsonify({"error": "Child ID is required!"}), 400
 
-    # Check if carpool exists
+    # Step 1: Find the carpool and associated activity
     carpool = Carpool.query.get(carpool_id)
     if not carpool:
         return jsonify({"error": "Carpool not found!"}), 404
 
-    # Check if there's space in the carpool
     if carpool.available_seats <= 0:
         return jsonify({"error": "No available seats in this carpool!"}), 400
 
-    # Add passenger to the carpool
-    new_passenger = Passenger(child_id=child_id, carpool_id=carpool_id)
+    # Step 2: If child_id is provided, use it; otherwise, find the child by parent's role
+    if not child_id:
+        # Retrieve role ID from the associated activity
+        activity = Activity.query.get(carpool.activity_id)
+        if not activity or not activity.role_id:
+            return jsonify({"error": "Associated activity or role not found!"}), 404
 
-    # Update available seats
+        # Find the child based on the role for the current user as either parent
+        desired_role = activity.role_id
+        child = Child.query.filter(
+            ((Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id)),
+            Child.role_id == desired_role
+        ).first()
+
+        if not child:
+            return jsonify({"error": "Child not found for this parent and role!"}), 404
+        child_id = child.child_id
+
+    # Step 3: Add the child to the carpool
+    new_passenger = Passenger(child_id=child_id, carpool_id=carpool_id)
     carpool.available_seats -= 1
 
     db.session.add(new_passenger)
     db.session.commit()
 
     return jsonify({"message": "Passenger added successfully!"}), 201
+
+
+# Endpoint to check if a parent has multiple children with the same role
+@carpool_bp.route('/api/carpool/check-multiple-children', methods=['GET'])
+@token_required
+def check_multiple_children(current_user):
+    # Retrieve carpool_id from the query parameters
+    carpool_id = request.args.get('carpool_id', type=int)
+    if not carpool_id:
+        return jsonify({"error": "Carpool ID is required!"}), 400
+
+    # Step 1: Find the carpool to retrieve the associated activity ID
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        return jsonify({"error": "Carpool not found!"}), 404
+
+    # Step 2: Use the activity ID to get the role associated with that activity
+    activity = Activity.query.get(carpool.activity_id)
+    if not activity or not activity.role_id:
+        return jsonify({"error": "Associated activity or role not found!"}), 404
+
+    role_id = activity.role_id
+
+    # Step 3: Query children under the current user with the specified role
+    children = Child.query.filter(
+        ((Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id)),
+        Child.role_id == role_id
+    ).all()
+
+    # Step 4: Check if there are multiple children with the given role
+    if len(children) > 1:
+        # Prepare a list with child info if multiple children are found
+        children_info = [{"child_id": child.child_id, "name": f"{child.first_name} {child.last_name}"} for child in children]
+        return jsonify({"multiple": True, "children": children_info}), 200
+    elif children:
+        # Single child case
+        return jsonify({"multiple": False, "child_id": children[0].child_id}), 200
+    else:
+        # No children found case
+        return jsonify({"multiple": False, "child_id": None, "message": "No children found for this role."}), 404
+
+
 
 
 

@@ -126,51 +126,65 @@ const DashBoardParent = ({ token }) => {
     setVisibleActivitiesCount(visibleActivitiesCount + 10);
   };
 
-  const handleJoinCarpool = async (carpoolId) => {
+  const handleJoinCarpool = async (carpoolId, roleId) => {
     try {
-      // Toggle the join state optimistically before the API call
-      setJoinedCarpools((prevJoined) => ({
-        ...prevJoined,
-        [carpoolId]: !prevJoined[carpoolId],
-      }));
-  
-      const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          child_id: 1, // Replace this with the actual child_id you want to pass
-        }),
-      });
-  
-      if (!response.ok) {
-        // Revert the toggle if the API call fails
-        setJoinedCarpools((prevJoined) => ({
-          ...prevJoined,
-          [carpoolId]: !prevJoined[carpoolId],
-        }));
-        throw new Error('Failed to join carpool');
-      }
-  
-      const result = await response.json();
-      toast({
-        title: 'Success',
-        description: result.message || 'Successfully joined the carpool!',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+        // Check if the user has multiple children in the same role
+        const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        
+        const checkData = await checkResponse.json();
+        let selectedChildId = -1; // Default value
+        
+        if (checkData.multiple) {
+            // If multiple children, prompt user to select one
+            selectedChildId = prompt(
+                `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
+            );
+            if (!selectedChildId) return; // Exit if no selection made
+        } else {
+            selectedChildId = checkData.child_id;
+        }
+
+        // Make the API request to join the carpool
+        const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ child_id: selectedChildId }),
+        });
+
+        if (!response.ok) {
+            setJoinedCarpools((prevJoined) => ({
+                ...prevJoined,
+                [carpoolId]: !prevJoined[carpoolId],
+            }));
+            throw new Error('Failed to join carpool');
+        }
+
+        const result = await response.json();
+        toast({
+            title: 'Success',
+            description: result.message || 'Successfully joined the carpool!',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+        });
     } catch (error) {
-      console.error('Error joining carpool:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Unable to join carpool',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+        console.error('Error joining carpool:', error);
+        toast({
+            title: 'Error',
+            description: error.message || 'Unable to join carpool',
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+        });
     }
-  };
+};
+
+  
   
 
   if (loading) {

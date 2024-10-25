@@ -41,13 +41,13 @@ def seed_roles():
         leader_role = Role(name='ledare')
         db.session.add(leader_role)
 
-    if not Role.query.filter_by(name='tumlare').first():
-        tumlare_role = Role(name='tumlare')
-        db.session.add(tumlare_role)
-
     if not Role.query.filter_by(name='kutar').first():
         kutar_role = Role(name='kutar')
         db.session.add(kutar_role)
+
+    if not Role.query.filter_by(name='tumlare').first():
+        tumlare_role = Role(name='tumlare')
+        db.session.add(tumlare_role)
 
     if not Role.query.filter_by(name='upptäckare').first():
         explorer_role = Role(name='upptäckare')
