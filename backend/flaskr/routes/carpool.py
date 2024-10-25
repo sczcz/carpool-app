@@ -74,13 +74,16 @@ def list_carpools(current_user):
 
 
 # Endpoint to add a passenger to a carpool
-@carpool_bp.route('/api/carpool/<int:carpool_id>/add-passenger', methods=['POST'])
+@carpool_bp.route('/api/carpool/add-passenger', methods=['POST'])
 @token_required
-def add_passenger(current_user, carpool_id):
+def add_passenger(current_user):
+    # Retrieve carpool_id from the query parameters
+    carpool_id = request.args.get('carpool_id')
     data = request.get_json()
-
     child_id = data.get('child_id')
 
+    if not carpool_id:
+        return jsonify({"error": "Carpool ID is required!"}), 400
     if not child_id:
         return jsonify({"error": "Child ID is required!"}), 400
 
@@ -103,6 +106,7 @@ def add_passenger(current_user, carpool_id):
     db.session.commit()
 
     return jsonify({"message": "Passenger added successfully!"}), 201
+
 
 
 # Endpoint to delete a carpool

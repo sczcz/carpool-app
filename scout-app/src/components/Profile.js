@@ -213,7 +213,7 @@ const Profile = () => {
           setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
           setChildFirstName('');
           setChildLastName('');
-          setChildRole('Kutar');
+          setChildRole('kutar');
           setMembershipNumber('');  // Återställ medlemsnummerfältet
           setChildPhone('');  // Återställ telefonnummerfältet
         } else {
