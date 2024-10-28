@@ -67,7 +67,8 @@ def list_carpools(current_user):
             "departure_address": carpool.departure_address,
             "departure_postcode": carpool.departure_postcode,
             "departure_city": carpool.departure_city,
-            "carpool_type": carpool.carpool_type
+            "carpool_type": carpool.carpool_type,
+            "passengers": [p.child_id for p in carpool.passengers]
         }
         for carpool in carpools
     ]
@@ -86,13 +87,18 @@ def add_passenger(current_user):
     if not carpool_id:
         return jsonify({"error": "Carpool ID is required!"}), 400
 
+    # Check if child is already in the carpool
+    existing_passenger = Passenger.query.filter_by(carpool_id=carpool_id, child_id=child_id).first()
+    if existing_passenger:
+        return jsonify({"error": "Child already added to this carpool!"}), 401
+
     # Step 1: Find the carpool and associated activity
     carpool = Carpool.query.get(carpool_id)
     if not carpool:
         return jsonify({"error": "Carpool not found!"}), 404
 
     if carpool.available_seats <= 0:
-        return jsonify({"error": "No available seats in this carpool!"}), 400
+        return jsonify({"error": "No available seats in this carpool!"}), 402
 
     # Step 2: If child_id is provided, use it; otherwise, find the child by parent's role
     if not child_id:

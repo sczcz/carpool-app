@@ -1,6 +1,7 @@
 from extensions import db
 from datetime import datetime
 from sqlalchemy import Enum
+from sqlalchemy.orm import relationship
 
 class Carpool(db.Model):
     __tablename__ = 'carpool'
@@ -13,6 +14,8 @@ class Carpool(db.Model):
     departure_postcode = db.Column(db.String(20), nullable=False)  # Postnummer för utgångsplats
     departure_city = db.Column(db.String(100), nullable=False)  # Ort för utgångsplats
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # När carpoolen skapades
+
+    passengers = relationship('Passenger', backref='carpool', lazy='dynamic')  # Lazy loading for better performance
 
     # New column for carpool type
     carpool_type = db.Column(Enum('drop-off', 'pick-up', 'both', name='carpool_type_enum'), nullable=False)

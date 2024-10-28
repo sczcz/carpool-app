@@ -17,7 +17,7 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 
-const CarpoolComponent = ({ activityId }) => {
+const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
   const [newCar, setNewCar] = useState({
     from: '',
     destination: '',
@@ -102,16 +102,10 @@ const CarpoolComponent = ({ activityId }) => {
           duration: 5000,
           isClosable: true,
         });
+
+        onCarpoolCreated();
+        onClose();
         // Reset the form after success
-        setNewCar({
-          from: '',
-          destination: '',
-          spots: '',
-          car_id: '',
-          carpool_type: 'drop-off',
-          departure_postcode: '',
-          departure_city: '',
-        });
       } else {
         throw new Error('Failed to create carpool');
       }
