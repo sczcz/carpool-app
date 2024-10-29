@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import customTheme from '../Theme';
 import { FaTrash } from "react-icons/fa"; // Import trash can icon from react-icons library
 import {
   Box,
@@ -26,7 +25,6 @@ import {
   ModalCloseButton,
   ModalBody,
   ModalFooter,
-  useBreakpointValue,
 } from '@chakra-ui/react';
 
 const Profile = () => {
@@ -122,6 +120,7 @@ const Profile = () => {
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
+      fetchUserData();
     };
 
     const fetchChildren = async () => {

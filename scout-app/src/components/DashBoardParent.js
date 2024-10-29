@@ -44,8 +44,26 @@ const DashBoardParent = ({ token }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const name = 'Användare';
-    setUserName(name);
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/protected/user', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const user = data.user;
+
+          setUserName(user.first_name + " " +user.last_name);
+
+        } else {
+          console.error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+    fetchUserData();
   }, []);
 
   useEffect(() => {

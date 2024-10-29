@@ -4,15 +4,11 @@ import { useLocation } from 'react-router-dom';
 
 const socket = io('http://localhost:5000'); // Byt ut med din backend URL
 
-socket.on("connect", () => {
-  console.log("Socket.IO connected:", socket.id);
-});
-
 function CarpoolChat() {
   const [messages, setMessages] = useState([]);
   const [messageContent, setMessageContent] = useState('');
   const [userId, setUserId] = useState(null);
-
+  const [userName, setUserName] = useState('');
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const carpoolId = queryParams.get('carpoolId'); // Hämtar carpoolId från URL-query
@@ -21,25 +17,26 @@ function CarpoolChat() {
     console.log("Carpool ID from query:", carpoolId);
   }, [carpoolId]);
 
-  // Hämta användarens ID från backend vid komponentens start
+  // Hämta användarens ID och namn från backend vid komponentens start
   useEffect(() => {
-    const fetchUserId = async () => {
+    const fetchUserInfo = async () => {
       try {
-        const response = await fetch('/api/user/id', {
+        const response = await fetch('/api/protected/user', {
           method: 'GET',
           credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();
-          setUserId(data.user_id);
+          setUserId(data.user.id);
+          setUserName(`${data.user.first_name} ${data.user.last_name}`);
         } else {
-          console.error('Failed to fetch user ID');
+          console.error('Failed to fetch user info');
         }
       } catch (error) {
-        console.error('Error fetching user ID:', error);
+        console.error('Error fetching user info:', error);
       }
     };
-    fetchUserId();
+    fetchUserInfo();
   }, []);
 
   // Hämta historiska meddelanden för carpoolen när komponenten laddas
@@ -69,6 +66,7 @@ function CarpoolChat() {
   useEffect(() => {
     if (carpoolId) {
       socket.emit('join_carpool', { carpool_id: parseInt(carpoolId) });
+      console.log("Joined room:", carpoolId);
 
       socket.on('new_message', (data) => {
         if (data.carpool_id === parseInt(carpoolId)) {
@@ -79,17 +77,19 @@ function CarpoolChat() {
       return () => {
         socket.emit('leave_carpool', { carpool_id: parseInt(carpoolId) });
         socket.off('new_message');
+        console.log("Left room:", carpoolId);
       };
     }
   }, [carpoolId]);
 
-  // Skicka meddelande med användarens ID inkluderat
+  // Skicka meddelande med användarens ID och namn inkluderat
   const sendMessage = () => {
     if (userId && messageContent.trim()) {
       socket.emit("send_message", {
         carpool_id: parseInt(carpoolId),
         content: messageContent,
         sender_id: userId,
+        sender_name: userName,
       });
       setMessageContent(''); // Rensa meddelandefältet efter att ha skickat
     }
@@ -99,7 +99,9 @@ function CarpoolChat() {
     <div>
       <div>
         {messages.map((msg) => (
-          <p key={`${msg.id}-${msg.timestamp}`}>{msg.content}</p>
+          <p key={`${msg.id}-${msg.timestamp}`}>
+            <strong>{msg.sender_name || "Unknown"}: </strong>{msg.content}
+          </p>
         ))}
       </div>
       <input

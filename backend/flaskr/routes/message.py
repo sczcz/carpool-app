@@ -4,22 +4,34 @@ from models.message_model import CarpoolMessage
 from flask_socketio import join_room, leave_room, emit
 from routes.auth import token_required
 from datetime import datetime
+from models.auth_model import User
 
 message_bp = Blueprint('message_bp', __name__)
 
-# Endpoint för att hämta meddelanden i en carpool
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['GET'])
 @token_required
 def get_carpool_messages(current_user, carpool_id):
-    """Hämtar historiska meddelanden för en given carpool."""
-    messages = CarpoolMessage.query.filter_by(carpool_id=carpool_id).order_by(CarpoolMessage.timestamp.asc()).all()
-    return jsonify([{
-        'id': msg.id,
-        'sender_id': msg.sender_id,
-        'content': msg.content,
-        'timestamp': msg.timestamp,
-        'status': msg.status
-    } for msg in messages]), 200
+    """Hämtar historiska meddelanden för en given carpool, inklusive användarens namn."""
+    messages = (
+        db.session.query(CarpoolMessage, User)
+        .join(User, CarpoolMessage.sender_id == User.user_id)
+        .filter(CarpoolMessage.carpool_id == carpool_id)
+        .order_by(CarpoolMessage.timestamp.asc())
+        .all()
+    )
+    
+    # Skapa en lista med alla meddelanden och relevant användarinformation
+    messages_data = [{
+        'id': msg.CarpoolMessage.id,
+        'sender_id': msg.CarpoolMessage.sender_id,
+        'sender_name': f"{msg.User.first_name} {msg.User.last_name}",  # Kombinerar för- och efternamn
+        'content': msg.CarpoolMessage.content,
+        'timestamp': msg.CarpoolMessage.timestamp,
+        'status': msg.CarpoolMessage.status
+    } for msg in messages]
+
+    return jsonify(messages_data), 200
+
 
 # Endpoint för att skicka meddelande
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['POST'])
@@ -93,6 +105,12 @@ def handle_send_message(data):
         emit('error', {'error': 'Message content is required!'}, room=request.sid)
         return
 
+    # Hämta användaren för att inkludera namnet i meddelandet
+    sender = User.query.get(sender_id)
+    if not sender:
+        emit('error', {'error': 'Sender not found.'}, room=request.sid)
+        return
+    
     # Spara meddelandet i databasen
     message = CarpoolMessage(
         sender_id=sender_id,
@@ -111,6 +129,7 @@ def handle_send_message(data):
         'message': {
             'id': message.id,
             'sender_id': message.sender_id,
+            'sender_name': f"{sender.first_name} {sender.last_name}",
             'content': message.content,
             'timestamp': message.timestamp.isoformat()
         }
