@@ -11,6 +11,7 @@ import DashBoardLeader from './components/DashBoardLeader';
 import DashBoardParent from './components/DashBoardParent'; // Importera din nya dashboard
 import Profile from './components/Profile'; // Importera din nya profilsida
 import Footer from './components/Footer'; // Import the Footer component
+import CarpoolChat from './components/CarpoolChat';
 
 
 const App = () => {
@@ -25,6 +26,7 @@ const App = () => {
         <Route path="/FetchUsers" element={<FetchUsers />} />
         <Route path="/TestSession" element={<TestSession />} />
         <Route path="/profile" element={<Profile />} /> {/* Ny rutt för Profile */}
+        <Route path="/carpool-chat" element={<CarpoolChat />} />
       </Routes>
       <Footer />
     </Router>

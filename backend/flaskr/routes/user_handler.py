@@ -61,6 +61,12 @@ def get_logged_in_user(current_user):
 
     return jsonify({"user": user_data}), 200
 
+@user_handler.route('/api/user/id', methods=['GET'])
+@token_required
+def get_user_id(current_user):
+    """Returnerar den inloggade användarens ID."""
+    return jsonify({"user_id": current_user.user_id}), 200
+
 @user_handler.route('/api/protected/add-child', methods=['POST'])
 @token_required
 def add_child(current_user):

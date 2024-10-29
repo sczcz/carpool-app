@@ -1,8 +1,8 @@
-from backend.flaskr.extensions import db
+from extensions import db
 from datetime import datetime
 
 class CarpoolMessage(db.Model):
-    __tablename__ = 'messages'
+    __tablename__ = 'carpoolmessage'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'))
     receiver_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=True)

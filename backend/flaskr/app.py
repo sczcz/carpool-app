@@ -3,19 +3,26 @@ from flask_cors import CORS
 from routes.auth import auth_bp
 from routes.user_handler import user_handler
 import os
-from extensions import db
+from extensions import db, socketio
 from models.auth_model import User, Role
 from routes.activity import activity_bp
 from routes.carpool import carpool_bp
+from routes.message import message_bp
 from test_data import add_test_data  # Import the add_test_data function
+from flask_socketio import SocketIO, join_room, leave_room, emit
+
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio.init_app(app, cors_allowed_origins="*")
 
 CORS(app, supports_credentials=True, resources={r"/api/*": {
     "origins": ["http://localhost:3000"],
     "methods": ["GET", "POST", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
 }})
+
+
 
 # Database setup
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -83,6 +90,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(user_handler)
 app.register_blueprint(activity_bp)
 app.register_blueprint(carpool_bp)
+app.register_blueprint(message_bp)
 
 # Route for rendering index.html
 @app.route('/')
@@ -97,4 +105,4 @@ def get_users():
     return jsonify(users_list), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    socketio.run(app, debug=True, host='0.0.0.0', allow_unsafe_werkzeug=True)
