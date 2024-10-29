@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from extensions import db, socketio
 from models.message_model import CarpoolMessage
 from flask_socketio import join_room, leave_room, emit
-from routes.auth import token_required  # Om token_required krävs för autentisering
+from routes.auth import token_required
 from datetime import datetime
 
 message_bp = Blueprint('message_bp', __name__)
@@ -58,9 +58,14 @@ def send_message(current_user, carpool_id):
 # Socket.IO-händelsehanterare för anslutning, chattrum och meddelanden
 @socketio.on('join_carpool')
 def handle_join_carpool(data):
-    
-    join_room(f'carpool_{1}')
-    emit('join_success', {'message': f'Joined carpool {1} chat'}, room=request.sid)
+    """Prenumererar användaren på en carpool-chatt baserat på carpool_id."""
+    carpool_id = data.get('carpool_id')
+    if carpool_id is None:
+        emit('error', {'error': 'Carpool ID is required to join the room.'}, room=request.sid)
+        return
+
+    join_room(f'carpool_{carpool_id}')
+    emit('join_success', {'message': f'Joined carpool {carpool_id} chat'}, room=request.sid)
 
 @socketio.on('leave_carpool')
 def handle_leave_carpool(data):
@@ -76,10 +81,14 @@ def handle_leave_carpool(data):
 
 @socketio.on('send_message')
 def handle_send_message(data):
-    carpool_id = 1
+    """Hantera meddelanden i realtid."""
+    carpool_id = data.get('carpool_id')
     content = data.get('content')
     sender_id = data.get('sender_id')
 
+    if not carpool_id:
+        emit('error', {'error': 'Carpool ID is required to send a message.'}, room=request.sid)
+        return
     if not content:
         emit('error', {'error': 'Message content is required!'}, room=request.sid)
         return
@@ -96,7 +105,6 @@ def handle_send_message(data):
     db.session.add(message)
     db.session.commit()
 
-    print("BACKEND BACKEND BACKEND" + message.content + "BACKEND BACKEND BACKEND")
     # Skicka meddelandet till alla anslutna klienter i rummet
     emit('new_message', {
         'carpool_id': carpool_id,

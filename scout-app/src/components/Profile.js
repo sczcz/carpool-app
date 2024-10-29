@@ -45,7 +45,7 @@ const Profile = () => {
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
-  const [childRole, setChildRole] = useState('');
+  const [childRole, setChildRole] = useState('kutar');
   const [membershipNumber, setMembershipNumber] = useState('');
   const [childPhone, setChildPhone] = useState('');
 
