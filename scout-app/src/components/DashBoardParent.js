@@ -30,6 +30,7 @@ import CarpoolChat from './CarpoolChat';
 
 const DashBoardParent = ({ token }) => {
   const [userName, setUserName] = useState('');
+  const [userId, setUserId] = useState('');
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,6 +56,7 @@ const DashBoardParent = ({ token }) => {
           const user = data.user;
 
           setUserName(user.first_name + " " +user.last_name);
+          setUserId(user.id);
 
         } else {
           console.error('Failed to fetch user data');
@@ -367,7 +369,7 @@ const openChatModal = (carpoolId) => {
               <ModalCloseButton />
               <ModalBody>
                 {/* Rendera CarpoolChat och skicka in valt carpoolId */}
-                <CarpoolChat carpoolId={selectedCarpoolId} />
+                <CarpoolChat carpoolId={selectedCarpoolId} userName={userName} userId={userId}/>
               </ModalBody>
             </ModalContent>
           </Modal>

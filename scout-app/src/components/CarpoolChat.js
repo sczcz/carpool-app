@@ -12,11 +12,9 @@ import {
 
 const socket = io('http://localhost:5000'); // Byt ut med din backend URL
 
-function CarpoolChat({ carpoolId }) {
+function CarpoolChat({ carpoolId, userName, userId }) {
   const [messages, setMessages] = useState([]);
   const [messageContent, setMessageContent] = useState('');
-  const [userId, setUserId] = useState(null);
-  const [userName, setUserName] = useState('');
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -29,26 +27,6 @@ function CarpoolChat({ carpoolId }) {
       console.error("carpoolId is missing, unable to load chat");
       return;
     }
-
-    // Hämta användarens information
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch('/api/protected/user', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUserId(data.user.id);
-          setUserName(`${data.user.first_name} ${data.user.last_name}`);
-        } else {
-          console.error('Failed to fetch user info');
-        }
-      } catch (error) {
-        console.error('Error fetching user info:', error);
-      }
-    };
-    fetchUserInfo();
 
     // Hämta historiska meddelanden
     const fetchMessages = async () => {
