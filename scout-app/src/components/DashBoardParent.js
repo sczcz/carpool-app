@@ -19,7 +19,6 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
   ModalBody,
   ModalCloseButton,
   useDisclosure,
@@ -27,7 +26,7 @@ import {
 import { FaUserCircle, FaPlus } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
 import CarpoolComponent from './CarPoolComponent';
-import { useNavigate } from 'react-router-dom'; // Importera useNavigate
+import CarpoolChat from './CarpoolChat';
 
 const DashBoardParent = ({ token }) => {
   const [userName, setUserName] = useState('');
@@ -41,7 +40,8 @@ const DashBoardParent = ({ token }) => {
   const [joinedCarpools, setJoinedCarpools] = useState({});
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
-  const navigate = useNavigate();
+  const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure(); // För chat-modal
+  const [selectedCarpoolId, setSelectedCarpoolId] = useState(null); // Ny state för att spara valt carpoolId för chatten
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -204,15 +204,12 @@ const DashBoardParent = ({ token }) => {
     }
 };
 
-// Navigera till chatt-sidan med carpoolId
-const handleNavigateToChat = (carpoolId) => {
-  navigate(`/carpool-chat?carpoolId=${carpoolId}`);
+
+const openChatModal = (carpoolId) => {
+  setSelectedCarpoolId(carpoolId); // Sätt det valda carpoolId:t
+  onChatOpen(); // Öppna chat-modal
 };
 
-
-
-  
-  
 
   if (loading) {
     return (
@@ -325,7 +322,7 @@ const handleNavigateToChat = (carpoolId) => {
                                 <Button
                                   colorScheme="teal"
                                   size="sm"
-                                  onClick={() => handleNavigateToChat(carpool.id)}
+                                  onClick={() => openChatModal(carpool.id)}
                                 >
                                   Chat
                                 </Button>
@@ -358,6 +355,19 @@ const handleNavigateToChat = (carpoolId) => {
               <ModalBody p={{ base: 2, md: 4 }} maxH={{ base: '60vh', md: 'none' }} overflowY={{ base: 'auto', md: 'visible' }}>
                 {/* CarpoolComponent adjusted for compact view */}
                 <CarpoolComponent activityId={selectedActivityId} />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+
+          {/* Modal for Carpool Chat */}
+          <Modal isOpen={isChatOpen} onClose={onChatClose} size="lg">
+            <ModalOverlay />
+            <ModalContent>
+              <ModalHeader>Carpool Chat</ModalHeader>
+              <ModalCloseButton />
+              <ModalBody>
+                {/* Rendera CarpoolChat och skicka in valt carpoolId */}
+                <CarpoolChat carpoolId={selectedCarpoolId} />
               </ModalBody>
             </ModalContent>
           </Modal>
