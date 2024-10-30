@@ -120,7 +120,6 @@ const Profile = () => {
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
-      fetchUserData();
     };
 
     const fetchChildren = async () => {
