@@ -28,6 +28,7 @@ import { format, parseISO } from 'date-fns';
 import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
 import { checkIfLoggedIn } from '../utils/auth';
+import CarpoolDetails from './CarpoolDetails';
 
 const DashBoardParent = ({ token }) => {
   const [authLoading, setAuthLoading] = useState(true); // New state for auth check
@@ -42,10 +43,13 @@ const DashBoardParent = ({ token }) => {
   const [selectedActivityId, setSelectedActivityId] = useState(null);
   const [joinedChildrenInCarpool, setJoinedChildrenInCarpool] = useState({});
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const toast = useToast();
   const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure();
   const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
-
+  const [selectedCarpool, setSelectedCarpool] = useState(null);
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
+  const toast = useToast();
+  
   useEffect(() => {
     const verifyUser = async () => {
       const loggedIn = await checkIfLoggedIn();
@@ -114,6 +118,15 @@ const DashBoardParent = ({ token }) => {
       setLoading(false);
     }
   };
+
+  const handleCarpoolClick = (activity, carpool) => {
+    setSelectedActivity(activity);
+    setSelectedCarpool(carpool);
+    onDetailsOpen();
+  };
+
+  
+
 
   const fetchCarpoolsForActivity = async (activityId) => {
     setFetchingCarpools(true);
@@ -325,8 +338,11 @@ const DashBoardParent = ({ token }) => {
                           leftIcon={<FaPlus />}
                           colorScheme="brand"
                           size="sm"
-                          onClick={() => openCarpoolModal(activity.activity_id)}
-                        >
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openCarpoolModal(activity.activity_id);
+                        }}
+                      >
                           Lägg till Carpool
                         </Button>
 
@@ -343,25 +359,32 @@ const DashBoardParent = ({ token }) => {
                               bg="gray.50"
                               boxShadow="sm"
                               fontSize={{ base: 'sm', sm: 'md' }}
+                              onClick={(e) => { e.stopPropagation(); handleCarpoolClick(activity, carpool)}}
+                              cursor="pointer"
+                              _hover={{ bg: 'gray.100' }}
                             >
-                              <Flex justify="space-between" align="center">
-                                <Box>
-                                  <Text fontSize="md" color="brand.600">
-                                    {carpool.departure_address} - {carpool.departure_city} ({carpool.carpool_type})
-                                  </Text>
-                                  <Text fontSize="sm" color="gray.500">
-                                    Tillgängliga Platser: {carpool.available_seats}
-                                  </Text>
-                                </Box>
+                              <Flex justify="space-between" align="center" wrap="wrap">
+                              <Box>
+                                <Text fontSize="md" color="brand.600">
+                                  {carpool.departure_address} - {carpool.departure_city} ({carpool.carpool_type})
+                                </Text>
+                                <Text fontSize="sm" color="gray.500">
+                                  Tillgängliga Platser: {carpool.available_seats}
+                                </Text>
+                              </Box>
 
+                              <Flex gap="2" mt={{ base: 2, md: 0 }}>
                                 {carpool.available_seats > 0 ? (
                                   <Button
-                                    colorScheme={joinedChildrenInCarpool[carpool.id]?.length ? 'green' : 'blue'}
+                                    colorScheme={joinedChildrenInCarpool[carpool.id]?.length ? 'red' : 'green'}
                                     size="sm"
-                                    onClick={() => handleJoinCarpool(carpool.id, activity.activity_id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();  
+                                      handleJoinCarpool(carpool.id, activity.activity_id);
+                                    }}
                                     disabled={joinedChildrenInCarpool[carpool.id]?.length}
                                   >
-                                    {joinedChildrenInCarpool[carpool.id]?.length ? 'Joined' : 'Join'}
+                                    {joinedChildrenInCarpool[carpool.id]?.length ? 'Avboka' : 'Boka'}
                                   </Button>
                                 ) : (
                                   <Button colorScheme="red" size="sm" isDisabled>
@@ -371,11 +394,16 @@ const DashBoardParent = ({ token }) => {
                                 <Button
                                   colorScheme="teal"
                                   size="sm"
-                                  onClick={() => openChatModal(carpool.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Stops event from bubbling up immediately
+                                    openChatModal(carpool.id);
+                                 }}
                                 >
                                   Chat
                                 </Button>
                               </Flex>
+                            </Flex>
+
                             </Box>
                           ))
                         ) : (
@@ -422,7 +450,15 @@ const DashBoardParent = ({ token }) => {
               </ModalBody>
             </ModalContent>
           </Modal>
-
+          {/* Carpool Details Modal */}
+          {selectedActivity && selectedCarpool && (
+            <CarpoolDetails
+              isOpen={isDetailsOpen}
+              onClose={onDetailsClose}
+              activity={selectedActivity}
+              carpool={selectedCarpool}
+            />
+            )}
         </Box>
       </Flex>
     </Box>
