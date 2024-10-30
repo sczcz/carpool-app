@@ -290,10 +290,15 @@ def remove_passenger(current_user):
     
     if not passenger:
         return jsonify({"error": "Passageraren finns inte i den angivna carpoolen"}), 404
+    
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        return jsonify({"error": "Carpool not found!"}), 404
 
     # Ta bort passageraren
     try:
         db.session.delete(passenger)
+        carpool.available_seats += 1
         db.session.commit()
         return jsonify({"message": "Passageraren har tagits bort från carpoolen"}), 200
     except Exception as e:
