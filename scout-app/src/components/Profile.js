@@ -26,6 +26,7 @@ import {
   ModalBody,
   ModalFooter,
 } from '@chakra-ui/react';
+import { checkIfLoggedIn } from '../utils/auth';
 
 const Profile = () => {
   // User information (auto-fill from backend)
@@ -93,6 +94,10 @@ const Profile = () => {
         console.error('Error fetching cars data:', error);
       }
     };
+
+  useEffect(() => {
+      checkIfLoggedIn(); // Kollar om användaren är inloggad och omdirigerar vid behov
+    }, []);
 
   // Fetch logged-in user information on component mount
   useEffect(() => {
