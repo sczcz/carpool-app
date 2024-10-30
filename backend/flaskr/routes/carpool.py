@@ -272,3 +272,31 @@ def delete_car(current_user, car_id):
     db.session.commit()
 
     return jsonify({"message": "Car deleted successfully!"}), 200
+
+
+@carpool_bp.route('/api/carpool/remove-passenger', methods=['DELETE'])
+@token_required
+def remove_passenger(current_user):
+    """Tar bort en passagerare från en carpool."""
+    data = request.get_json()
+    carpool_id = data.get('carpool_id')
+    child_id = data.get('child_id')
+
+    if not carpool_id or not child_id:
+        return jsonify({"error": "Både carpool_id och child_id krävs för att ta bort en passagerare"}), 400
+
+    # Kontrollera om passageraren finns i carpoolen
+    passenger = Passenger.query.filter_by(carpool_id=carpool_id, child_id=child_id).first()
+    
+    if not passenger:
+        return jsonify({"error": "Passageraren finns inte i den angivna carpoolen"}), 404
+
+    # Ta bort passageraren
+    try:
+        db.session.delete(passenger)
+        db.session.commit()
+        return jsonify({"message": "Passageraren har tagits bort från carpoolen"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Ett fel inträffade vid borttagningen av passageraren"}), 500
+
