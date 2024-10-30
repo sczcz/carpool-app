@@ -19,6 +19,7 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
+  ModalFooter,
   ModalBody,
   ModalCloseButton,
   useDisclosure,
@@ -38,11 +39,12 @@ const DashBoardParent = ({ token }) => {
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
   const [selectedActivityId, setSelectedActivityId] = useState(null);
-  const [joinedCarpools, setJoinedCarpools] = useState({});
+  const [joinedChildrenInCarpool, setJoinedChildrenInCarpool] = useState({});
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
   const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure(); // För chat-modal
   const [selectedCarpoolId, setSelectedCarpoolId] = useState(null); // Ny state för att spara valt carpoolId för chatten
+
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -148,9 +150,8 @@ const DashBoardParent = ({ token }) => {
     setVisibleActivitiesCount(visibleActivitiesCount + 10);
   };
 
-  const handleJoinCarpool = async (carpoolId, roleId) => {
+  const handleJoinCarpool = async (carpoolId, activityId) => {
     try {
-        // Check if the user has multiple children in the same role
         const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
             method: 'GET',
             credentials: 'include',
@@ -158,19 +159,32 @@ const DashBoardParent = ({ token }) => {
         });
         
         const checkData = await checkResponse.json();
-        let selectedChildId = -1; // Default value
+        let selectedChildId = -1;
         
         if (checkData.multiple) {
-            // If multiple children, prompt user to select one
             selectedChildId = prompt(
                 `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
             );
-            if (!selectedChildId) return; // Exit if no selection made
+            if (!selectedChildId) return; 
         } else {
             selectedChildId = checkData.child_id;
         }
 
-        // Make the API request to join the carpool
+        const selectedCarpool = activities
+            .find(activity => activity.activity_id === activityId)
+            .carpools.find(carpool => carpool.id === carpoolId);
+
+        if (selectedCarpool.passengers.includes(parseInt(selectedChildId))) {
+            toast({
+                title: 'Already Joined',
+                description: 'This child is already part of the carpool.',
+                status: 'info',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
         const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
             method: 'POST',
             credentials: 'include',
@@ -178,24 +192,24 @@ const DashBoardParent = ({ token }) => {
             body: JSON.stringify({ child_id: selectedChildId }),
         });
 
-        if (!response.ok) {
-            setJoinedCarpools((prevJoined) => ({
-                ...prevJoined,
-                [carpoolId]: !prevJoined[carpoolId],
-            }));
-            throw new Error('Failed to join carpool');
-        }
+        if (!response.ok) throw new Error('Failed to join carpool');
 
-        const result = await response.json();
         toast({
-            title: 'Success',
-            description: result.message || 'Successfully joined the carpool!',
+            title: 'Joined Carpool',
+            description: 'Successfully joined the carpool!',
             status: 'success',
             duration: 5000,
             isClosable: true,
         });
+
+        setJoinedChildrenInCarpool(prev => ({
+          ...prev,
+          [carpoolId]: [...(prev[carpoolId] || []), selectedChildId]
+        }));
+
+        await fetchCarpoolsForActivity(activityId);
+
     } catch (error) {
-        console.error('Error joining carpool:', error);
         toast({
             title: 'Error',
             description: error.message || 'Unable to join carpool',
@@ -204,14 +218,12 @@ const DashBoardParent = ({ token }) => {
             isClosable: true,
         });
     }
-};
+  };
 
-
-const openChatModal = (carpoolId) => {
-  setSelectedCarpoolId(carpoolId); // Sätt det valda carpoolId:t
-  onChatOpen(); // Öppna chat-modal
-};
-
+  const openChatModal = (carpoolId) => {
+    setSelectedCarpoolId(carpoolId); // Sätt det valda carpoolId:t
+    onChatOpen(); // Öppna chat-modal
+  };
 
   if (loading) {
     return (
@@ -303,7 +315,7 @@ const openChatModal = (carpoolId) => {
                               w="100%"
                               bg="gray.50"
                               boxShadow="sm"
-                              fontSize={{ base: 'sm', sm: 'md' }} // Smaller font on mobile
+                              fontSize={{ base: 'sm', sm: 'md' }}
                             >
                               <Flex justify="space-between" align="center">
                                 <Box>
@@ -314,13 +326,21 @@ const openChatModal = (carpoolId) => {
                                     Tillgängliga Platser: {carpool.available_seats}
                                   </Text>
                                 </Box>
-                                <Button
-                                  colorScheme={joinedCarpools[carpool.id] ? 'green' : 'blue'}
-                                  size="sm"
-                                  onClick={() => handleJoinCarpool(carpool.id)}
-                                >
-                                  {joinedCarpools[carpool.id] ? 'Joined' : 'Join'}
-                                </Button>
+                                
+                                {carpool.available_seats > 0 ? (
+                                  <Button
+                                    colorScheme={joinedChildrenInCarpool[carpool.id]?.length ? 'green' : 'blue'}
+                                    size="sm"
+                                    onClick={() => handleJoinCarpool(carpool.id, activity.activity_id)}
+                                    disabled={joinedChildrenInCarpool[carpool.id]?.length}
+                                  >
+                                    {joinedChildrenInCarpool[carpool.id]?.length ? 'Joined' : 'Join'}
+                                  </Button>
+                                ) : (
+                                  <Button colorScheme="red" size="sm" isDisabled>
+                                    Full
+                                  </Button>
+                                )}
                                 <Button
                                   colorScheme="teal"
                                   size="sm"
@@ -355,8 +375,10 @@ const openChatModal = (carpoolId) => {
               </ModalHeader>
               <ModalCloseButton size={{ base: 'sm', md: 'md' }} />
               <ModalBody p={{ base: 2, md: 4 }} maxH={{ base: '60vh', md: 'none' }} overflowY={{ base: 'auto', md: 'visible' }}>
-                {/* CarpoolComponent adjusted for compact view */}
-                <CarpoolComponent activityId={selectedActivityId} />
+                <CarpoolComponent 
+                  activityId={selectedActivityId} onClose={onClose} 
+                  onCarpoolCreated={() => fetchCarpoolsForActivity(selectedActivityId)}
+                />
               </ModalBody>
             </ModalContent>
           </Modal>
