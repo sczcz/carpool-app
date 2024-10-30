@@ -139,7 +139,7 @@ const Profile = () => {
           const mappedChildren = data.children.map(child => ({
             firstName: child.first_name,
             lastName: child.last_name,
-            role: child.role, // Ensure this value is correct
+            role: child.role, 
             membershipNumber: child.membership_number,
             phone: child.phone
           }));

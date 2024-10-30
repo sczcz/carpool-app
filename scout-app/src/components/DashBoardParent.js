@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -50,6 +51,18 @@ const DashBoardParent = ({ token }) => {
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
   
+
+  const roleColors = {
+    tumlare: 'blue.400',
+    kutar: 'cyan.400',     
+    upptäckare: 'green.400', 
+    äventyrare: 'yellow.400', 
+    utmanare: 'orange.400',   
+    rover: 'purple.400',        
+  };
+
+
+
   useEffect(() => {
     const verifyUser = async () => {
       const loggedIn = await checkIfLoggedIn();
@@ -125,8 +138,6 @@ const DashBoardParent = ({ token }) => {
     onDetailsOpen();
   };
 
-  
-
 
   const fetchCarpoolsForActivity = async (activityId) => {
     setFetchingCarpools(true);
@@ -176,79 +187,160 @@ const DashBoardParent = ({ token }) => {
     onOpen();
   };
 
-  const handleLoadMore = () => {
-    setVisibleActivitiesCount(visibleActivitiesCount + 10);
-  };
-
   const handleJoinCarpool = async (carpoolId, activityId) => {
     try {
-      const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        const checkData = await checkResponse.json();
+        let selectedChildId = -1;
+
+        if (checkData.multiple) {
+            selectedChildId = prompt(
+                `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
+            );
+            if (!selectedChildId) return;
+        } else {
+            selectedChildId = checkData.child_id;
+        }
+
+        const selectedCarpool = activities
+            .find(activity => activity.activity_id === activityId)
+            .carpools.find(carpool => carpool.id === carpoolId);
+
+        if (selectedCarpool.passengers.includes(parseInt(selectedChildId))) {
+            toast({
+                title: 'Already Joined',
+                description: 'This child is already part of the carpool.',
+                status: 'info',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ child_id: selectedChildId }),
+        });
+
+        if (!response.ok) throw new Error('Failed to join carpool');
+
+        toast({
+            title: 'Joined Carpool',
+            description: 'Successfully joined the carpool!',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+        });
+
+        // Update joined children state
+        setJoinedChildrenInCarpool(prev => ({
+            ...prev,
+            [carpoolId]: [...(prev[carpoolId] || []), selectedChildId]
+        }));
+
+        // Refresh carpool data to update available seats
+        await fetchCarpoolsForActivity(activityId);
+
+    } catch (error) {
+        toast({
+            title: 'Error',
+            description: error.message || 'Unable to join carpool',
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+        });
+    }
+};
+
+  const handleRemoveFromCarpool = async (carpoolId, activityId) => {
+    try {
+        // Get the children in the carpool for confirmation
+        const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
       });
 
       const checkData = await checkResponse.json();
       let selectedChildId = -1;
 
       if (checkData.multiple) {
-        selectedChildId = prompt(
-          `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
-        );
-        if (!selectedChildId) return;
+          selectedChildId = prompt(
+              `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
+          );
+          if (!selectedChildId) return;
       } else {
-        selectedChildId = checkData.child_id;
+          selectedChildId = checkData.child_id;
       }
-
-      const selectedCarpool = activities
-        .find(activity => activity.activity_id === activityId)
-        .carpools.find(carpool => carpool.id === carpoolId);
-
-      if (selectedCarpool.passengers.includes(parseInt(selectedChildId))) {
-        toast({
-          title: 'Already Joined',
-          description: 'This child is already part of the carpool.',
-          status: 'info',
-          duration: 5000,
-          isClosable: true,
+        // Send carpool_id and child_id in the body of the DELETE request
+        const response = await fetch(`/api/carpool/remove-passenger`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ carpool_id: carpoolId, child_id: selectedChildId }),
         });
-        return;
-      }
 
-      const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ child_id: selectedChildId }),
-      });
+        if (!response.ok) throw new Error('Failed to remove from carpool');
 
-      if (!response.ok) throw new Error('Failed to join carpool');
+        toast({
+            title: 'Removed from Carpool',
+            description: 'Successfully removed the child from the carpool!',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+        });
 
-      toast({
-        title: 'Joined Carpool',
-        description: 'Successfully joined the carpool!',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+        // Update state to remove child ID from joinedChildrenInCarpool
+        setJoinedChildrenInCarpool(prev => ({
+            ...prev,
+            [carpoolId]: (prev[carpoolId] || []).filter(id => id !== selectedChildId)
+        }));
 
-      setJoinedChildrenInCarpool(prev => ({
-        ...prev,
-        [carpoolId]: [...(prev[carpoolId] || []), selectedChildId]
-      }));
+        // ** Here is the key change: Update the available seats of the carpool after removal **
+        setActivities(prevActivities => 
+            prevActivities.map(activity => {
+                if (activity.activity_id === activityId) {
+                    return {
+                        ...activity,
+                        carpools: activity.carpools.map(carpool => {
+                            if (carpool.id === carpoolId) {
+                                return {
+                                    ...carpool,
+                                    available_seats: carpool.available_seats + 1 // Increase available seats by 1
+                                };
+                            }
+                            return carpool;
+                        }),
+                    };
+                }
+                return activity;
+            })
+        );
 
-      await fetchCarpoolsForActivity(activityId);
-
+        // Refresh carpool data to update available seats
+        await fetchCarpoolsForActivity(activityId);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Unable to join carpool',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+        toast({
+            title: 'Error',
+            description: error.message || 'Unable to remove from carpool',
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+        });
     }
-  };
+};
+
+const handleLoadMore = () => {
+  setVisibleActivitiesCount(visibleActivitiesCount + 10);
+};
+
 
   const openChatModal = (carpoolId) => {
     setSelectedCarpoolId(carpoolId);
@@ -314,7 +406,7 @@ const DashBoardParent = ({ token }) => {
               {activities.slice(0, visibleActivitiesCount).map((activity, index) => (
                 <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="white">
                   <Flex justify="space-between" align="center" mb={2}>
-                    <Tag size="lg" colorScheme="teal" borderRadius="full">
+                    <Tag size="lg" color={'white'} backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
                       <TagLabel>{activity.scout_level}</TagLabel>
                     </Tag>
                     <Button
@@ -349,7 +441,7 @@ const DashBoardParent = ({ token }) => {
                         {fetchingCarpools ? (
                           <Spinner />
                         ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
-                          activity.carpools.slice(0, 3).map((carpool) => (
+                          activity.carpools.map((carpool) => (
                             <Box
                               key={carpool.id}
                               p={4}
@@ -376,16 +468,20 @@ const DashBoardParent = ({ token }) => {
                               <Flex gap="2" mt={{ base: 2, md: 0 }}>
                                 {carpool.available_seats > 0 ? (
                                   <Button
-                                    colorScheme={joinedChildrenInCarpool[carpool.id]?.length ? 'red' : 'green'}
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();  
-                                      handleJoinCarpool(carpool.id, activity.activity_id);
-                                    }}
-                                    disabled={joinedChildrenInCarpool[carpool.id]?.length}
-                                  >
-                                    {joinedChildrenInCarpool[carpool.id]?.length ? 'Avboka' : 'Boka'}
-                                  </Button>
+                                  colorScheme={joinedChildrenInCarpool[carpool.id]?.length ? 'red' : 'green'}
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (joinedChildrenInCarpool[carpool.id]?.length) {
+                                      handleRemoveFromCarpool(carpool.id, activity.activity_id); // Call removal function
+                                    } else {
+                                      handleJoinCarpool(carpool.id, activity.activity_id); // Call joining function
+                                    }
+                                  }}
+                                  disabled={joinedChildrenInCarpool[carpool.id]?.length && joinedChildrenInCarpool[carpool.id]?.length === 0}
+                                >
+                                  {joinedChildrenInCarpool[carpool.id]?.length ? 'Avboka' : 'Boka'}
+                                </Button>
                                 ) : (
                                   <Button colorScheme="red" size="sm" isDisabled>
                                     Full

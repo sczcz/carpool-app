@@ -118,7 +118,7 @@ const Navbar = () => {
                 variant="solid" // Change variant to solid for a filled button style
                 colorScheme={isScrolled ? "white" : "brand"} 
                 size="md" // Size of the button
-                borderRadius="full" // Full rounded corners
+                borderRadius="md" // Full rounded corners
                 ml={5}
                 _hover={{ bg: isScrolled ? "whiteAlpha.300" : "brand.600", color: "white" }} // Hover effect
                 _active={{ bg: "brand.600", transform: 'scale(0.95)' }} // Active effect
