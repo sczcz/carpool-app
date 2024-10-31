@@ -4,7 +4,7 @@ from models.carpool_model import Carpool, Passenger, Car  # Import your models
 from models.auth_model import Child
 from models.activity_model import Activity
 from datetime import datetime
-from routes.auth import token_required  # Assuming you're using the token for authorization
+from routes.auth import token_required, User  # Assuming you're using the token for authorization
 
 carpool_bp = Blueprint('carpool_bp', __name__)
 
@@ -68,12 +68,31 @@ def list_carpools(current_user):
             "departure_postcode": carpool.departure_postcode,
             "departure_city": carpool.departure_city,
             "carpool_type": carpool.carpool_type,
-            "passengers": [p.child_id for p in carpool.passengers]
+            "passengers": [
+                {
+                    "child_id": passenger.child_id,
+                    "name": f"{child.first_name} {child.last_name}",
+                    "phone": child.phone,
+                    "parent_1_id": child.parent_1_id,
+                    "parent_2_id": child.parent_2_id,
+                    "parent1_name": f"{parent1.first_name} {parent1.last_name}" if parent1 else None,
+                    "parent2_name": f"{parent2.first_name} {parent2.last_name}" if parent2 else None,
+                    "parent1_phone": parent1.phone if parent1 else None,
+                    "parent2_phone": parent2.phone if parent2 else None
+                }
+                for passenger in carpool.passengers
+                for child in [Child.query.get(passenger.child_id)]
+                for parent1 in [User.query.get(child.parent_1_id)]  # Query parent 1
+                for parent2 in [User.query.get(child.parent_2_id) if child.parent_2_id else None]  # Query parent 2 if exists
+                if child
+            ]
         }
         for carpool in carpools
     ]
 
     return jsonify({"carpools": carpool_list}), 200
+
+
 
 
 # Endpoint to add a passenger to a carpool
@@ -166,9 +185,39 @@ def check_multiple_children(current_user):
     else:
         # No children found case
         return jsonify({"multiple": False, "child_id": None, "message": "No children found for this role."}), 404
+    
 
+@carpool_bp.route('/api/carpool/all-children-joined', methods=['GET'])
+@token_required
+def all_children_joined(current_user):
+    carpool_id = request.args.get('carpool_id', type=int)
+    if not carpool_id:
+        return jsonify({"error": "Carpool ID is required!"}), 400
 
+    # Retrieve carpool and associated activity
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        return jsonify({"error": "Carpool not found!"}), 404
 
+    activity = Activity.query.get(carpool.activity_id)
+    if not activity or not activity.role_id:
+        return jsonify({"error": "Associated activity or role not found!"}), 404
+
+    role_id = activity.role_id
+
+    # Retrieve all children of the current user with this role
+    children_with_role = Child.query.filter(
+        ((Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id)),
+        Child.role_id == role_id
+    ).all()
+
+    # Retrieve all passengers in the carpool
+    passenger_child_ids = [p.child_id for p in Passenger.query.filter_by(carpool_id=carpool_id).all()]
+
+    # Check if every child with this role is in the carpool
+    all_joined = all(child.child_id in passenger_child_ids for child in children_with_role)
+
+    return jsonify({"all_joined": all_joined}), 200
 
 
 # Endpoint to delete a carpool

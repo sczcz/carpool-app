@@ -17,7 +17,8 @@ class User(db.Model):
     last_name = db.Column(db.String(255), nullable=False)
     address = db.Column(db.String(255), nullable=True)
     postcode = db.Column(db.String(20), nullable=True) 
-    city = db.Column(db.String(100), nullable=True)  
+    city = db.Column(db.String(100), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)  
 
 # Sambandstabell mellan User och Role
 class UserRole(db.Model):

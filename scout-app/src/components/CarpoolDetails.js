@@ -14,14 +14,19 @@ import {
   Icon,
   TagLabel,
   useBreakpointValue,
-  HStack
+  HStack,
+  Button
 } from '@chakra-ui/react';
-import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle } from 'react-icons/fa';
+import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaUser, FaTrash } from 'react-icons/fa';
 
-const CarpoolDetails = ({ isOpen, onClose, activity, carpool }) => {
-  // Responsive settings for font sizes and modal size
+const CarpoolDetails = ({ isOpen, onClose, activity, carpool, currentUserId, handleLeaveCarpool }) => {
   const fontSize = useBreakpointValue({ base: 'sm', md: 'md' });
   const modalSize = useBreakpointValue({ base: 'xs', md: 'lg' });
+
+  const isParentOfChild = (passenger) => {
+    return passenger.parent_1_id === currentUserId || passenger.parent_2_id === currentUserId;
+  };
+  
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size={modalSize}>
@@ -57,6 +62,50 @@ const CarpoolDetails = ({ isOpen, onClose, activity, carpool }) => {
               <Text fontSize={fontSize}><strong>Available Seats:</strong> {carpool.available_seats}</Text>
               <Text fontSize={fontSize}><strong>Carpool Type:</strong> {carpool.carpool_type}</Text>
             </Box>
+
+            {/* Passenger List */}
+            <Text fontWeight="bold" fontSize={fontSize} mt={{ base: 4, md: 6 }}>Passengers:</Text>
+            <VStack w="100%" align="start" spacing={2}>
+              {carpool.passengers && carpool.passengers.length > 0 ? (
+                carpool.passengers.map((passenger, index) => (
+                  <Box key={index} w="100%" p={2} borderRadius="md" bg="gray.50" boxShadow="sm">
+                    <HStack spacing={2} justifyContent="space-between">
+                      <HStack spacing={2}>
+                        <Icon as={FaUser} color="gray.500" />
+                        <Text fontSize="sm" fontWeight="bold">Namn:</Text>
+                        <Text fontSize="sm">{passenger.name || 'Unknown'}</Text>
+                      </HStack>
+                    
+                      {/* Visa "Leave" knapp bara för föräldern */}
+                      {isParentOfChild(passenger) && (
+                        <Button
+                          size="xs"
+                          colorScheme="red"
+                          onClick={() => handleLeaveCarpool(passenger.child_id)}
+                          leftIcon={<FaTrash />}
+                        >
+                          Lämna
+                        </Button>
+                      )}
+                    </HStack>
+                    <HStack spacing={2} mt={1}>
+                      <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
+                      <Text fontSize="sm">{passenger.phone || 'N/A'}</Text>
+                    </HStack>
+                    <HStack spacing={2} mt={1}>
+                      <Text fontSize="sm" fontWeight="bold">Vårdnadshavare:</Text>
+                      <Text fontSize="sm">{passenger.parent1_name}</Text>
+                    </HStack>
+                    <HStack spacing={2} mt={1}>
+                      <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
+                      <Text fontSize="sm">{passenger.parent1_phone || 'N/A'}</Text>
+                    </HStack>
+                  </Box>
+                ))
+              ) : (
+                <Text fontSize="sm" color="gray.500">No passengers found.</Text>
+              )}
+            </VStack>
           </VStack>
         </ModalBody>
       </ModalContent>

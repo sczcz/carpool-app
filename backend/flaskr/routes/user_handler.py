@@ -22,6 +22,7 @@ def add_address(current_user):
     address = data.get('address')
     postcode = data.get('postcode')
     city = data.get('city')
+    phone = data.get('phone')
 
     if not all([address, postcode, city]):
         return jsonify({"error": "Address, postcode, and city are required!"}), 400
@@ -30,6 +31,7 @@ def add_address(current_user):
     current_user.address = address
     current_user.postcode = postcode
     current_user.city = city
+    current_user.phone = phone
 
     db.session.commit()
 
@@ -56,7 +58,8 @@ def get_logged_in_user(current_user):
         "address": current_user.address,
         "postcode": current_user.postcode,
         "city": current_user.city,
-        "role": role_name  
+        "role": role_name,
+        "phone": current_user.phone  
     }
 
     return jsonify({"user": user_data}), 200

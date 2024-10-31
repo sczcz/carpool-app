@@ -39,6 +39,7 @@ const Profile = () => {
   const [address, setAddress] = useState('');
   const [postcode, setPostcode] = useState('');
   const [city, setCity] = useState('');
+  const [phone, setPhone] = useState('');
 
   // Children information
   const [children, setChildren] = useState([]);
@@ -119,6 +120,7 @@ const Profile = () => {
           setAddress(user.address || '');
           setPostcode(user.postcode || '');
           setCity(user.city || '');
+          setPhone(user.phone || '');
         } else {
           console.error('Failed to fetch user data');
         }
@@ -171,6 +173,7 @@ const Profile = () => {
           address,
           postcode,
           city,
+          phone,
         }),
       });
   
@@ -377,6 +380,9 @@ const Profile = () => {
           </Text>
           <Text fontSize="lg" color="gray.600">
             Adress: {address}, {postcode}, {city}
+          </Text>
+          <Text fontSize="lg" color="gray.600">
+            Telefon: {phone}
           </Text>
           <Text fontSize="md" color="gray.500">
             Roll: {role}
@@ -637,6 +643,15 @@ const Profile = () => {
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Skriv in stad"
                 isRequired // Accessibility enhancement
+              />
+            </FormControl>
+            <FormControl mt={4}>
+              <FormLabel>Telefon</FormLabel>
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Skriv in telefonnummer"
+                //isRequired // Accessibility enhancement
               />
             </FormControl>
           </ModalBody>

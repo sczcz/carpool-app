@@ -22,7 +22,8 @@ def add_test_data():
             last_name='User',
             address='Test Street 123',
             postcode='12345',
-            city='Testville'
+            city='Testville',
+            phone='0708555123'
         )
         db.session.add(test_user)
         db.session.commit()
