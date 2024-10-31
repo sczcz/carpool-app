@@ -24,6 +24,7 @@ const Register = ({ isOpen, onClose }) => {
     const [last_name, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [phone, setPhone] = useState('');  // Nytt state för telefonnummer
     const [role, setRole] = useState('Vårdnadshavare');
     const [error, setError] = useState('');
 
@@ -35,7 +36,7 @@ const Register = ({ isOpen, onClose }) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ first_name, last_name, email, password, role })
+            body: JSON.stringify({ first_name, last_name, email, password, phone, role })  // Inkludera phone i request body
         })
         .then(response => response.json())
         .then(data => {
@@ -48,6 +49,7 @@ const Register = ({ isOpen, onClose }) => {
                 setLastName('');
                 setEmail('');
                 setPassword('');
+                setPhone('');  
                 setRole('Vårdnadshavare');
                 setError('');
                 onClose(); // Close the modal upon successful registration
@@ -113,6 +115,18 @@ const Register = ({ isOpen, onClose }) => {
                                         type="password" 
                                         value={password} 
                                         onChange={(e) => setPassword(e.target.value)} 
+                                        required 
+                                        bg="white"
+                                    />
+                                </FormControl>
+
+                                {/* Telefon */}
+                                <FormControl isRequired>  {/* Telefonnummer */}
+                                    <FormLabel>Telefonnummer:</FormLabel>
+                                    <Input 
+                                        type="tel" 
+                                        value={phone} 
+                                        onChange={(e) => setPhone(e.target.value)} 
                                         required 
                                         bg="white"
                                     />
