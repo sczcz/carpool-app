@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -547,14 +546,16 @@ const handleLoadMore = () => {
             </ModalContent>
           </Modal>
           {/* Carpool Details Modal */}
-          {selectedActivity && selectedCarpool && (
-            <CarpoolDetails
+          <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} size={{ base: 'xs', md: 'md', lg: 'lg' }} isCentered>
+            <ModalOverlay />
+            <CarpoolDetails 
               isOpen={isDetailsOpen}
               onClose={onDetailsClose}
               activity={selectedActivity}
               carpool={selectedCarpool}
+              handleRemoveFromCarpool={handleRemoveFromCarpool} // Pass the function down
             />
-            )}
+          </Modal>
         </Box>
       </Flex>
     </Box>
