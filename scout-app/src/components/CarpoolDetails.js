@@ -84,50 +84,61 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, han
 
               {/* Passenger List Section */}
               <Text fontWeight="bold" fontSize={fontSize} mt={4}>Passengers:</Text>
-              <Stack spacing={3} w="full">
-                {carpool.passengers && carpool.passengers.length > 0 ? (
-                  carpool.passengers.map((passenger, index) => (
-                    <Box key={index} w="full" p={3} borderRadius="md" bg="gray.50" boxShadow="sm">
-                      <HStack spacing={2} justifyContent="space-between">
-                        <HStack spacing={2}>
-                          <Icon as={FaUser} color="gray.500" />
-                          <Text fontSize="sm" fontWeight="bold">Namn:</Text>
-                          <Text fontSize="sm">{passenger.name || 'Unknown'}</Text>
+              <Box 
+                w="full" 
+                maxH={{ base: '200px', md: '300px' }} // Set max height for the scrollable area
+                overflowY="auto" // Enable vertical scrolling
+                borderWidth={1}
+                borderColor="gray.200"
+                borderRadius="md"
+                bg="gray.50"
+                p={2}
+              >
+                <Stack spacing={3} w="full">
+                  {carpool.passengers && carpool.passengers.length > 0 ? (
+                    carpool.passengers.map((passenger, index) => (
+                      <Box key={index} w="full" p={3} borderRadius="md" bg="white" boxShadow="sm">
+                        <HStack spacing={2} justifyContent="space-between">
+                          <HStack spacing={2}>
+                            <Icon as={FaUser} color="gray.500" />
+                            <Text fontSize="sm" fontWeight="bold">Namn:</Text>
+                            <Text fontSize="sm">{passenger.name || 'Unknown'}</Text>
+                          </HStack>
+                        
+                          {/* Show "Leave" button only for parent */}
+                          {isParentOfChild(passenger) && (
+                            <IconButton
+                              icon={<FaTrash />}
+                              colorScheme="red"
+                              aria-label="Remove child from carpool"
+                              onClick={() => handleUnbook(passenger.child_id)}
+                              variant="outline"
+                              size="sm"
+                              ml={3}
+                            />
+                          )}
                         </HStack>
-                      
-                        {/* Show "Leave" button only for parent */}
-                        {isParentOfChild(passenger) && (
-                          <IconButton
-                            icon={<FaTrash />}
-                            colorScheme="red"
-                            aria-label="Remove child from carpool"
-                            onClick={() => handleUnbook(passenger.child_id)}
-                            variant="outline"
-                            size="sm"
-                            ml={3}
-                          />
-                        )}
-                      </HStack>
-                      <Stack spacing={1} mt={2}>
-                        <HStack spacing={2}>
-                          <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
-                          <Text fontSize="sm">{passenger.phone || 'N/A'}</Text>
-                        </HStack>
-                        <HStack spacing={2}>
-                          <Text fontSize="sm" fontWeight="bold">Vårdnadshavare:</Text>
-                          <Text fontSize="sm">{passenger.parent1_name || 'N/A'}</Text>
-                        </HStack>
-                        <HStack spacing={2}>
-                          <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
-                          <Text fontSize="sm">{passenger.parent1_phone || 'N/A'}</Text>
-                        </HStack>
-                      </Stack>
-                    </Box>
-                  ))
-                ) : (
-                  <Text fontSize="sm" color="gray.500">No passengers found.</Text>
-                )}
-              </Stack>
+                        <Stack spacing={1} mt={2}>
+                          <HStack spacing={2}>
+                            <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
+                            <Text fontSize="sm">{passenger.phone || 'N/A'}</Text>
+                          </HStack>
+                          <HStack spacing={2}>
+                            <Text fontSize="sm" fontWeight="bold">Vårdnadshavare:</Text>
+                            <Text fontSize="sm">{passenger.parent1_name || 'N/A'}</Text>
+                          </HStack>
+                          <HStack spacing={2}>
+                            <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
+                            <Text fontSize="sm">{passenger.parent1_phone || 'N/A'}</Text>
+                          </HStack>
+                        </Stack>
+                      </Box>
+                    ))
+                  ) : (
+                    <Text fontSize="sm" color="gray.500">No passengers found.</Text>
+                  )}
+                </Stack>
+              </Box>
             </VStack>
 
             {/* Right Section for Activity Details */}

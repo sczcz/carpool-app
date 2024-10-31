@@ -133,6 +133,7 @@ const Navbar = () => {
         <Menu>
           <MenuButton as={Button} variant="link" colorScheme="brand">
             <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" />
+          
           </MenuButton>
           <MenuList>
             <MenuItem as={Link} to="/profile" color="brand.500">Profile</MenuItem>
