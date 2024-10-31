@@ -1,4 +1,3 @@
-// CarpoolDetails.js
 import React from 'react';
 import {
   Modal,
@@ -16,14 +15,13 @@ import {
   useBreakpointValue,
   HStack,
   IconButton,
-  Button,
-  Stack, // Added Stack for improved spacing
+  Stack,
 } from '@chakra-ui/react';
 import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from 'react-icons/fa';
 
 const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, handleRemoveFromCarpool }) => {
   const fontSize = useBreakpointValue({ base: 'sm', md: 'md' });
-  const modalSize = useBreakpointValue({ base: 'xs', md: 'lg' });
+  const modalSize = useBreakpointValue({ base: 'lg', md: 'lg' });
 
   const handleUnbook = (childId) => {
     if (window.confirm(`Are you sure you want to unbook child ID: ${childId}?`)) {
@@ -64,10 +62,10 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, han
           </Tag>
         </HStack>
         <ModalCloseButton size="sm" />
-        <ModalBody p={{ base: 4, md: 6 }}>
-          <HStack spacing={{ base: 4, md: 8 }} align="start" w="full" flexDirection={{ base: 'column', md: 'row' }}>
+        <ModalBody p={{ base: 4, md: 6 }}> {/* Adjusted padding for mobile */}
+          <HStack spacing={{ base: 4, md: 8 }} align="start" w="full" flexDirection={{ base: 'column', md: 'row' }} justify="center"> {/* Centered layout */}
             {/* Left Section for Carpool Information and Passenger List */}
-            <VStack align="start" spacing={4} flex={1}>
+            <VStack align="start" spacing={4} flex={1} w="full" px={{ base: 4, md: 0 }}> {/* Added padding to the sides */}
               {/* Carpool Information Section */}
               <Text fontWeight="bold" fontSize={fontSize} mt={4}>
                 Carpool Information:
@@ -133,7 +131,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, han
             </VStack>
 
             {/* Right Section for Activity Details */}
-            <Box flex={1} w="full" mt={{ base: 4, md: 0 }}>
+            <Box flex={1} w="full" mt={{ base: 4, md: 0 }} px={{ base: 4, md: 0 }}> {/* Added padding to the sides */}
               <Text fontWeight="bold" fontSize={fontSize} mt={4}>
                 Activity Details:
               </Text>
