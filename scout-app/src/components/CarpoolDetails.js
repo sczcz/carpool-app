@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -16,16 +16,54 @@ import {
   HStack,
   IconButton,
   Stack,
+  useToast
 } from '@chakra-ui/react';
 import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from 'react-icons/fa';
 
-const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, handleRemoveFromCarpool }) => {
+const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fetchCarpoolsForActivity }) => {
   const fontSize = useBreakpointValue({ base: 'sm', md: 'md' });
   const modalSize = useBreakpointValue({ base: 'lg', md: 'lg' });
+  const toast = useToast();
 
-  const handleUnbook = (childId) => {
-    if (window.confirm(`Are you sure you want to unbook child ID: ${childId}?`)) {
-      handleRemoveFromCarpool(carpool.id, activity.activity_id, childId);
+  const [passengers, setPassengers] = useState([]);
+
+  useEffect(() => {
+    if (carpool && carpool.passengers) {
+      setPassengers(carpool.passengers);
+    }
+  }, [carpool]);
+
+  const handleUnbook = async (child_id) => {
+    try {
+
+      const response = await fetch(`/api/carpool/remove-passenger`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ carpool_id: carpool.id, child_id: child_id }),
+      });
+
+      if (!response.ok) throw new Error('Failed to remove from carpool');
+
+      toast({
+        title: 'Removed from Carpool',
+        description: 'Successfully removed the child from the carpool!',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      setPassengers((prevPassengers) => prevPassengers.filter((p) => p.child_id !== child_id));
+
+      await fetchCarpoolsForActivity(activity.activity_id);
+
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Unable to remove from carpool',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -95,8 +133,8 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, han
                 p={2}
               >
                 <Stack spacing={3} w="full">
-                  {carpool.passengers && carpool.passengers.length > 0 ? (
-                    carpool.passengers.map((passenger, index) => (
+                  {passengers && passengers.length > 0 ? (
+                    passengers.map((passenger, index) => (
                       <Box key={index} w="full" p={3} borderRadius="md" bg="white" boxShadow="sm">
                         <HStack spacing={2} justifyContent="space-between">
                           <HStack spacing={2}>

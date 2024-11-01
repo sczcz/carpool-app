@@ -307,84 +307,6 @@ const handleJoinCarpool = async (carpoolId, activityId) => {
   }
 };
 
-  const handleRemoveFromCarpool = async (carpoolId, activityId) => {
-    try {
-        // Get the children in the carpool for confirmation
-        const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-      });
-
-      const checkData = await checkResponse.json();
-      let selectedChildId = -1;
-
-      if (checkData.multiple) {
-          selectedChildId = prompt(
-              `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
-          );
-          if (!selectedChildId) return;
-      } else {
-          selectedChildId = checkData.child_id;
-      }
-        // Send carpool_id and child_id in the body of the DELETE request
-        const response = await fetch(`/api/carpool/remove-passenger`, {
-            method: 'DELETE',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ carpool_id: carpoolId, child_id: selectedChildId }),
-        });
-
-        if (!response.ok) throw new Error('Failed to remove from carpool');
-
-        toast({
-            title: 'Removed from Carpool',
-            description: 'Successfully removed the child from the carpool!',
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-        });
-
-        // Update state to remove child ID from joinedChildrenInCarpool
-        setJoinedChildrenInCarpool(prev => ({
-            ...prev,
-            [carpoolId]: (prev[carpoolId] || []).filter(id => id !== selectedChildId)
-        }));
-
-        // ** Here is the key change: Update the available seats of the carpool after removal **
-        setActivities(prevActivities => 
-            prevActivities.map(activity => {
-                if (activity.activity_id === activityId) {
-                    return {
-                        ...activity,
-                        carpools: activity.carpools.map(carpool => {
-                            if (carpool.id === carpoolId) {
-                                return {
-                                    ...carpool,
-                                    available_seats: carpool.available_seats + 1 // Increase available seats by 1
-                                };
-                            }
-                            return carpool;
-                        }),
-                    };
-                }
-                return activity;
-            })
-        );
-
-        // Refresh carpool data to update available seats
-        await fetchCarpoolsForActivity(activityId);
-    } catch (error) {
-        toast({
-            title: 'Error',
-            description: error.message || 'Unable to remove from carpool',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-        });
-    }
-};
-
 const handleLoadMore = () => {
   setVisibleActivitiesCount(visibleActivitiesCount + 10);
 };
@@ -533,7 +455,7 @@ const handleLoadMore = () => {
                                     {loadingJoinState[carpool.id] ? (
                                       <Spinner size="xs" />
                                     ) : joinedChildrenInCarpool[carpool.id]?.allJoined ? (
-                                      'Joined'
+                                      'Bokad'
                                     ) : (
                                       'Boka'
                                     )}
@@ -610,6 +532,7 @@ const handleLoadMore = () => {
               activity={selectedActivity}
               carpool={selectedCarpool}
               currentUserId={userId}
+              fetchCarpoolsForActivity={fetchCarpoolsForActivity}
             />
             )}
         </Box>
