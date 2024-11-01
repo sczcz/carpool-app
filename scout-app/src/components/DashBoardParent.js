@@ -103,10 +103,8 @@ const DashBoardParent = ({ token }) => {
   };
   
   useEffect(() => {
-    if (!authLoading) {
       fetchActivities();
-    }
-  }, [token, authLoading]);
+  }, [token]);
   
   const fetchActivities = async () => {
     setLoading(true);
