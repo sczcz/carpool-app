@@ -235,14 +235,10 @@ def delete_carpool(current_user, carpool_id):
     return jsonify({"message": "Carpool deleted successfully!"}), 200
 
 
-# Endpoint to list passengers in a carpool
 @carpool_bp.route('/api/carpool/<int:carpool_id>/passengers', methods=['GET'])
 @token_required
 def list_passengers(current_user, carpool_id):
     passengers = Passenger.query.filter_by(carpool_id=carpool_id).all()
-
-    if not passengers:
-        return jsonify({"error": "No passengers found!"}), 404
 
     passenger_data = [
         {

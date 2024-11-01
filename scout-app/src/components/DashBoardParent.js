@@ -307,6 +307,56 @@ const handleJoinCarpool = async (carpoolId, activityId) => {
   }
 };
 
+const handleDeleteCarpool = async (carpoolId, activityId) => {
+  try {
+    // Fetch carpool details to check for passengers
+    const carpoolResponse = await fetch(`/api/carpool/${carpoolId}/passengers`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const carpoolData = await carpoolResponse.json();
+
+    if (carpoolData.passengers && carpoolData.passengers.length > 0) {
+      const confirmDelete = window.confirm(
+        "Samåkningen har passagerare! Är du säker på att du vill ta bort?"
+      );
+      if (!confirmDelete) return; // Exit if the user cancels
+    }
+
+    // Proceed with deletion if confirmed or no passengers
+    const response = await fetch(`/api/carpool/${carpoolId}/delete`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) throw new Error('Failed to delete carpool');
+
+    toast({
+      title: 'Samåkning borttagen',
+      description: 'Samåkning borttagen!',
+      status: 'success',
+      duration: 5000,
+      isClosable: true,
+    });
+
+    // Update the carpool list for the activity
+    await fetchCarpoolsForActivity(activityId);
+  } catch (error) {
+    toast({
+      title: 'Error',
+      description: error.message || 'Unable to delete carpool',
+      status: 'error',
+      duration: 5000,
+      isClosable: true,
+    });
+  }
+};
+
+
+
 const handleLoadMore = () => {
   setVisibleActivitiesCount(visibleActivitiesCount + 10);
 };
@@ -434,6 +484,21 @@ const handleLoadMore = () => {
                                 </Text>
                               </Box>
                               <Flex gap="2" mt={{ base: 2, md: 0 }}>
+                                {/* Show Delete button if the current user is the creator of the carpool */}
+                                {carpool.driver_id === userId && (
+                                  <Button
+                                    colorScheme="red"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteCarpool(carpool.id, activity.activity_id);
+                                    }}
+                                  >
+                                    Ta bort
+                                  </Button>
+                                )}
+
+                                {/* Boka-knappen */}
                                 {carpool.available_seats > 0 ? (
                                   <Button
                                     colorScheme={joinedChildrenInCarpool[carpool.id]?.allJoined ? 'blue' : 'green'}
@@ -465,17 +530,20 @@ const handleLoadMore = () => {
                                     Full
                                   </Button>
                                 )}
+
+                                {/* Chat-knappen */}
                                 <Button
                                   colorScheme="teal"
                                   size="sm"
                                   onClick={(e) => {
-                                    e.stopPropagation(); // Stops event from bubbling up immediately
+                                    e.stopPropagation();
                                     openChatModal(carpool.id);
                                   }}
                                 >
                                   Chat
                                 </Button>
                               </Flex>
+
                             </Flex>
 
                             </Box>
