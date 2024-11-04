@@ -350,3 +350,25 @@ def remove_passenger(current_user):
         db.session.rollback()
         return jsonify({"error": "Ett fel inträffade vid borttagningen av passageraren"}), 500
 
+@carpool_bp.route('/api/carpool/<int:carpool_id>/driver', methods=['GET'])
+@token_required
+def get_driver_info(current_user, carpool_id):
+    # Hämta carpool baserat på carpool_id
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        return jsonify({"error": "Carpool not found"}), 404
+
+    # Hämta användaren (driver) baserat på driver_id
+    driver = User.query.get(carpool.driver_id)
+    if not driver:
+        return jsonify({"error": "Driver not found"}), 404
+
+    # Returnera förarens namn och annan relevant information
+    driver_info = {
+        "driver_id": driver.user_id,
+        "first_name": driver.first_name,
+        "last_name": driver.last_name,
+        "phone": driver.phone,  # Lägg till fler attribut om nödvändigt
+    }
+
+    return jsonify({"driver": driver_info}), 200

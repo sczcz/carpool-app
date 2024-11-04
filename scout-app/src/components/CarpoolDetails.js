@@ -26,12 +26,46 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
   const toast = useToast();
 
   const [passengers, setPassengers] = useState([]);
+  const [driverInfo, setDriverInfo] = useState(null); // New state for driver info
 
   useEffect(() => {
     if (carpool && carpool.passengers) {
       setPassengers(carpool.passengers);
     }
   }, [carpool]);
+
+  // Fetch driver info
+  useEffect(() => {
+    const fetchDriverInfo = async () => {
+      try {
+        const response = await fetch(`/api/carpool/${carpool.id}/driver`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setDriverInfo(data.driver);
+        } else {
+          throw new Error('Failed to fetch driver info');
+        }
+      } catch (error) {
+        console.error('Error fetching driver info:', error);
+        toast({
+          title: 'Error',
+          description: 'Could not fetch driver information',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
+    if (carpool) {
+      fetchDriverInfo();
+    }
+  }, [carpool, toast]);
 
   const handleUnbook = async (child_id) => {
     try {
@@ -108,22 +142,33 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
               <Text fontWeight="bold" fontSize={fontSize} mt={4}>
                 Carpool Information:
               </Text>
-              <Box w="full">
-                <Text fontSize={fontSize}>
-                  <strong>Departure Address:</strong> {carpool?.departure_address || 'N/A'}
-                </Text>
-                <Text fontSize={fontSize}>
-                  <strong>Available Seats:</strong> {carpool?.available_seats || 'N/A'}
-                </Text>
-                <Text fontSize={fontSize}>
-                  <strong>Carpool Type:</strong> {carpool?.carpool_type || 'N/A'}
-                </Text>
-              </Box>
+              <VStack align="start" spacing={1} w="full"> {/* Inner VStack for consistent spacing */}
+                <HStack>
+                  <Text fontSize={fontSize} fontWeight="bold">Driver:</Text>
+                  <Text fontSize={fontSize}>{driverInfo ? `${driverInfo.first_name} ${driverInfo.last_name}` : 'Loading...'}</Text>
+                </HStack>
+                <HStack>
+                  <Text fontSize={fontSize} fontWeight="bold">Phone:</Text>
+                  <Text fontSize={fontSize}>{driverInfo?.phone || 'N/A'}</Text>
+                </HStack>
+                <HStack>
+                  <Text fontSize={fontSize} fontWeight="bold">Departure Address:</Text>
+                  <Text fontSize={fontSize}>{carpool?.departure_address || 'N/A'}</Text>
+                </HStack>
+                <HStack>
+                  <Text fontSize={fontSize} fontWeight="bold">Available Seats:</Text>
+                  <Text fontSize={fontSize}>{carpool?.available_seats || 'N/A'}</Text>
+                </HStack>
+                <HStack>
+                  <Text fontSize={fontSize} fontWeight="bold">Carpool Type:</Text>
+                  <Text fontSize={fontSize}>{carpool?.carpool_type || 'N/A'}</Text>
+                </HStack>
+              </VStack>
 
               {/* Passenger List Section */}
               <Text fontWeight="bold" fontSize={fontSize} mt={4}>Passengers:</Text>
-              <Box 
-                w="full" 
+              <Box
+                w="full"
                 maxH={{ base: '200px', md: '300px' }} // Set max height for the scrollable area
                 overflowY="auto" // Enable vertical scrolling
                 borderWidth={1}
@@ -142,7 +187,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                             <Text fontSize="sm" fontWeight="bold">Namn:</Text>
                             <Text fontSize="sm">{passenger.name || 'Unknown'}</Text>
                           </HStack>
-                        
+
                           {/* Show "Leave" button only for parent */}
                           {isParentOfChild(passenger) && (
                             <IconButton
