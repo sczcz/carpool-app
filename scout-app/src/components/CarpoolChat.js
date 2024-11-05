@@ -115,7 +115,7 @@ function CarpoolChat({ carpoolId, userName, userId }) {
                     <Text fontSize="sm" fontWeight="bold">{msg.sender_name}</Text>
                     <Text>{msg.content}</Text>
                     <Text fontSize="xs" color="black.500" mt={1} textAlign="right">
-                      {format(new Date(msg.timestamp), 'HH:mm')}
+                      {format(new Date(), 'HH:mm')}
                     </Text>
                   </Box>
                 </Flex>
