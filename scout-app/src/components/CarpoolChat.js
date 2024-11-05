@@ -9,8 +9,9 @@ import {
   VStack,
   HStack,
 } from '@chakra-ui/react';
+import { format, isSameDay } from 'date-fns';
 
-const socket = io('http://localhost:5000'); // Byt ut med din backend URL
+const socket = io('http://localhost:5000'); // Replace with your backend URL
 
 function CarpoolChat({ carpoolId, userName, userId }) {
   const [messages, setMessages] = useState([]);
@@ -22,13 +23,11 @@ function CarpoolChat({ carpoolId, userName, userId }) {
   };
 
   useEffect(() => {
-    console.log("CarpoolChat opened with carpoolId:", carpoolId);
     if (!carpoolId) {
       console.error("carpoolId is missing, unable to load chat");
       return;
     }
 
-    // Hämta historiska meddelanden
     const fetchMessages = async () => {
       try {
         const response = await fetch(`/api/carpool/${carpoolId}/messages`, {
@@ -37,7 +36,7 @@ function CarpoolChat({ carpoolId, userName, userId }) {
         });
         if (response.ok) {
           const data = await response.json();
-          setMessages(data); // Spara historiska meddelanden
+          setMessages(data);
         } else {
           console.error('Failed to fetch messages');
         }
@@ -47,7 +46,6 @@ function CarpoolChat({ carpoolId, userName, userId }) {
     };
     fetchMessages();
 
-    // Anslut till chatten och lyssna på nya meddelanden
     socket.emit('join_carpool', { carpool_id: parseInt(carpoolId) });
     socket.on('new_message', (data) => {
       if (data.carpool_id === parseInt(carpoolId)) {
@@ -61,7 +59,6 @@ function CarpoolChat({ carpoolId, userName, userId }) {
     };
   }, [carpoolId]);
 
-  // Scrolla till botten varje gång `messages` uppdateras
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -89,41 +86,48 @@ function CarpoolChat({ carpoolId, userName, userId }) {
         bg="white"
         borderRadius="md"
         sx={{
-          '&::-webkit-scrollbar': {
-            display: 'none', // Döljer scrollbaren i Webkit-baserade webbläsare (som Chrome och Safari)
-          },
-          '-ms-overflow-style': 'none', // Döljer scrollbaren i Internet Explorer och Edge
-          'scrollbar-width': 'none', // Döljer scrollbaren i Firefox
+          '&::-webkit-scrollbar': { display: 'none' },
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
         }}
       >
         {messages.length === 0 ? (
           <Text>Inga meddelanden ännu</Text>
         ) : (
-          messages.map((msg) => (
-            <Flex
-              key={`${msg.id}-${msg.timestamp}`}
-              justify={msg.sender_name === userName ? 'flex-end' : 'flex-start'}
-            >
-              <Box
-                bg={msg.sender_name === userName ? 'blue.500' : 'gray.200'}
-                color={msg.sender_name === userName ? 'white' : 'black'}
-                p={3}
-                borderRadius="md"
-                maxW="70%"
-              >
-                <Text fontSize="sm" fontWeight="bold">
-                  {msg.sender_name}
-                </Text>
-                <Text>{msg.content}</Text>
-              </Box>
-            </Flex>
-          ))
+          messages.map((msg, index) => {
+            const showDateSeparator = index === 0 || !isSameDay(new Date(msg.timestamp), new Date(messages[index - 1].timestamp));
+            return (
+              <div key={`${msg.id}-${msg.timestamp}`}>
+                {showDateSeparator && (
+                  <Text fontSize="sm" fontWeight="bold" textAlign="center" my={2}>
+                    {format(new Date(msg.timestamp), 'd MMMM yyyy')}
+                  </Text>
+                )}
+                <Flex justify={msg.sender_name === userName ? 'flex-end' : 'flex-start'}>
+                  <Box
+                    bg={msg.sender_name === userName ? 'blue.500' : 'gray.200'}
+                    color={msg.sender_name === userName ? 'white' : 'black'}
+                    p={3}
+                    borderRadius="md"
+                    maxW="70%"
+                    mb={1}
+                  >
+                    <Text fontSize="sm" fontWeight="bold">{msg.sender_name}</Text>
+                    <Text>{msg.content}</Text>
+                    <Text fontSize="xs" color="black.500" mt={1} textAlign="right">
+                      {format(new Date(msg.timestamp), 'HH:mm')}
+                    </Text>
+                  </Box>
+                </Flex>
+              </div>
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </VStack>
       <HStack mt={4} p={2}>
         <Input
-          placeholder="Type your message..."
+          placeholder="Skriv ditt meddelande..."
           value={messageContent}
           onChange={(e) => setMessageContent(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
@@ -131,7 +135,7 @@ function CarpoolChat({ carpoolId, userName, userId }) {
           bg="white"
         />
         <Button colorScheme="blue" onClick={sendMessage}>
-          Send
+          Skicka
         </Button>
       </HStack>
     </Flex>
