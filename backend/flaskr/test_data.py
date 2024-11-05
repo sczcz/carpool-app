@@ -2,7 +2,6 @@
 from extensions import db
 from models.auth_model import User, Child, Role, UserRole
 from models.carpool_model import Car
-from flask import current_app
 
 def add_test_data():
         # Kontrollera om rollerna finns
@@ -75,5 +74,3 @@ def add_test_data():
         # Lägg till allt i sessionen och begå
         db.session.add_all([car_1, car_2, child_1, child_2])
         db.session.commit()
-
-        print("Test user with cars, children, and role added successfully!")
