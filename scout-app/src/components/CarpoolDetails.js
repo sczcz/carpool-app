@@ -19,6 +19,7 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from 'react-icons/fa';
+import ExpandableText from './ExpandableText';
 
 const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fetchCarpoolsForActivity }) => {
   const fontSize = useBreakpointValue({ base: 'sm', md: 'md' });
@@ -240,10 +241,13 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                 </Text>
                 <Text fontSize={fontSize}>{activity.dtstart}</Text>
 
-                <Text fontSize="sm" color="gray.500" mt={3}>
-                  <Icon as={FaInfoCircle} mr={1} /> Description:
-                </Text>
-                <Text fontSize={fontSize}>{activity.description}</Text>
+                <Box>
+                  <Text fontSize="sm" color="gray.500" mt={3}>
+                    <Icon as={FaInfoCircle} mr={1} /> Description:
+                  </Text>
+                  <ExpandableText text={activity.description} fontSize={fontSize} />
+                </Box>
+
               </Box>
             </Box>
           </HStack>

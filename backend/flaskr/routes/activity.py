@@ -103,5 +103,7 @@ def get_all_activities(current_user):
                             'description': new_activity.description,
                             'scout_level': scout_level
                         })
+                        print(new_activity.description)
+                        
 
     return make_response(jsonify({"events": events_list}), 200)
