@@ -18,7 +18,7 @@ import {
 
 const apiURL = "/api/login";
 
-const Login = ({ isOpen, onClose }) => {
+const Login = ({ isOpen, onClose, onLoginSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -39,7 +39,26 @@ const Login = ({ isOpen, onClose }) => {
             if (data.error) {
                 setError(data.error);
             } else {
-                alert('Inloggad! Cookie är satt.');
+                // Fetch the user role after a successful login
+                fetch('/api/protected/user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(userData => {
+                    const userRole = userData.user.role;
+                    if (onLoginSuccess) {
+                        onLoginSuccess(userRole); // Pass the role to onLoginSuccess
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching user role:', error);
+                    setError('Unable to fetch user role.');
+                });
+
                 setEmail('');
                 setPassword('');
                 setError('');
@@ -83,7 +102,7 @@ const Login = ({ isOpen, onClose }) => {
                                         bg="white"
                                     />
                                 </FormControl>
-                                <Button colorScheme="brand" width="full" onClick={handleLogin}>
+                                <Button type="submit" colorScheme="brand" width="full">
                                     Logga in
                                 </Button>
                                 {error && <Text color="red.500">{error}</Text>} {/* Error message below the button */}
