@@ -1,5 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Heading,
@@ -30,6 +30,8 @@ import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
 import { checkIfLoggedIn } from '../utils/auth';
 import CarpoolDetails from './CarpoolDetails';
+import AddChildModal from './AddChildModal'; // Import the AddChildModal component
+
 
 const DashBoardParent = ({ token }) => {
   const [authLoading, setAuthLoading] = useState(true); // New state for auth check
@@ -51,7 +53,8 @@ const DashBoardParent = ({ token }) => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
-  
+  const navigate = useNavigate();  // Added navigate for routing
+  const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
 
   const roleColors = {
     tumlare: 'blue.400',
@@ -181,6 +184,12 @@ const DashBoardParent = ({ token }) => {
     setSelectedCarpool(carpool);
     onDetailsOpen();
   };
+
+  const handleChildAdded = (newChild) => {
+    // Optionally handle any other state updates
+    window.location.reload(); // Reload the window when a child is added
+  };
+  
 
 
   const fetchCarpoolsForActivity = async (activityId) => {
@@ -420,6 +429,22 @@ const handleLoadMore = () => {
             <Heading as="h2" size="md" mb={4} color="brand.500">
               Kommande Aktiviteter
             </Heading>
+
+            {/* Display a message if there are no activities */}
+            {activities.length === 0 && (
+              <VStack spacing={4}>
+                <Text fontSize="lg" color="gray.500">Inga aktiviteter hittades. Lägg till barn</Text>
+                <Button colorScheme="blue" onClick={openAddChildModal}>
+                  Lägg till barn
+                </Button>
+              </VStack>
+            )}
+            {/* AddChildModal component */}
+            <AddChildModal
+              isOpen={isAddChildOpen}
+              onClose={closeAddChildModal}
+              onChildAdded={handleChildAdded}
+            />
 
             <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
               {activities.slice(0, visibleActivitiesCount).map((activity, index) => (

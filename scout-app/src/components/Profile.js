@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTrash } from "react-icons/fa"; // Import trash can icon from react-icons library
+import AddChildModal from './AddChildModal';  // Import AddChildModal
 import {
   Box,
   Heading,
@@ -62,6 +63,10 @@ const Profile = () => {
 
   // Car information (this was missing in your code)
   const [cars, setCars] = useState([]);  // Now defined as state for cars
+
+  const handleChildAdded = (newChild) => {
+    setChildren((prevChildren) => [...prevChildren, newChild]);
+  };
 
   const roleColors = {
     tumlare: 'blue.400',
@@ -542,74 +547,12 @@ const Profile = () => {
 
       <Divider mb={3} />
 
-      {/* Modal for Adding Child */}
-      <Modal isOpen={isAddChildOpen} onClose={() => setAddChildOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Lägg till Barn</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Förnamn</FormLabel>
-              <Input
-                value={childFirstName}
-                onChange={(e) => setChildFirstName(e.target.value)}
-                placeholder="Förnamn"
-                isRequired // Accessibility enhancement
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Efternamn</FormLabel>
-              <Input
-                value={childLastName}
-                onChange={(e) => setChildLastName(e.target.value)}
-                placeholder="Efternamn"
-                isRequired // Accessibility enhancement
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Roll</FormLabel>
-              <Select
-                value={childRole}
-                onChange={(e) => setChildRole(e.target.value)}
-              >
-                <option value="kutar">Kutar</option>
-                <option value="tumlare">Tumlare</option>
-                <option value="upptäckare">Upptäckare</option>
-                <option value="äventyrare">Äventyrare</option>
-                <option value="utmanare">Utmanare</option>
-                <option value="rover">Rover</option>
-              </Select>
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Medlemsnummer</FormLabel>
-              <Input
-                value={membershipNumber}
-                onChange={(e) => setMembershipNumber(e.target.value)}
-                placeholder="Skriv in medlemsnummer"
-                isRequired // Accessibility enhancement
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Telefonnummer</FormLabel>
-              <Input
-                value={childPhone}
-                onChange={(e) => setChildPhone(e.target.value)}
-                placeholder="Skriv in telefonnummer"
-                isRequired // Accessibility enhancement
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="brand" onClick={handleAddChild}>
-              Spara
-            </Button>
-            <Button ml={3} onClick={() => setAddChildOpen(false)}>
-              Avbryt
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* AddChildModal */}
+      <AddChildModal
+        isOpen={isAddChildOpen}
+        onClose={() => setAddChildOpen(false)}
+        onChildAdded={handleChildAdded}
+      />
 
       {/* Modal for Address Information */}
       <Modal isOpen={isAddressInfoOpen} onClose={() => setAddressInfoOpen(false)}>
