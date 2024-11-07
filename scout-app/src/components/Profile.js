@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaTrash } from "react-icons/fa"; // Import trash can icon from react-icons library
 import AddChildModal from './AddChildModal';  // Import AddChildModal
+import AddCarModal from './AddCarModal';
 import {
   Box,
   Heading,
@@ -134,6 +135,8 @@ const Profile = () => {
       }
     };
 
+
+
     const fetchChildren = async () => {
       try {
         const response = await fetch('/api/protected/get-children', {
@@ -165,6 +168,10 @@ const Profile = () => {
     fetchCars();  // Fetch cars on mount
   }, []);
   
+  // Handle new car addition
+  const handleCarAdded = (newCar) => {
+    setCars((prevCars) => [...prevCars, newCar]);
+  };
 
   const handleSaveAddress = async () => {
     try {
@@ -312,50 +319,6 @@ const Profile = () => {
     }
   };
 
-  const handleAddCar = async () => {
-    if (regNumber && fuelType && consumption && modelName) {
-      try {
-        const response = await fetch('/api/protected/add-car', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            reg_number: regNumber,
-            fuel_type: fuelType,
-            consumption: consumption,
-            model_name: modelName,
-          }),
-        });
-  
-        if (response.ok) {
-          const data = await response.json();
-          alert('Car added successfully!');
-
-          fetchCars();
-
-          // Close the modal after successful car addition
-          setAddCarOpen(false);
-  
-          // Clear form fields after saving
-          setRegNumber('');
-          setFuelType('Gas');
-          setConsumption('');
-          setModelName('');
-        } else {
-          const error = await response.json();
-          alert(`Error: ${error.message || 'Failed to add car'}`);
-        }
-      } catch (error) {
-        console.error('Error adding car:', error);
-        alert('An error occurred while adding the car');
-      }
-    } else {
-      alert('Please fill in all fields');
-    }
-  };
-
   return (
   <Box
         p={5}
@@ -482,52 +445,54 @@ const Profile = () => {
           Bilar:
         </Heading>
         <SimpleGrid mt={3} columns={[1, 1, 2]} spacing={4} width="full">
-          {cars.map((car, index) => (
-
-            <Box
-            key={index}
-            borderWidth="1px"
-            borderTopRadius="lg" // Rounded top corners
-            borderBottomRadius="lg" // Rounded bottom corners
-            overflow="hidden"
-            boxShadow="lg"
-            p={4}
-            bg="white" // Background color of the card
-            borderColor="gray.300" // Border color
-            >
-          {/* Colored Header for the Car Information */}
-          <Box
-                bg={fuelTypeColors[car.fuel_type] || 'gray.200'} // Set background color based on fuel type
-                borderTopRadius="lg"
-                p={3}
-              >
-                <Text fontSize="lg" fontWeight="bold" color="black">
-                  {car.model_name} - {car.reg_number.toUpperCase()}
-                </Text>
-              </Box>
-
-          {/* Main Content with Centered Text and Delete Button */}
-          <HStack justifyContent="space-between" mt={3} alignItems="center"> {/* Align items center */}
-            <Text
-              fontSize={{ base: "sm", sm: "md" }} // Responsive font sizes
-              color="black" // Text color
-            >
-              Fuel Type: {car.fuel_type}, Consumption: {car.consumption} l/kWh
-            </Text>
-
-            {/* Button Section */}
-            <Button
-              colorScheme="red"
-              onClick={() => handleRemoveCar(car.car_id)}
-              variant="outline" // Use outline variant if you want a border
-              aria-label="Remove Car" // Accessibility label
-            >
-              <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
-            </Button>
-          </HStack>
+  {cars.map((car, index) => (
+    car ? ( // Check if car is not undefined
+      <Box
+        key={index}
+        borderWidth="1px"
+        borderTopRadius="lg" // Rounded top corners
+        borderBottomRadius="lg" // Rounded bottom corners
+        overflow="hidden"
+        boxShadow="lg"
+        p={4}
+        bg="white" // Background color of the card
+        borderColor="gray.300" // Border color
+      >
+        {/* Colored Header for the Car Information */}
+        <Box
+          bg={fuelTypeColors[car.fuel_type] || 'gray.200'} // Use default color if fuel_type is missing
+          borderTopRadius="lg"
+          p={3}
+        >
+          <Text fontSize="lg" fontWeight="bold" color="black">
+            {car.model_name || 'Unknown Model'} - {car.reg_number ? car.reg_number.toUpperCase() : 'Unknown Reg'}
+          </Text>
         </Box>
-          ))}
-        </SimpleGrid>
+
+        {/* Main Content with Centered Text and Delete Button */}
+        <HStack justifyContent="space-between" mt={3} alignItems="center">
+          <Text
+            fontSize={{ base: "sm", sm: "md" }}
+            color="black"
+          >
+            Fuel Type: {car.fuel_type || 'Unknown'}, Consumption: {car.consumption || 'N/A'} l/kWh
+          </Text>
+
+          {/* Button Section */}
+          <Button
+            colorScheme="red"
+            onClick={() => handleRemoveCar(car.car_id)}
+            variant="outline"
+            aria-label="Remove Car"
+          >
+            <Icon as={FaTrash} color="red.500" />
+          </Button>
+        </HStack>
+      </Box>
+    ) : null // Skip rendering if car is undefined
+  ))}
+</SimpleGrid>
+
       </VStack>
 
       <Divider mb={6} />
@@ -609,65 +574,12 @@ const Profile = () => {
         </ModalContent>
       </Modal>
 
-      {/* Modal for Adding Car */}
-      <Modal isOpen={isAddCarOpen} onClose={() => setAddCarOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Lägg till Bil</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Registeringsnummer</FormLabel>
-              <Input
-                value={regNumber}
-                onChange={(e) => setRegNumber(e.target.value)}
-                placeholder="Skriv in registreringsnummer"
-                isRequired
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Bränsletyp</FormLabel>
-              <Select
-                value={fuelType}
-                onChange={(e) => setFuelType(e.target.value)}
-                isRequired
-              >
-                <option value="Electric">Electric</option>
-                <option value="Gas">Gas</option>
-                <option value="Hybrid">Hybrid</option>
-              </Select>
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Konsumption (L or kWh)</FormLabel>
-              <Input
-                value={consumption}
-                onChange={(e) => setConsumption(e.target.value)}
-                placeholder="Ange bränslekonsumption"
-                type="number"
-                step="0.1"
-                isRequired
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Model Name</FormLabel>
-              <Input
-                value={modelName}
-                onChange={(e) => setModelName(e.target.value)}
-                placeholder="Ange bilmodell"
-                isRequired
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" onClick={handleAddCar}>
-              Lägg till bil
-            </Button>
-            <Button ml={3} onClick={() => setAddCarOpen(false)}>
-              Avbryt
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* AddCarModal */}
+      <AddCarModal
+        isOpen={isAddCarOpen}
+        onClose={() => setAddCarOpen(false)}
+        onCarAdded={handleCarAdded}
+      />
     </Box>
   );
 };

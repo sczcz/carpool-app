@@ -5,6 +5,7 @@ from flask_socketio import join_room, leave_room, emit
 from routes.auth import token_required
 from datetime import datetime
 from models.auth_model import User
+from dateutil import tz
 
 message_bp = Blueprint('message_bp', __name__)
 
@@ -32,40 +33,6 @@ def get_carpool_messages(current_user, carpool_id):
 
     return jsonify(messages_data), 200
 
-
-# Endpoint för att skicka meddelande
-@message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['POST'])
-@token_required
-def send_message(current_user, carpool_id):
-    """Skickar ett nytt meddelande till en carpool-chatt."""
-    data = request.get_json()
-    content = data.get('content')
-    
-    if not content:
-        return jsonify({"error": "Message content is required!"}), 400
-
-    message = CarpoolMessage(
-        sender_id=current_user.user_id,
-        carpool_id=carpool_id,
-        content=content,
-        status='sent'
-    )
-    
-    db.session.add(message)
-    db.session.commit()
-
-    # Emit message to WebSocket subscribers
-    socketio.emit('new_message', {
-        'carpool_id': carpool_id,
-        'message': {
-            'id': message.id,
-            'sender_id': message.sender_id,
-            'content': message.content,
-            'timestamp': message.timestamp.isoformat()
-        }
-    }, room=f'carpool_{carpool_id}')
-
-    return jsonify({"message": "Message sent successfully!"}), 201
 
 # Socket.IO-händelsehanterare för anslutning, chattrum och meddelanden
 @socketio.on('join_carpool')
@@ -111,12 +78,23 @@ def handle_send_message(data):
         emit('error', {'error': 'Sender not found.'}, room=request.sid)
         return
     
-    # Spara meddelandet i databasen
+    # Define timezone conversion
+    from_zone = tz.tzutc()
+    to_zone = tz.tzlocal()  # This converts to the server's local timezone
+
+    # Get UTC time for the message
+    utc_timestamp = datetime.utcnow()
+    utc_timestamp = utc_timestamp.replace(tzinfo=from_zone)  # Mark it as UTC
+    
+    # Convert UTC timestamp to local time
+    local_timestamp = utc_timestamp.astimezone(to_zone)
+
+    # Spara meddelandet i databasen med UTC-tid
     message = CarpoolMessage(
         sender_id=sender_id,
         carpool_id=carpool_id,
         content=content,
-        timestamp=datetime.utcnow(),
+        timestamp=utc_timestamp,  # Still saving in UTC to the database
         status='sent'
     )
     
@@ -131,6 +109,6 @@ def handle_send_message(data):
             'sender_id': message.sender_id,
             'sender_name': f"{sender.first_name} {sender.last_name}",
             'content': message.content,
-            'timestamp': message.timestamp.isoformat()
+            'timestamp': local_timestamp.isoformat()  # Sending local time to clients
         }
     }, room=f'carpool_{carpool_id}')

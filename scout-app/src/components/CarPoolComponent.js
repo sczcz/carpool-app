@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Heading,
@@ -16,6 +16,8 @@ import {
   Spinner,
   useBreakpointValue,
 } from '@chakra-ui/react';
+import AddCarModal from './AddCarModal'; // Import AddCarModal
+
 
 const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
   const [newCar, setNewCar] = useState({
@@ -30,6 +32,8 @@ const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
+  const toastShown = useRef(false); // Track if the toast has been shown
 
   const gridTemplateColumns = useBreakpointValue({ base: '1fr', md: '1fr 1fr' });
 
@@ -43,6 +47,19 @@ const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
         if (response.ok) {
           const data = await response.json();
           setCars(data.cars);
+
+          // Only show toast if no cars are available and it hasn't been shown yet
+          if (data.cars.length === 0 && !toastShown.current) {
+            setIsAddCarModalOpen(true); // Open AddCarModal if no cars are available
+            toast({
+              title: 'Ingen bil registrerad',
+              description: "Du måste lägga till en bil för att registrera en samåkning",
+              status: 'warning',
+              duration: 5000,
+              isClosable: true,
+            });
+            toastShown.current = true; // Set the ref to true so toast is not shown again
+          }
         } else {
           throw new Error('Kunde inte hämta bilar');
         }
@@ -59,7 +76,12 @@ const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
     };
 
     fetchCars();
-  }, [toast]);
+  }, []);
+
+  const handleCarAdded = (newCar) => {
+    setCars((prevCars) => [...prevCars, newCar]);
+    setIsAddCarModalOpen(false); // Close the modal after adding a car
+  };
 
   const handleCarRegistration = async () => {
     if (!newCar.from || !newCar.destination || !newCar.spots || !newCar.car_id || !newCar.departure_postcode || !newCar.departure_city) {
@@ -240,7 +262,14 @@ const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
             Registrera samåkning
           </Button>
         </VStack>
+        
       )}
+            {/* AddCarModal */}
+            <AddCarModal
+        isOpen={isAddCarModalOpen}
+        onClose={() => setIsAddCarModalOpen(false)}
+        onCarAdded={handleCarAdded} // Pass the callback function
+      />
     </Box>
   );
 };
