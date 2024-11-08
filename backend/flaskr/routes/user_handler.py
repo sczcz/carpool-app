@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, make_response
 from extensions import db
 from models.auth_model import User, Role, UserRole, Child, ParentChildLink
 from functools import wraps
+from datetime import datetime
 from routes.auth import token_required  # Import token_required decorator
 
 user_handler = Blueprint('user_handler', __name__)
@@ -70,61 +71,46 @@ def get_logged_in_user(current_user):
 @token_required
 def add_child(current_user):
     data = request.get_json()
-    
+
     first_name = data.get('first_name')
     last_name = data.get('last_name')
     phone = data.get('phone')
     role_name = data.get('role')
-    date_of_birth = data.get('date_of_birth')
+    date_of_birth_str = data.get('birth_date')  # Datumet skickas som en sträng
 
-    if not first_name or not last_name or not role_name or not date_of_birth:
+    if not first_name or not last_name or not role_name or not date_of_birth_str:
         return jsonify({"error": "First name, last name, role, and date of birth are required!"}), 400
+
+    # Konvertera sträng till date-objekt
+    try:
+        date_of_birth = datetime.strptime(date_of_birth_str, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
     # Hämta role_id baserat på rollnamn
     role = Role.query.filter_by(name=role_name.lower()).first()
     if not role:
         return jsonify({"error": "Invalid role provided!"}), 401
 
-    # Kontrollera om barnet redan finns
-    existing_child = Child.query.filter_by(
+    # Skapa ett nytt barn
+    new_child = Child(
         first_name=first_name,
         last_name=last_name,
-        date_of_birth=date_of_birth
-    ).first()
+        phone=phone,
+        role_id=role.role_id,
+        date_of_birth=date_of_birth  # Använd det konverterade date-objektet
+    )
 
-    if existing_child:
-        # Kolla om länken mellan föräldern och barnet redan existerar
-        existing_link = ParentChildLink.query.filter_by(
-            user_id=current_user.user_id,
-            child_id=existing_child.child_id
-        ).first()
+    # Lägg till och spara barnet för att generera ett child_id
+    db.session.add(new_child)
+    db.session.commit()  # Detta genererar ett child_id för new_child
 
-        if not existing_link:
-            # Skapa en ny länk mellan föräldern och det befintliga barnet
-            new_link = ParentChildLink(user_id=current_user.user_id, child_id=existing_child.child_id)
-            db.session.add(new_link)
-            db.session.commit()
-            return jsonify({"message": f"Linked existing child {first_name} {last_name} to current user."}), 200
-        else:
-            return jsonify({"error": "This child is already linked to the current user!"}), 402
-    else:
-        # Skapa ett nytt barn och länka det till föräldern
-        new_child = Child(
-            first_name=first_name,
-            last_name=last_name,
-            date_of_birth=date_of_birth,
-            phone=phone,
-            role_id=role.role_id
-        )
-        db.session.add(new_child)
-        db.session.commit()
+    # Lägg till relationen till den inloggade användaren i ParentChildLink
+    parent_link = ParentChildLink(user_id=current_user.user_id, child_id=new_child.child_id)
+    db.session.add(parent_link)
+    db.session.commit()
 
-        # Skapa en ny länk mellan föräldern och det nya barnet
-        new_link = ParentChildLink(user_id=current_user.user_id, child_id=new_child.child_id)
-        db.session.add(new_link)
-        db.session.commit()
-
-        return jsonify({"message": f"Child {first_name} {last_name} created and linked to current user!"}), 201
+    return jsonify({"message": f"Child {first_name} {last_name} created!"}), 201
 
 
 
@@ -137,6 +123,7 @@ def get_children(current_user):
     # Skapa en lista med barnens data
     children_data = [
         {
+            "child_id" : child.child_id,
             "first_name": child.first_name,
             "last_name": child.last_name,
             "date_of_birth": child.date_of_birth.isoformat(),
@@ -192,21 +179,14 @@ def delete_child(current_user):
 @token_required
 def update_child_role(current_user):
     data = request.get_json()
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    date_of_birth = data.get('date_of_birth')
+    child_id = data.get('child_id')
     new_role_name = data.get('new_role')
 
-    if not first_name or not last_name or not date_of_birth or not new_role_name:
-        return jsonify({"error": "First name, last name, date of birth, and new role are required!"}), 400
+    if not child_id or not new_role_name:
+        return jsonify({"error": "Child ID and new role are required!"}), 400
 
-    # Hitta barnet baserat på namn, efternamn och födelsedatum
-    child = Child.query.filter_by(
-        first_name=first_name,
-        last_name=last_name,
-        date_of_birth=date_of_birth
-    ).first()
-
+    # Hitta barnet baserat på child_id
+    child = Child.query.get(child_id)
     if not child:
         return jsonify({"error": "Child not found!"}), 404
 
@@ -225,3 +205,4 @@ def update_child_role(current_user):
     db.session.commit()
 
     return jsonify({"message": f"Child's role updated to {new_role_name}!"}), 200
+

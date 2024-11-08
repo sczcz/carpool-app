@@ -29,10 +29,10 @@ const Home = () => {
           navigate('/dashboard-leader');
         }
       } else {
-        console.error('Failed to fetch user role after login');
+        console.error('Misslyckades med att hämta användarroll efter inloggning');
       }
     } catch (error) {
-      console.error('Error fetching user role after login:', error);
+      console.error('Fel vid hämtning av användarroll efter inloggning:', error);
     }
   };
 

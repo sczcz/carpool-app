@@ -57,12 +57,12 @@ const DashBoardParent = ({ token }) => {
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
 
   const roleColors = {
-    tumlare: 'blue.400',
-    kutar: 'cyan.400',     
-    upptäckare: 'green.400', 
-    äventyrare: 'yellow.400', 
-    utmanare: 'orange.400',   
-    rover: 'purple.400',        
+    tumlare: '#41a62a',
+    kutar: '#71c657',     
+    upptäckare: '#00a8e1', 
+    äventyrare: '#e95f13', 
+    utmanare: '#da005e',   
+    rover: '#e2e000',        
   };
 
 
@@ -141,43 +141,33 @@ const DashBoardParent = ({ token }) => {
     }
   }, [activities]);
   
-  // Function to initialize the "Joined" state for each carpool after activities are loaded
   const initializeJoinedChildrenState = async () => {
     const joinedStatus = {};
-    const loadingState = {}; // Track loading state per carpool
     for (const activity of activities) {
       if (activity.carpools) {
         for (const carpool of activity.carpools) {
-          loadingState[carpool.id] = true; // Start loading for each carpool button
           const allChildrenJoined = await checkIfAllChildrenJoined(carpool.id);
           joinedStatus[carpool.id] = { allJoined: allChildrenJoined };
-          loadingState[carpool.id] = false; // Stop loading once checked
         }
       }
     }
     setJoinedChildrenInCarpool(joinedStatus);
-     setLoadingJoinState(loadingState); // Update loading state
   };
-  
+
   const checkIfAllChildrenJoined = async (carpoolId) => {
     try {
       const response = await fetch(`/api/carpool/all-children-joined?carpool_id=${carpoolId}`, {
         method: 'GET',
         credentials: 'include',
       });
-  
+
       const data = await response.json();
-      if (response.ok) {
-        return data.all_joined;
-      } else {
-        throw new Error(data.error || 'Error checking if all children have joined');
-      }
+      return response.ok && data.all_joined;
     } catch (error) {
       console.error('Error:', error);
       return false;
     }
   };
-  
 
   const handleCarpoolClick = (activity, carpool) => {
     setSelectedActivity(activity);
@@ -185,12 +175,9 @@ const DashBoardParent = ({ token }) => {
     onDetailsOpen();
   };
 
-  const handleChildAdded = (newChild) => {
-    // Optionally handle any other state updates
-    window.location.reload(); // Reload the window when a child is added
+  const handleChildAdded = () => {
+    window.location.reload();
   };
-  
-
 
   const fetchCarpoolsForActivity = async (activityId) => {
     setFetchingCarpools(true);
@@ -226,12 +213,103 @@ const DashBoardParent = ({ token }) => {
     }
   };
 
-  const toggleCarpool = (index, activityId) => {
-    if (openCarpoolIndex === index) {
-      setOpenCarpoolIndex(null);
-    } else {
-      setOpenCarpoolIndex(index);
-      fetchCarpoolsForActivity(activityId);
+  const handleJoinCarpool = async (carpoolId, activityId) => {
+    try {
+      const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const checkData = await checkResponse.json();
+      setChildrenWithSameRole((prev) => ({
+        ...prev,
+        [carpoolId]: checkData.children,
+      }));
+
+      let selectedChildId = -1;
+
+      if (checkData.multiple) {
+        selectedChildId = prompt(
+          `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
+        );
+        if (!selectedChildId) return;
+      } else {
+        selectedChildId = checkData.child_id;
+      }
+
+      const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ child_id: selectedChildId }),
+      });
+
+      if (!response.ok) throw new Error('Failed to join carpool');
+
+      toast({
+        title: 'Joined Carpool',
+        description: 'Successfully joined the carpool!',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      await fetchCarpoolsForActivity(activityId);
+
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Unable to join carpool',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleDeleteCarpool = async (carpoolId, activityId) => {
+    try {
+      const carpoolResponse = await fetch(`/api/carpool/${carpoolId}/passengers`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const carpoolData = await carpoolResponse.json();
+
+      if (carpoolData.passengers && carpoolData.passengers.length > 0) {
+        const confirmDelete = window.confirm(
+          "Samåkningen har passagerare! Är du säker på att du vill ta bort?"
+        );
+        if (!confirmDelete) return;
+      }
+
+      const response = await fetch(`/api/carpool/${carpoolId}/delete`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete carpool');
+
+      toast({
+        title: 'Samåkning borttagen',
+        description: 'Samåkning borttagen!',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      await fetchCarpoolsForActivity(activityId);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Kan inte ta bort samåkning',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -240,129 +318,14 @@ const DashBoardParent = ({ token }) => {
     onOpen();
   };
 
-// Kontrollfunktion för att se om alla barn med samma roll har bokats i carpoolen
-const isAllChildrenWithRoleBooked = (carpoolId) => {
-  const childrenInRole = childrenWithSameRole[carpoolId] || [];
-  const bookedChildren = joinedChildrenInCarpool[carpoolId] || [];
-  
-  console.log("Children in Role:", childrenInRole);
-  console.log("Booked Children:", bookedChildren);
-
-  // Kontrollera om antalet barn med samma roll är lika med antalet bokade barn
-  return childrenInRole.length > 0 && childrenInRole.length === bookedChildren.length;
-};
-
-const handleJoinCarpool = async (carpoolId, activityId) => {
-  try {
-    setLoadingJoinState((prev) => ({ ...prev, [carpoolId]: true }));
-    const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    const checkData = await checkResponse.json();
-    setChildrenWithSameRole((prev) => ({
-      ...prev,
-      [carpoolId]: checkData.children,
-    }));
-
-    let selectedChildId = -1;
-
-    if (checkData.multiple) {
-      selectedChildId = prompt(
-        `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
-      );
-      if (!selectedChildId) return;
+  const toggleCarpool = (index, activityId) => {
+    if (openCarpoolIndex === index) {
+      setOpenCarpoolIndex(null);
     } else {
-      selectedChildId = checkData.child_id;
+      setOpenCarpoolIndex(index);
+      fetchCarpoolsForActivity(activityId);
     }
-
-    const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ child_id: selectedChildId }),
-    });
-
-    if (!response.ok) throw new Error('Failed to join carpool');
-
-    toast({
-      title: 'Joined Carpool',
-      description: 'Successfully joined the carpool!',
-      status: 'success',
-      duration: 5000,
-      isClosable: true,
-    });
-
-    // Lägg till barnet i joinedChildrenInCarpool för att uppdatera UI
-    setJoinedChildrenInCarpool(prev => ({
-      ...prev,
-      [carpoolId]: [...(prev[carpoolId]?.allJoined ? prev[carpoolId].children : []), selectedChildId],
-    }));
-
-    await fetchCarpoolsForActivity(activityId);
-
-  } catch (error) {
-    toast({
-      title: 'Error',
-      description: error.message || 'Unable to join carpool',
-      status: 'error',
-      duration: 5000,
-      isClosable: true,
-    });
-  } finally {
-    setLoadingJoinState((prev) => ({ ...prev, [carpoolId]: false }));
-  }
-};
-
-const handleDeleteCarpool = async (carpoolId, activityId) => {
-  try {
-    // Fetch carpool details to check for passengers
-    const carpoolResponse = await fetch(`/api/carpool/${carpoolId}/passengers`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    const carpoolData = await carpoolResponse.json();
-
-    if (carpoolData.passengers && carpoolData.passengers.length > 0) {
-      const confirmDelete = window.confirm(
-        "Samåkningen har passagerare! Är du säker på att du vill ta bort?"
-      );
-      if (!confirmDelete) return; // Exit if the user cancels
-    }
-
-    // Proceed with deletion if confirmed or no passengers
-    const response = await fetch(`/api/carpool/${carpoolId}/delete`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (!response.ok) throw new Error('Failed to delete carpool');
-
-    toast({
-      title: 'Samåkning borttagen',
-      description: 'Samåkning borttagen!',
-      status: 'success',
-      duration: 5000,
-      isClosable: true,
-    });
-
-    // Update the carpool list for the activity
-    await fetchCarpoolsForActivity(activityId);
-  } catch (error) {
-    toast({
-      title: 'Error',
-      description: error.message || 'Kan inte ta bort samåkning',
-      status: 'error',
-      duration: 5000,
-      isClosable: true,
-    });
-  }
-};
+  };
 
 const translateCarpoolType = (type) => {
   switch (type) {

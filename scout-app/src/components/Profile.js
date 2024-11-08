@@ -50,7 +50,6 @@ const Profile = () => {
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
   const [childRole, setChildRole] = useState('kutar');
-  const [membershipNumber, setMembershipNumber] = useState('');
   const [childPhone, setChildPhone] = useState('');
   
 
@@ -73,12 +72,12 @@ const Profile = () => {
   };
 
   const roleColors = {
-    tumlare: 'blue.400',
-    kutar: 'cyan.400',     
-    upptäckare: 'green.400', 
-    äventyrare: 'yellow.400', 
-    utmanare: 'orange.400',   
-    rover: 'purple.400',        
+    tumlare: '#41a62a',
+    kutar: '#71c657',     
+    upptäckare: '#00a8e1', 
+    äventyrare: '#e95f13', 
+    utmanare: '#da005e',   
+    rover: '#e2e000',        
   };
 
   const fuelTypeColors = {
@@ -138,8 +137,6 @@ const Profile = () => {
       }
     };
 
-
-
     const fetchChildren = async () => {
       try {
         const response = await fetch('/api/protected/get-children', {
@@ -150,20 +147,20 @@ const Profile = () => {
           const data = await response.json();
     
           const mappedChildren = data.children.map(child => ({
+            childId: child.child_id,
             firstName: child.first_name,
             lastName: child.last_name,
             role: child.role,
             originalRole: child.role.toLowerCase(), 
-            membershipNumber: child.membership_number,
             phone: child.phone
           }));
     
           setChildren(mappedChildren);  // Set state with the mapped children
         } else {
-          console.error('Failed to fetch children data');
+          console.error('Misslyckades med att hämta barndata');
         }
       } catch (error) {
-        console.error('Error fetching children data:', error);
+        console.error('Fel vid hämtning av barndata:', error);
       }
     };
 
@@ -195,7 +192,7 @@ const Profile = () => {
   
       if (response.ok) {
         const data = await response.json();
-        alert('Address updated successfully!');
+        alert('Adressen har uppdaterats framgångsrikt!');
       } else {
         const error = await response.json();
         alert(`Error: ${error.message || 'Failed to update address'}`);
@@ -208,7 +205,7 @@ const Profile = () => {
   };
 
   const handleAddChild = async () => {
-    if (childFirstName && childLastName && membershipNumber) {
+    if (childFirstName && childLastName && childRole) {
       try {
         // Skicka POST-begäran till backend för att lägga till ett barn
         const response = await fetch('/api/protected/add-child', {
@@ -218,7 +215,6 @@ const Profile = () => {
           },
           credentials: 'include', // Skicka med cookies för autentisering
           body: JSON.stringify({
-            membership_number: membershipNumber,  // Nytt fält
             first_name: childFirstName,
             last_name: childLastName,
             phone: childPhone,  // Nytt fält för telefonnummer
@@ -232,11 +228,10 @@ const Profile = () => {
           setAddChildOpen(false);
           
           // Lägg till barnet i listan efter att det framgångsrikt har lagts till i backend
-          setChildren([...children, { firstName: childFirstName, lastName: childLastName, role: childRole, membershipNumber, phone: childPhone }]);
+          setChildren([...children, { childId: data.child_id, firstName: childFirstName, lastName: childLastName, role: childRole, phone: childPhone }]);
           setChildFirstName('');
           setChildLastName('');
           setChildRole('kutar');
-          setMembershipNumber('');  // Återställ medlemsnummerfältet
           setChildPhone('');  // Återställ telefonnummerfältet
         } else {
           const error = await response.json();
@@ -247,7 +242,7 @@ const Profile = () => {
         alert('Ett fel uppstod vid tillägg av barnet');
       }
     } else {
-      alert('Du måste fylla i förnamn, efternamn och medlemsnummer för barnet');
+      alert('Du måste fylla i förnamn, efternamn och roll för barnet');
     }
   };
 
@@ -261,7 +256,7 @@ const Profile = () => {
         },
         credentials: 'include',
         body: JSON.stringify({
-          membership_number: child.membershipNumber,
+          child_id: child.childId,
           new_role: child.role,
         }),
       });
@@ -303,11 +298,11 @@ const Profile = () => {
   const handleRemoveChild = async (index) => {
     const childToRemove = children[index]; // Get the child to be deleted
   
-    if (childToRemove && childToRemove.membershipNumber) {
+    if (childToRemove && childToRemove.childId) {
       // Confirm before deleting
       if (window.confirm(`Are you sure you want to delete ${childToRemove.firstName} ${childToRemove.lastName}?`)) {
         // Call the delete API
-        await deleteChild(childToRemove.membershipNumber);
+        await deleteChild(childToRemove.childId);
   
         // After successful deletion, remove the child from state
         setChildren(children.filter((_, i) => i !== index));
@@ -318,7 +313,7 @@ const Profile = () => {
   };
   
   // Delete API function (already written)
-  const deleteChild = async (membershipNumber) => {
+  const deleteChild = async (childId) => {
     try {
       const response = await fetch('/api/protected/delete-child', {
         method: 'DELETE',
@@ -326,7 +321,7 @@ const Profile = () => {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // This ensures cookies are included for authentication
-        body: JSON.stringify({ membership_number: membershipNumber }) // Send the membership number
+        body: JSON.stringify({ child_id: childId }) // Send the child ID
       });
   
       if (response.ok) {
@@ -469,7 +464,7 @@ const Profile = () => {
                 pl={4}
                 pr={4}
             >
-            Medlemsnummer: {child.membershipNumber} (Telefon: {child.phone})
+            (Telefon: {child.phone || 'N/A'})
             </Text>
 
             <HStack mt={2} justifyContent="space-between"spacing={2} alignItems="center">

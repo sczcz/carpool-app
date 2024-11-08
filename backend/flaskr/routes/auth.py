@@ -115,18 +115,12 @@ def logout():
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # Hämta token från cookies
-        print(f"Cookies received: {request.cookies}", flush=True)  # Logga alla cookies
         token = request.cookies.get('jwt_token')
-
-        # Logga tokenen för felsökning
-        print(f"Token received: {token}", flush=True)
 
         if not token:
             return jsonify({"error": "Token is missing!"}), 401
 
         try:
-            # Dekryptera tokenen
             data = jwt.decode(token, current_app.config['JWT_SECRET'], algorithms=['HS256'])
             current_user = User.query.get(data['sub'])
 
@@ -141,5 +135,3 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
 
     return decorated
-
-

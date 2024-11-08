@@ -4,7 +4,7 @@ import requests
 from icalendar import Calendar, Event
 from routes.auth import token_required
 import sys
-from models.auth_model import Child, Role
+from models.auth_model import Child, Role, ParentChildLink
 from models.activity_model import Activity
 import datetime
 
@@ -78,17 +78,19 @@ def fetch_calendar_events():
     return events_list
 
 
+# Funktion för att hämta aktiviteter baserat på roll
 @activity_bp.route('/api/protected/activity/by_role', methods=['GET'])
 @token_required
 def get_activities_by_role(current_user):
-    children = Child.query.filter(
-        (Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id)
+    # Hämta barn som är kopplade till den inloggade användaren
+    children = db.session.query(Child).join(ParentChildLink).filter(
+        ParentChildLink.user_id == current_user.user_id
     ).all()
     
-    # Get children roles from the updated role_mapping
+    # Hämta rollnamn baserat på barnens `role_id`
     children_roles = [Role.query.filter_by(role_id=child.role_id).first().name.lower() for child in children]
-    
-    # Using role names from role_mapping to match activities
+
+    # Matcha `role_ids` för aktiviteter som stämmer överens med barnens roller
     role_ids = [role_mapping[role] for role in children_roles if role in role_mapping]
 
     now = datetime.datetime.now()
@@ -97,6 +99,7 @@ def get_activities_by_role(current_user):
         Activity.start_date >= now
     ).all()
 
+    # Skapa en lista av aktiviteter
     events_list = [{
         'activity_id': activity.activity_id,
         'summary': activity.name,
@@ -107,7 +110,7 @@ def get_activities_by_role(current_user):
         'scout_level': list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
     } for activity in activities]
 
-    # Fetch new events from the external calendar if needed
+    # Hämta nya händelser från den externa kalendern om det behövs
     new_events = fetch_calendar_events()
     events_list.extend(new_events)
 
