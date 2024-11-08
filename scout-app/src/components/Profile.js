@@ -195,7 +195,7 @@ const Profile = () => {
         alert('Adressen har uppdaterats framgångsrikt!');
       } else {
         const error = await response.json();
-        alert(`Error: ${error.message || 'Failed to update address'}`);
+        alert(`Error: ${error.message || 'Misslyckades med att uppdatera adressen'}`);
       }
     } catch (error) {
       console.error('Error:', error);
