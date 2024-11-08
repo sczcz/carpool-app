@@ -32,6 +32,7 @@ import {
 import { checkIfLoggedIn } from '../utils/auth';
 
 const Profile = () => {
+  const toast = useToast();
   // User information (auto-fill from backend)
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -151,7 +152,8 @@ const Profile = () => {
           const mappedChildren = data.children.map(child => ({
             firstName: child.first_name,
             lastName: child.last_name,
-            role: child.role, 
+            role: child.role,
+            originalRole: child.role.toLowerCase(), 
             membershipNumber: child.membership_number,
             phone: child.phone
           }));
@@ -265,6 +267,11 @@ const Profile = () => {
       });
 
       if (response.ok) {
+        setChildren(prevChildren =>
+          prevChildren.map((c, i) =>
+            i === index ? { ...c, originalRole: c.role } : c
+          )
+        );
         toast({
           title: 'Barnets roll uppdaterad!',
           status: 'success',
@@ -365,6 +372,15 @@ const Profile = () => {
     }
   };
 
+  const handleRoleChange = (index, newRole) => {
+    setChildren(prevChildren =>
+      prevChildren.map((child, i) =>
+        i === index ? { ...child, role: newRole } : child
+      )
+    );
+  };
+
+
   return (
   <Box
         p={5}
@@ -456,10 +472,10 @@ const Profile = () => {
             Medlemsnummer: {child.membershipNumber} (Telefon: {child.phone})
             </Text>
 
-            <HStack mt={2} justifyContent="space-between">
+            <HStack mt={2} justifyContent="space-between"spacing={2} alignItems="center">
                 <Select
                 value={child.role}
-                onChange={(e) => handleUpdateChild(index, e.target.value)}
+                onChange={(e) => handleRoleChange(index, e.target.value)}
                 width={{ base: "100%", md: "150px" }} // Responsive width
                 color="black" // Set text color for Select
                 bg="white" // Optional: Set background color for better visibility
@@ -473,6 +489,15 @@ const Profile = () => {
                 <option value="utmanare">Utmanare</option>
                 <option value="rover">Rover</option>
                 </Select>
+              {child.role !== child.originalRole && (
+                <Button
+                  colorScheme="blue"
+                  size="sm"
+                  onClick={() => handleSaveRole(index)}
+                >
+                  Spara
+                </Button>
+              )}
                 <Button
                 colorScheme="red"
                 onClick={() => handleRemoveChild(index)}

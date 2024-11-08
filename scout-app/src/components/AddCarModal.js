@@ -94,7 +94,7 @@ const AddCarModal = ({ isOpen, onClose, onCarAdded }) => {
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Lägg till Bil</ModalHeader>
+        <ModalHeader>Lägg till bil</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl>
@@ -113,8 +113,8 @@ const AddCarModal = ({ isOpen, onClose, onCarAdded }) => {
               onChange={(e) => setFuelType(e.target.value)}
               isRequired
             >
-              <option value="Electric">Electric</option>
-              <option value="Gas">Gas</option>
+              <option value="Electric">El</option>
+              <option value="Gas">Bensin</option>
               <option value="Hybrid">Hybrid</option>
             </Select>
           </FormControl>

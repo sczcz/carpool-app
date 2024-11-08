@@ -211,11 +211,11 @@ const DashBoardParent = ({ token }) => {
           })
         );
       } else {
-        throw new Error('Failed to fetch carpools');
+        throw new Error('Misslyckades med att hämta samåkningar');
       }
     } catch (error) {
       toast({
-        title: 'Error fetching carpools.',
+        title: 'Fel vid hämtning av samåkningar.',
         description: error.message,
         status: 'error',
         duration: 5000,
@@ -356,11 +356,24 @@ const handleDeleteCarpool = async (carpoolId, activityId) => {
   } catch (error) {
     toast({
       title: 'Error',
-      description: error.message || 'Unable to delete carpool',
+      description: error.message || 'Kan inte ta bort samåkning',
       status: 'error',
       duration: 5000,
       isClosable: true,
     });
+  }
+};
+
+const translateCarpoolType = (type) => {
+  switch (type) {
+    case 'drop-off':
+      return 'Avlämning';
+    case 'pick-up':
+      return 'Hämtning';
+    case 'both':
+      return 'Båda';
+    default:
+      return 'Okänd';
   }
 };
 
@@ -427,7 +440,7 @@ const handleLoadMore = () => {
           {/* Upcoming activities */}
           <Box mb={8}>
             <Heading as="h2" size="md" mb={4} color="brand.500">
-              Kommande Aktiviteter
+              Kommande aktiviteter
             </Heading>
 
             {/* Display a message if there are no activities */}
@@ -506,7 +519,7 @@ const handleLoadMore = () => {
                               <Flex justify="space-between" align="center" wrap="wrap">
                               <Box>
                                 <Text fontSize="md" color="brand.600">
-                                  {carpool.departure_address} - {carpool.departure_city} ({carpool.carpool_type})
+                                  {carpool.departure_address} - {carpool.departure_city} ({translateCarpoolType(carpool?.carpool_type) || 'N/A'})
                                 </Text>
                                 <Text fontSize="sm" color="gray.500">
                                   Tillgängliga Platser: {carpool.available_seats}

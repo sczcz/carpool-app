@@ -24,7 +24,7 @@ function CarpoolChat({ carpoolId, userName, userId }) {
 
   useEffect(() => {
     if (!carpoolId) {
-      console.error("carpoolId is missing, unable to load chat");
+      console.error("carpoolId saknas, kan inte ladda chatten");
       return;
     }
 
@@ -38,10 +38,10 @@ function CarpoolChat({ carpoolId, userName, userId }) {
           const data = await response.json();
           setMessages(data);
         } else {
-          console.error('Failed to fetch messages');
+          console.error('Misslyckades med att hämta meddelanden');
         }
       } catch (error) {
-        console.error('Error fetching messages:', error);
+        console.error('Error vid hämtning av meddelanden:', error);
       }
     };
     fetchMessages();

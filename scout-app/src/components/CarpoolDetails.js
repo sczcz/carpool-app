@@ -96,7 +96,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
     } catch (error) {
       toast({
         title: 'Error',
-        description: error.message || 'Unable to remove from carpool',
+        description: error.message || 'Kan inte ta bort från samåkning',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -106,6 +106,19 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
 
   const isParentOfChild = (passenger) => {
     return passenger.parent_1_id === currentUserId || passenger.parent_2_id === currentUserId;
+  };
+
+  const translateCarpoolType = (type) => {
+    switch (type) {
+      case 'drop-off':
+        return 'Avlämning';
+      case 'pick-up':
+        return 'Hämtning';
+      case 'both':
+        return 'Båda';
+      default:
+        return 'Okänd';
+    }
   };
 
   const roleColors = {
@@ -148,7 +161,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
               <VStack align="start" spacing={1} w="full"> {/* Inner VStack for consistent spacing */}
                 <HStack>
                   <Text fontSize={fontSize} fontWeight="bold">Förare:</Text>
-                  <Text fontSize={fontSize}>{driverInfo ? `${driverInfo.first_name} ${driverInfo.last_name}` : 'Loading...'}</Text>
+                  <Text fontSize={fontSize}>{driverInfo ? `${driverInfo.first_name} ${driverInfo.last_name}` : 'Laddar...'}</Text>
                 </HStack>
                 <HStack>
                   <Text fontSize={fontSize} fontWeight="bold">Telefon:</Text>
@@ -160,11 +173,11 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                 </HStack>
                 <HStack>
                   <Text fontSize={fontSize} fontWeight="bold">Tillgängliga platser:</Text>
-                  <Text fontSize={fontSize}>{carpool?.available_seats || 'N/A'}</Text>
+                  <Text fontSize={fontSize}>{carpool?.available_seats || '0'}</Text>
                 </HStack>
                 <HStack>
                   <Text fontSize={fontSize} fontWeight="bold">Typ av samåkning:</Text>
-                  <Text fontSize={fontSize}>{carpool?.carpool_type || 'N/A'}</Text>
+                  <Text fontSize={fontSize}>{translateCarpoolType(carpool?.carpool_type) || 'N/A'}</Text>
                 </HStack>
               </VStack>
 
@@ -196,7 +209,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                             <IconButton
                               icon={<FaTrash />}
                               colorScheme="red"
-                              aria-label="Remove child from carpool"
+                              aria-label="Ta bort barnet från samåkning"
                               onClick={() => handleUnbook(passenger.child_id)}
                               variant="outline"
                               size="sm"
@@ -239,7 +252,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                 <Text fontSize={fontSize}>{activity.location}</Text>
 
                 <Text fontSize="sm" color="gray.500" mt={3}>
-                  <Icon as={FaClock} mr={1} /> Start Tid:
+                  <Icon as={FaClock} mr={1} /> Start tid:
                 </Text>
                 <Text fontSize={fontSize}>
                   {activity.dtstart ? format(parseISO(activity.dtstart), "d MMMM 'kl' HH:mm") : 'Datum inte tillgängliga'}
