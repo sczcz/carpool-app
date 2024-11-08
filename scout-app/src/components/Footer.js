@@ -41,10 +41,10 @@ export default function Footer() {
         
         {/* Navigation Links */}
         <Stack direction="row" spacing={8} justifyContent="center">
-          <Link href="/">Home</Link>
-          <Link href="/about">About</Link>
+          <Link href="/">Hem</Link>
+          <Link href="/about">Om oss</Link>
           <Link href="/services">Services</Link>
-          <Link href="/contact">Contact</Link>
+          <Link href="/contact">Kontakt</Link>
         </Stack>
 
         <Text>© {new Date().getFullYear()} Your Company. All rights reserved.</Text>

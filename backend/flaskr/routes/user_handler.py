@@ -1,7 +1,7 @@
 # user_handler.py
 from flask import Blueprint, request, jsonify, make_response
 from extensions import db
-from models.auth_model import User, Role, UserRole, Child
+from models.auth_model import User, Role, UserRole, Child, ParentChildLink
 from functools import wraps
 from routes.auth import token_required  # Import token_required decorator
 
@@ -70,73 +70,77 @@ def get_logged_in_user(current_user):
 @token_required
 def add_child(current_user):
     data = request.get_json()
+    
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    phone = data.get('phone')
+    role_name = data.get('role')
+    date_of_birth = data.get('date_of_birth')
 
-    # Get the membership number from the request
-    membership_number = data.get('membership_number')
+    if not first_name or not last_name or not role_name or not date_of_birth:
+        return jsonify({"error": "First name, last name, role, and date of birth are required!"}), 400
 
-    if not membership_number:
-        return jsonify({"error": "Membership number is required!"}), 400
+    # Hämta role_id baserat på rollnamn
+    role = Role.query.filter_by(name=role_name.lower()).first()
+    if not role:
+        return jsonify({"error": "Invalid role provided!"}), 401
 
-    # Check if the child already exists based on membership_number
-    existing_child = Child.query.filter_by(membership_number=membership_number).first()
+    # Kontrollera om barnet redan finns
+    existing_child = Child.query.filter_by(
+        first_name=first_name,
+        last_name=last_name,
+        date_of_birth=date_of_birth
+    ).first()
 
     if existing_child:
-        # If the child exists, update parent_2_id if it's empty
-        if not existing_child.parent_2_id:
-            existing_child.parent_2_id = current_user.user_id
+        # Kolla om länken mellan föräldern och barnet redan existerar
+        existing_link = ParentChildLink.query.filter_by(
+            user_id=current_user.user_id,
+            child_id=existing_child.child_id
+        ).first()
+
+        if not existing_link:
+            # Skapa en ny länk mellan föräldern och det befintliga barnet
+            new_link = ParentChildLink(user_id=current_user.user_id, child_id=existing_child.child_id)
+            db.session.add(new_link)
             db.session.commit()
-            return jsonify({"message": f"Parent 2 added to child {existing_child.first_name} {existing_child.last_name}!"}), 200
+            return jsonify({"message": f"Linked existing child {first_name} {last_name} to current user."}), 200
         else:
-            return jsonify({"error": "This child already has two parents!"}), 402
+            return jsonify({"error": "This child is already linked to the current user!"}), 402
     else:
-        # If the child doesn't exist and only membership number is provided, return an error
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
-        phone = data.get('phone')
-        role = data.get('role')
-
-        # If only the membership number is provided but the child doesn't exist, return an error
-        if not all([first_name, last_name, role]):
-            return jsonify({"error": "Child not found. First name, last name, and role are required to create a new child!"}), 400
-
-        # Get role_id from the role name
-        role_id = db.session.query(Role.role_id).filter_by(name=role.lower()).first()
-        if not role_id:
-            return jsonify({"error": "Invalid role provided!"}), 401
-
-        # Create a new child
+        # Skapa ett nytt barn och länka det till föräldern
         new_child = Child(
-            membership_number=membership_number,
             first_name=first_name,
             last_name=last_name,
+            date_of_birth=date_of_birth,
             phone=phone,
-            role_id=role_id[0],  # role_id is a tuple, so we get the first element
-            parent_1_id=current_user.user_id  # Set current user as parent_1
+            role_id=role.role_id
         )
-
-        # Save the child to the database
         db.session.add(new_child)
         db.session.commit()
 
-        return jsonify({"message": f"Child {first_name} {last_name} created!"}), 201
-    
-    # Route för att hämta en lista över barn för den inloggade användaren
+        # Skapa en ny länk mellan föräldern och det nya barnet
+        new_link = ParentChildLink(user_id=current_user.user_id, child_id=new_child.child_id)
+        db.session.add(new_link)
+        db.session.commit()
+
+        return jsonify({"message": f"Child {first_name} {last_name} created and linked to current user!"}), 201
+
+
+
 @user_handler.route('/api/protected/get-children', methods=['GET'])
 @token_required
 def get_children(current_user):
-    # Hämta alla barn där den inloggade användaren är förälder
-    children = Child.query.filter(
-        (Child.parent_1_id == current_user.user_id) | 
-        (Child.parent_2_id == current_user.user_id)
-    ).all()
+    # Hämta alla barn för den inloggade användaren
+    children = db.session.query(Child).join(ParentChildLink).filter(ParentChildLink.user_id == current_user.user_id).all()
 
     # Skapa en lista med barnens data
     children_data = [
         {
             "first_name": child.first_name,
             "last_name": child.last_name,
-            "membership_number": child.membership_number,
-            "role": db.session.query(Role.name).filter_by(role_id=child.role_id).first()[0],  # Hämta rollnamn
+            "date_of_birth": child.date_of_birth.isoformat(),
+            "role": db.session.query(Role.name).filter_by(role_id=child.role_id).first()[0],
             "phone": child.phone,
         }
         for child in children
@@ -144,51 +148,72 @@ def get_children(current_user):
 
     return jsonify({"children": children_data}), 200
 
-# Route för att ta bort ett barn baserat på medlemsnummer
+
+
 @user_handler.route('/api/protected/delete-child', methods=['DELETE'])
 @token_required
 def delete_child(current_user):
     data = request.get_json()
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    date_of_birth = data.get('date_of_birth')
 
-    # Hämta medlemsnumret från frontend
-    membership_number = data.get('membership_number')
-
-    if not membership_number:
-        return jsonify({"error": "Membership number is required!"}), 400
-
-    # Hitta barnet baserat på medlemsnummer och kontrollera om den inloggade användaren är en av föräldrarna
-    child_to_delete = Child.query.filter(
-        (Child.membership_number == membership_number) &
-        ((Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id))
+    # Hitta barnet baserat på namn, efternamn och födelsedatum
+    child_to_unlink = Child.query.filter_by(
+        first_name=first_name,
+        last_name=last_name,
+        date_of_birth=date_of_birth
     ).first()
 
-    if not child_to_delete:
-        return jsonify({"error": "Child not found or you do not have permission to delete this child!"}), 404
+    if not child_to_unlink:
+        return jsonify({"error": "Child not found!"}), 404
 
-    # Ta bort barnet från databasen
-    db.session.delete(child_to_delete)
+    # Hitta länken mellan föräldern och barnet
+    link = ParentChildLink.query.filter_by(user_id=current_user.user_id, child_id=child_to_unlink.child_id).first()
+
+    if not link:
+        return jsonify({"error": "No link found between current user and specified child!"}), 404
+
+    # Ta bort länken
+    db.session.delete(link)
     db.session.commit()
 
-    return jsonify({"message": f"Child with membership number {membership_number} has been deleted!"}), 200
+    # Kontrollera om barnet inte längre är länkat till några föräldrar
+    remaining_links = ParentChildLink.query.filter_by(child_id=child_to_unlink.child_id).all()
+    if not remaining_links:
+        db.session.delete(child_to_unlink)
+        db.session.commit()
+
+    return jsonify({"message": f"Unlinked child {first_name} {last_name} from current user!"}), 200
+
+
 
 @user_handler.route('/api/protected/update-child-role', methods=['PUT'])
 @token_required
 def update_child_role(current_user):
     data = request.get_json()
-    membership_number = data.get('membership_number')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    date_of_birth = data.get('date_of_birth')
     new_role_name = data.get('new_role')
 
-    if not membership_number or not new_role_name:
-        return jsonify({"error": "Membership number and new role are required!"}), 400
+    if not first_name or not last_name or not date_of_birth or not new_role_name:
+        return jsonify({"error": "First name, last name, date of birth, and new role are required!"}), 400
 
-    # Hitta barnet baserat på medlemsnummer och se om den inloggade användaren är förälder
-    child = Child.query.filter(
-        (Child.membership_number == membership_number) &
-        ((Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id))
+    # Hitta barnet baserat på namn, efternamn och födelsedatum
+    child = Child.query.filter_by(
+        first_name=first_name,
+        last_name=last_name,
+        date_of_birth=date_of_birth
     ).first()
 
     if not child:
-        return jsonify({"error": "Child not found or you do not have permission to update this child's role!"}), 404
+        return jsonify({"error": "Child not found!"}), 404
+
+    # Kontrollera att användaren är en förälder till barnet
+    link = ParentChildLink.query.filter_by(user_id=current_user.user_id, child_id=child.child_id).first()
+    if not link:
+        return jsonify({"error": "You do not have permission to update this child's role!"}), 403
 
     # Hämta det nya role_id från rollen
     role = Role.query.filter_by(name=new_role_name.lower()).first()
