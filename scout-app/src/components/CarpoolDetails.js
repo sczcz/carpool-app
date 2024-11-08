@@ -120,7 +120,9 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
     }
   };
 
-  const isParentOfChild = (passenger) => passenger.parent_1_id === currentUserId || passenger.parent_2_id === currentUserId;
+  const isParentOfChild = (passenger) => {
+    return passenger.parents && passenger.parents.some((parent) => parent.parent_id === currentUserId);
+  };
 
   const translateCarpoolType = (type) => {
     switch (type) {
@@ -137,11 +139,11 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
 
   const roleColors = {
     tumlare: '#41a62a',
-    kutar: '#71c657',     
-    upptäckare: '#00a8e1', 
-    äventyrare: '#e95f13', 
-    utmanare: '#da005e',   
-    rover: '#e2e000',        
+    kutar: '#71c657',
+    upptäckare: '#00a8e1',
+    äventyrare: '#e95f13',
+    utmanare: '#da005e',
+    rover: '#e2e000',
   };
 
   return (
@@ -195,7 +197,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                           <HStack spacing={2}>
                             <Icon as={FaUser} color="gray.500" />
                             <Text fontSize="sm" fontWeight="bold">Namn:</Text>
-                            <Text fontSize="sm">{passenger.name || 'Unknown'}</Text>
+                            <Text fontSize="sm">{passenger.child_name || 'Unknown'}</Text>
                           </HStack>
 
                           {isParentOfChild(passenger) && (
@@ -213,16 +215,25 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                         <Stack spacing={1} mt={2}>
                           <HStack spacing={2}>
                             <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
-                            <Text fontSize="sm">{passenger.phone || 'N/A'}</Text>
+                            <Text fontSize="sm">{passenger.child_phone || 'N/A'}</Text>
                           </HStack>
-                          <HStack spacing={2}>
-                            <Text fontSize="sm" fontWeight="bold">Vårdnadshavare:</Text>
-                            <Text fontSize="sm">{passenger.parent1_name || 'N/A'}</Text>
-                          </HStack>
-                          <HStack spacing={2}>
-                            <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
-                            <Text fontSize="sm">{passenger.parent1_phone || 'N/A'}</Text>
-                          </HStack>
+
+                          {passenger.parents && passenger.parents.length > 0 ? (
+                            passenger.parents.map((parent, i) => (
+                              <Box key={i} pl={4} mt={2} borderLeft="1px solid" borderColor="gray.200">
+                                <HStack spacing={2}>
+                                  <Text fontSize="sm" fontWeight="bold">Vårdnadshavare:</Text>
+                                  <Text fontSize="sm">{parent.parent_name || 'N/A'}</Text>
+                                </HStack>
+                                <HStack spacing={2}>
+                                  <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
+                                  <Text fontSize="sm">{parent.parent_phone || 'N/A'}</Text>
+                                </HStack>
+                              </Box>
+                            ))
+                          ) : (
+                            <Text fontSize="sm" color="gray.500">Inga vårdnadshavare hittade.</Text>
+                          )}
                         </Stack>
                       </Box>
                     ))

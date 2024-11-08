@@ -186,13 +186,25 @@ const DashBoardParent = ({ token }) => {
         method: 'GET',
         credentials: 'include',
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         setActivities((prevActivities) =>
           prevActivities.map((activity) => {
             if (activity.activity_id === activityId) {
-              return { ...activity, carpools: data.carpools };
+              return {
+                ...activity,
+                carpools: data.carpools.map((carpool) => ({
+                  ...carpool,
+                  passengers: carpool.passengers.map((passenger) => ({
+                    ...passenger,
+                    parents: passenger.parents.map((parent) => ({
+                      parent_name: parent.parent_name,
+                      parent_phone: parent.parent_phone,
+                    })),
+                  })),
+                })),
+              };
             }
             return activity;
           })
@@ -212,6 +224,7 @@ const DashBoardParent = ({ token }) => {
       setFetchingCarpools(false);
     }
   };
+  
 
   const handleJoinCarpool = async (carpoolId, activityId) => {
     try {

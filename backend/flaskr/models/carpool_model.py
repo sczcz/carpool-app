@@ -20,7 +20,6 @@ class Carpool(db.Model):
     # New column for carpool type
     carpool_type = db.Column(Enum('drop-off', 'pick-up', 'both', name='carpool_type_enum'), nullable=False)
 
-
 # Passagerar-tabell
 class Passenger(db.Model):
     __tablename__ = 'passengers'
