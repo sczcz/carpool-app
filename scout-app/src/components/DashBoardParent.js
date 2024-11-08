@@ -112,7 +112,7 @@ const DashBoardParent = ({ token }) => {
   const fetchActivities = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/protected/activity/all', {
+      const response = await fetch('/api/protected/activity/by_role', {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -451,7 +451,7 @@ const handleLoadMore = () => {
                 <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="white">
                   <Flex justify="space-between" align="center" mb={2}>
                     <Tag size="lg" color={'white'} backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
-                      <TagLabel>{activity.scout_level}</TagLabel>
+                    <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
                     </Tag>
                     <Button
                       colorScheme="brand"
@@ -462,8 +462,12 @@ const handleLoadMore = () => {
                     </Button>
                   </Flex>
                   <Text fontWeight="bold">
-                    {format(parseISO(activity.dtstart), 'P p')}
+                    {format(parseISO(activity.dtstart), "d MMMM")}
                   </Text>
+                  <Text fontSize="sm" color="gray.600">
+                   Start: {format(parseISO(activity.dtstart), "HH:mm")}
+                  </Text>
+
                   <Text>{activity.location}</Text>
                   <Text mt={2}>{activity.summary.split('//')[0]}</Text>
 

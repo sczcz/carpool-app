@@ -20,6 +20,8 @@ import {
 } from '@chakra-ui/react';
 import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from 'react-icons/fa';
 import ExpandableText from './ExpandableText';
+import { format, parseISO } from 'date-fns';
+
 
 const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fetchCarpoolsForActivity }) => {
   const fontSize = useBreakpointValue({ base: 'sm', md: 'md' });
@@ -49,13 +51,13 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
           const data = await response.json();
           setDriverInfo(data.driver);
         } else {
-          throw new Error('Failed to fetch driver info');
+          throw new Error('Det gick inte att hämta förarinformationen');
         }
       } catch (error) {
-        console.error('Error fetching driver info:', error);
+        console.error('Error vid hämtning av förarinformation', error);
         toast({
           title: 'Error',
-          description: 'Could not fetch driver information',
+          description: 'Kunde inte hämta förarinformation',
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -78,11 +80,11 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
         body: JSON.stringify({ carpool_id: carpool.id, child_id: child_id }),
       });
 
-      if (!response.ok) throw new Error('Failed to remove from carpool');
+      if (!response.ok) throw new Error('Misslyckades med att ta bort från samåkning');
 
       toast({
-        title: 'Removed from Carpool',
-        description: 'Successfully removed the child from the carpool!',
+        title: 'Tagits bort från samåkning',
+        description: 'Barnet har framgångsrikt tagits bort från samåkningen!',
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -131,7 +133,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
             alignSelf="center"
           >
             <Icon as={FaFlag} mr={1} />
-            <TagLabel>{activity.scout_level}</TagLabel>
+            <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
           </Tag>
         </HStack>
         <ModalCloseButton size="sm" />
@@ -141,33 +143,33 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
             <VStack align="start" spacing={4} flex={1} w="full" px={{ base: 4, md: 0 }}> {/* Added padding to the sides */}
               {/* Carpool Information Section */}
               <Text fontWeight="bold" fontSize={fontSize} mt={4}>
-                Carpool Information:
+                Samåkningsinformation:
               </Text>
               <VStack align="start" spacing={1} w="full"> {/* Inner VStack for consistent spacing */}
                 <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Driver:</Text>
+                  <Text fontSize={fontSize} fontWeight="bold">Förare:</Text>
                   <Text fontSize={fontSize}>{driverInfo ? `${driverInfo.first_name} ${driverInfo.last_name}` : 'Loading...'}</Text>
                 </HStack>
                 <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Phone:</Text>
+                  <Text fontSize={fontSize} fontWeight="bold">Telefon:</Text>
                   <Text fontSize={fontSize}>{driverInfo?.phone || 'N/A'}</Text>
                 </HStack>
                 <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Departure Address:</Text>
+                  <Text fontSize={fontSize} fontWeight="bold">Avgångsadress:</Text>
                   <Text fontSize={fontSize}>{carpool?.departure_address || 'N/A'}</Text>
                 </HStack>
                 <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Available Seats:</Text>
+                  <Text fontSize={fontSize} fontWeight="bold">Tillgängliga platser:</Text>
                   <Text fontSize={fontSize}>{carpool?.available_seats || 'N/A'}</Text>
                 </HStack>
                 <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Carpool Type:</Text>
+                  <Text fontSize={fontSize} fontWeight="bold">Typ av samåkning:</Text>
                   <Text fontSize={fontSize}>{carpool?.carpool_type || 'N/A'}</Text>
                 </HStack>
               </VStack>
 
               {/* Passenger List Section */}
-              <Text fontWeight="bold" fontSize={fontSize} mt={4}>Passengers:</Text>
+              <Text fontWeight="bold" fontSize={fontSize} mt={4}>Passagerare:</Text>
               <Box
                 w="full"
                 maxH={{ base: '200px', md: '300px' }} // Set max height for the scrollable area
@@ -219,7 +221,7 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                       </Box>
                     ))
                   ) : (
-                    <Text fontSize="sm" color="gray.500">No passengers found.</Text>
+                    <Text fontSize="sm" color="gray.500">Inga passagerare hittade.</Text>
                   )}
                 </Stack>
               </Box>
@@ -228,22 +230,26 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
             {/* Right Section for Activity Details */}
             <Box flex={1} w="full" mt={{ base: 4, md: 0 }} px={{ base: 4, md: 0 }}> {/* Added padding to the sides */}
               <Text fontWeight="bold" fontSize={fontSize} mt={4}>
-                Activity Details:
+                Aktivitetsdetaljer:
               </Text>
               <Box w="full">
                 <Text fontSize="sm" color="gray.500" mb={1}>
-                  <Icon as={FaMapMarkerAlt} mr={1} /> Location:
+                  <Icon as={FaMapMarkerAlt} mr={1} /> Plats:
                 </Text>
                 <Text fontSize={fontSize}>{activity.location}</Text>
 
                 <Text fontSize="sm" color="gray.500" mt={3}>
-                  <Icon as={FaClock} mr={1} /> Start Time:
+                  <Icon as={FaClock} mr={1} /> Start Tid:
                 </Text>
-                <Text fontSize={fontSize}>{activity.dtstart}</Text>
+                <Text fontSize={fontSize}>
+                  {activity.dtstart ? format(parseISO(activity.dtstart), "d MMMM 'kl' HH:mm") : 'Datum inte tillgängliga'}
+                </Text>
+
+
 
                 <Box>
                   <Text fontSize="sm" color="gray.500" mt={3}>
-                    <Icon as={FaInfoCircle} mr={1} /> Description:
+                    <Icon as={FaInfoCircle} mr={1} /> Beskrivning:
                   </Text>
                   <ExpandableText text={activity.description} fontSize={fontSize} />
                 </Box>

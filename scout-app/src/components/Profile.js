@@ -18,6 +18,7 @@ import {
   Avatar,
   Flex,
   useColorModeValue,
+  useToast,
   Stack,
   SimpleGrid,
   Modal,
@@ -50,6 +51,7 @@ const Profile = () => {
   const [childRole, setChildRole] = useState('kutar');
   const [membershipNumber, setMembershipNumber] = useState('');
   const [childPhone, setChildPhone] = useState('');
+  
 
   // Modal states
   const [isAddChildOpen, setAddChildOpen] = useState(false);
@@ -244,6 +246,50 @@ const Profile = () => {
       }
     } else {
       alert('Du måste fylla i förnamn, efternamn och medlemsnummer för barnet');
+    }
+  };
+
+  const handleSaveRole = async (index) => {
+    const child = children[index];
+    try {
+      const response = await fetch('/api/protected/update-child-role', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          membership_number: child.membershipNumber,
+          new_role: child.role,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Barnets roll uppdaterad!',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Fel',
+          description: error.message || 'Misslyckades med att uppdatera roll',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating child role:', error);
+      toast({
+        title: 'Error',
+        description: 'Ett fel uppstod vid uppdatering av roll',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 

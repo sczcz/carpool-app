@@ -170,3 +170,33 @@ def delete_child(current_user):
     db.session.commit()
 
     return jsonify({"message": f"Child with membership number {membership_number} has been deleted!"}), 200
+
+@user_handler.route('/api/protected/update-child-role', methods=['PUT'])
+@token_required
+def update_child_role(current_user):
+    data = request.get_json()
+    membership_number = data.get('membership_number')
+    new_role_name = data.get('new_role')
+
+    if not membership_number or not new_role_name:
+        return jsonify({"error": "Membership number and new role are required!"}), 400
+
+    # Hitta barnet baserat på medlemsnummer och se om den inloggade användaren är förälder
+    child = Child.query.filter(
+        (Child.membership_number == membership_number) &
+        ((Child.parent_1_id == current_user.user_id) | (Child.parent_2_id == current_user.user_id))
+    ).first()
+
+    if not child:
+        return jsonify({"error": "Child not found or you do not have permission to update this child's role!"}), 404
+
+    # Hämta det nya role_id från rollen
+    role = Role.query.filter_by(name=new_role_name.lower()).first()
+    if not role:
+        return jsonify({"error": "Invalid role provided!"}), 401
+
+    # Uppdatera barnets roll
+    child.role_id = role.role_id
+    db.session.commit()
+
+    return jsonify({"message": f"Child's role updated to {new_role_name}!"}), 200
