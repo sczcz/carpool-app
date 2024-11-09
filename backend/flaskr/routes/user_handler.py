@@ -141,17 +141,14 @@ def get_children(current_user):
 @token_required
 def delete_child(current_user):
     data = request.get_json()
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    date_of_birth = data.get('date_of_birth')
+    child_id = data.get('child_id')
 
-    # Hitta barnet baserat på namn, efternamn och födelsedatum
-    child_to_unlink = Child.query.filter_by(
-        first_name=first_name,
-        last_name=last_name,
-        date_of_birth=date_of_birth
-    ).first()
+    # Kontrollera om child_id har skickats
+    if not child_id:
+        return jsonify({"error": "Child ID is required!"}), 400
 
+    # Hitta barnet baserat på child_id
+    child_to_unlink = Child.query.get(child_id)
     if not child_to_unlink:
         return jsonify({"error": "Child not found!"}), 404
 
@@ -171,9 +168,7 @@ def delete_child(current_user):
         db.session.delete(child_to_unlink)
         db.session.commit()
 
-    return jsonify({"message": f"Unlinked child {first_name} {last_name} from current user!"}), 200
-
-
+    return jsonify({"message": f"Unlinked child {child_to_unlink.first_name} {child_to_unlink.last_name} from current user!"}), 200
 
 @user_handler.route('/api/protected/update-child-role', methods=['PUT'])
 @token_required

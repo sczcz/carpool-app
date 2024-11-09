@@ -28,6 +28,7 @@ import {
   ModalCloseButton,
   ModalBody,
   ModalFooter,
+  Spacer,
 } from '@chakra-ui/react';
 import { checkIfLoggedIn } from '../utils/auth';
 
@@ -467,41 +468,48 @@ const Profile = () => {
             (Telefon: {child.phone || 'N/A'})
             </Text>
 
-            <HStack mt={2} justifyContent="space-between"spacing={2} alignItems="center">
-                <Select
+            <HStack mt={2} spacing={2} alignItems="center" width="full">
+              <Select
                 value={child.role}
                 onChange={(e) => handleRoleChange(index, e.target.value)}
                 width={{ base: "100%", md: "150px" }} // Responsive width
                 color="black" // Set text color for Select
                 bg="white" // Optional: Set background color for better visibility
                 pl={4}
-                
-                >
+              >
                 <option value="kutar">Kutar</option>
                 <option value="tumlare">Tumlare</option>
                 <option value="upptäckare">Upptäckare</option>
                 <option value="äventyrare">Äventyrare</option>
                 <option value="utmanare">Utmanare</option>
                 <option value="rover">Rover</option>
-                </Select>
+              </Select>
+
+              {/* Placera Spara-knappen nära rullmenyn */}
               {child.role !== child.originalRole && (
-                <Button
-                  colorScheme="blue"
-                  size="sm"
-                  onClick={() => handleSaveRole(index)}
-                >
-                  Spara
-                </Button>
+                <Box>
+                  <Button
+                    colorScheme="blue"
+                    size="sm"
+                    onClick={() => handleSaveRole(index)}
+                  >
+                    Spara
+                  </Button>
+                </Box>
               )}
-                <Button
+
+              {/* Använd Spacer för att skjuta soptunneikonen längst till höger */}
+              <Spacer />
+
+              <Button
                 colorScheme="red"
                 onClick={() => handleRemoveChild(index)}
                 variant="outline" // Use outline variant if you want a border
                 aria-label="Remove Child" // Accessibility label
                 mr={4}
-                >
+              >
                 <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
-                </Button>
+              </Button>
             </HStack>
             </Box>
           ))}
