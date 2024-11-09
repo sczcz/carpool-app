@@ -30,17 +30,19 @@ import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
 import { checkIfLoggedIn } from '../utils/auth';
 import CarpoolDetails from './CarpoolDetails';
-import AddChildModal from './AddChildModal'; // Import the AddChildModal component
+import AddChildModal from './AddChildModal';
 
 
 const DashBoardParent = ({ token }) => {
-  const [authLoading, setAuthLoading] = useState(true); // New state for auth check
+  const [authLoading, setAuthLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState('');
   const [activities, setActivities] = useState([]);
+  const [myActivities, setMyActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openCarpoolIndex, setOpenCarpoolIndex] = useState(null);
+  const [openMyCarpoolIndex, setOpenMyCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
   const [selectedActivityId, setSelectedActivityId] = useState(null);
@@ -53,7 +55,7 @@ const DashBoardParent = ({ token }) => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
-  const navigate = useNavigate();  // Added navigate for routing
+  const navigate = useNavigate();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
 
   const roleColors = {
@@ -65,15 +67,12 @@ const DashBoardParent = ({ token }) => {
     rover: '#e2e000',        
   };
 
-
-
   useEffect(() => {
     const verifyUser = async () => {
       const loggedIn = await checkIfLoggedIn();
       if (loggedIn) {
-        setAuthLoading(false); // Only stop loading if user is logged in
+        setAuthLoading(false);
       }
-      // No need to do anything if the user is not logged in, since checkIfLoggedIn will redirect
     };
 
     verifyUser();
@@ -106,31 +105,66 @@ const DashBoardParent = ({ token }) => {
   };
   
   useEffect(() => {
-      fetchActivities();
+    fetchActivities();
   }, [token]);
+
+  useEffect(() => {
+    const filteredMyActivities = activities.filter((activity) =>
+      activity.carpools.some((carpool) => {
+        const isDriver = carpool.driver_id === userId;
+        const hasChildAsPassenger = carpool.passengers.some((passenger) =>
+          passenger.parents.some((parent) => parent.parent_id === userId)
+        );
+        return isDriver || hasChildAsPassenger;
+      })
+    );
+  
+    setMyActivities(filteredMyActivities);
+  }, [activities, userId]);
+  
   
   const fetchActivities = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/protected/activity/by_role', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error('Något gick fel vid hämtning av aktiviteter');
-      }
-  
+      const response = await fetch('/api/protected/activity/by_role', { credentials: 'include' });
       const data = await response.json();
       const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
-      setActivities(sortedActivities);
-      setLoading(false);
+
+      const activitiesWithCarpools = await Promise.all(sortedActivities.map(async (activity) => {
+        const carpoolResponse = await fetch(`/api/carpool/list?activity_id=${activity.activity_id}`, { credentials: 'include' });
+        const carpoolData = await carpoolResponse.json();
+        return { ...activity, carpools: carpoolData.carpools || [] };
+      })
+    );
+
+    setActivities(activitiesWithCarpools);
+
+    const filteredMyActivities = activitiesWithCarpools.filter((activity) =>
+      activity.carpools.some((carpool) => {
+        const isDriver = carpool.driver_id === userId;
+        const hasChildAsPassenger = carpool.passengers.some((passenger) =>
+          passenger.parents.some((parent) => parent.parent_id === userId)
+        );
+        return isDriver || hasChildAsPassenger;
+      })
+    );
+
+    setMyActivities(filteredMyActivities);
+    setLoading(false);
+
     } catch (err) {
+      console.error('Error fetching activities:', err);
       setError(err.message);
       setLoading(false);
     }
+  };
+
+  const toggleUpcomingCarpool = (index) => {
+    setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
+  };
+
+  const toggleMyCarpool = (index) => {
+    setOpenMyCarpoolIndex(openMyCarpoolIndex === index ? null : index);
   };
   
   const [loadingJoinState, setLoadingJoinState] = useState({});
@@ -288,24 +322,24 @@ const DashBoardParent = ({ token }) => {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
-
+  
       const carpoolData = await carpoolResponse.json();
-
+  
       if (carpoolData.passengers && carpoolData.passengers.length > 0) {
         const confirmDelete = window.confirm(
           "Samåkningen har passagerare! Är du säker på att du vill ta bort?"
         );
         if (!confirmDelete) return;
       }
-
+  
       const response = await fetch(`/api/carpool/${carpoolId}/delete`, {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
-
+  
       if (!response.ok) throw new Error('Failed to delete carpool');
-
+  
       toast({
         title: 'Samåkning borttagen',
         description: 'Samåkning borttagen!',
@@ -313,8 +347,31 @@ const DashBoardParent = ({ token }) => {
         duration: 5000,
         isClosable: true,
       });
-
-      await fetchCarpoolsForActivity(activityId);
+  
+      setMyActivities((prevActivities) =>
+        prevActivities
+          .map((activity) =>
+            activity.activity_id === activityId
+              ? {
+                  ...activity,
+                  carpools: activity.carpools.filter((carpool) => carpool.id !== carpoolId),
+                }
+              : activity
+          )
+          .filter((activity) => activity.carpools.length > 0)
+      );
+  
+      setActivities((prevActivities) =>
+        prevActivities.map((activity) =>
+          activity.activity_id === activityId
+            ? {
+                ...activity,
+                carpools: activity.carpools.filter((carpool) => carpool.id !== carpoolId),
+              }
+            : activity
+        )
+      );
+  
     } catch (error) {
       toast({
         title: 'Error',
@@ -325,7 +382,7 @@ const DashBoardParent = ({ token }) => {
       });
     }
   };
-
+  
   const openCarpoolModal = (activityId) => {
     setSelectedActivityId(activityId);
     onOpen();
@@ -353,8 +410,6 @@ const translateCarpoolType = (type) => {
   }
 };
 
-
-
 const handleLoadMore = () => {
   setVisibleActivitiesCount(visibleActivitiesCount + 10);
 };
@@ -365,7 +420,6 @@ const handleLoadMore = () => {
   };
 
   if (authLoading) {
-    // Show only the auth loading spinner until the check is complete
     return (
       <VStack>
         <Spinner size="xl" color="brand.500" />
@@ -412,6 +466,141 @@ const handleLoadMore = () => {
           </Box>
 
           <Divider mb={6} />
+
+          {myActivities.length > 0 && (
+            <Box mb={8}>
+              <Heading as="h2" size="md" mb={4} color="gray.600">Mina aktiviteter</Heading>
+              <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+                {myActivities.map((activity, index) => (
+                  <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="gray.50">
+                    <Flex justify="space-between" align="center" mb={2}>
+                      <Tag size="lg" color="white" backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
+                        <TagLabel>{activity.scout_level}</TagLabel>
+                      </Tag>
+                      <Button colorScheme="brand" size="sm" onClick={() => toggleMyCarpool(index)}>
+                        {openMyCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
+                      </Button>
+                    </Flex>
+                    <Text fontWeight="bold">{format(parseISO(activity.dtstart), "d MMMM")}</Text>
+                    <Text fontSize="sm" color="gray.600">Start: {format(parseISO(activity.dtstart), "HH:mm")}</Text>
+                    <Text>{activity.location}</Text>
+                    <Collapse in={openMyCarpoolIndex === index} animateOpacity>
+                    <Box mt={2} maxHeight="250px" overflowY="auto">
+                      <VStack spacing={4}>
+                        <Button
+                          leftIcon={<FaPlus />}
+                          colorScheme="brand"
+                          size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openCarpoolModal(activity.activity_id);
+                        }}
+                      >
+                          Lägg till Carpool
+                        </Button>
+
+                        {fetchingCarpools ? (
+                          <Spinner />
+                        ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
+                          activity.carpools.map((carpool) => (
+                            <Box
+                              key={carpool.id}
+                              p={4}
+                              borderWidth={1}
+                              borderRadius="lg"
+                              w="100%"
+                              bg="gray.50"
+                              boxShadow="sm"
+                              fontSize={{ base: 'sm', sm: 'md' }}
+                              onClick={(e) => { e.stopPropagation(); handleCarpoolClick(activity, carpool)}}
+                              cursor="pointer"
+                              _hover={{ bg: 'gray.100' }}
+                            >
+                              <Flex justify="space-between" align="center" wrap="wrap">
+                              <Box>
+                                <Text fontSize="md" color="brand.600">
+                                  {carpool.departure_address} - {carpool.departure_city} ({translateCarpoolType(carpool?.carpool_type) || 'N/A'})
+                                </Text>
+                                <Text fontSize="sm" color="gray.500">
+                                  Tillgängliga Platser: {carpool.available_seats}
+                                </Text>
+                              </Box>
+                              <Flex gap="2" mt={{ base: 2, md: 0 }}>
+                                {/* Show Delete button if the current user is the creator of the carpool */}
+                                {carpool.driver_id === userId && (
+                                  <Button
+                                    colorScheme="red"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteCarpool(carpool.id, activity.activity_id);
+                                    }}
+                                  >
+                                    Ta bort
+                                  </Button>
+                                )}
+
+                                {/* Boka-knappen */}
+                                {carpool.available_seats > 0 ? (
+                                  <Button
+                                    colorScheme={joinedChildrenInCarpool[carpool.id]?.allJoined ? 'blue' : 'green'}
+                                    size="sm"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      const allChildrenJoined = await checkIfAllChildrenJoined(carpool.id);
+                                      if (allChildrenJoined) {
+                                        setJoinedChildrenInCarpool((prev) => ({
+                                          ...prev,
+                                          [carpool.id]: { allJoined: true },
+                                        }));
+                                        return;
+                                      }
+                                      handleJoinCarpool(carpool.id, activity.activity_id);
+                                    }}
+                                    isDisabled={joinedChildrenInCarpool[carpool.id]?.allJoined} // Disable if "Joined"
+                                  >
+                                    {loadingJoinState[carpool.id] ? (
+                                      <Spinner size="xs" />
+                                    ) : joinedChildrenInCarpool[carpool.id]?.allJoined ? (
+                                      'Bokad'
+                                    ) : (
+                                      'Boka'
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <Button colorScheme="red" size="sm" isDisabled>
+                                    Full
+                                  </Button>
+                                )}
+
+                                {/* Chat-knappen */}
+                                <Button
+                                  colorScheme="teal"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openChatModal(carpool.id);
+                                  }}
+                                >
+                                  Chat
+                                </Button>
+                              </Flex>
+
+                            </Flex>
+
+                            </Box>
+                          ))
+                        ) : (
+                          <Text>Inga tillgängliga samåkningar för denna aktivitet.</Text>
+                        )}
+                      </VStack>
+                    </Box>
+                  </Collapse>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </Box>
+          )}
 
           {/* Upcoming activities */}
           <Box mb={8}>
