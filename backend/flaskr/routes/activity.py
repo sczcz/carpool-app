@@ -73,7 +73,6 @@ def fetch_calendar_events():
                             'description': new_activity.description,
                             'scout_level': scout_level
                         })
-                        print(new_activity.description)
     
     return events_list
 

@@ -53,6 +53,8 @@ const DashBoardParent = ({ token }) => {
   const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
   const [selectedCarpool, setSelectedCarpool] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
+  const [openCarpoolIndexForUpcoming, setOpenCarpoolIndexForUpcoming] = useState(null);
+  const [openCarpoolIndexForMyActivities, setOpenCarpoolIndexForMyActivities] = useState(null);
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
   const navigate = useNavigate();
@@ -83,7 +85,21 @@ const DashBoardParent = ({ token }) => {
       fetchUserData();
     }
   }, [authLoading]);
-  
+
+  const isInMyActivities = (activity) => {
+    return activity.carpools.some((carpool) => {
+      return (
+        carpool.driver_id === userId ||
+        carpool.passengers.some((passenger) =>
+          passenger.parents.some((parent) => parent.parent_id === userId)
+        )
+      );
+    });
+  };
+
+  const activitiesForUpcoming = activities.filter(activity => !isInMyActivities(activity));
+  const activitiesForMyActivities = activities.filter(activity => isInMyActivities(activity));
+
   const fetchUserData = async () => {
     try {
       const response = await fetch('/api/protected/user', {
@@ -107,6 +123,10 @@ const DashBoardParent = ({ token }) => {
   useEffect(() => {
     fetchActivities();
   }, [token]);
+
+  useEffect(() => {
+    setMyActivities(activities.filter(activity => isInMyActivities(activity)));
+  }, [activities]);
 
   useEffect(() => {
     const filteredMyActivities = activities.filter((activity) =>
@@ -138,18 +158,6 @@ const DashBoardParent = ({ token }) => {
     );
 
     setActivities(activitiesWithCarpools);
-
-    const filteredMyActivities = activitiesWithCarpools.filter((activity) =>
-      activity.carpools.some((carpool) => {
-        const isDriver = carpool.driver_id === userId;
-        const hasChildAsPassenger = carpool.passengers.some((passenger) =>
-          passenger.parents.some((parent) => parent.parent_id === userId)
-        );
-        return isDriver || hasChildAsPassenger;
-      })
-    );
-
-    setMyActivities(filteredMyActivities);
     setLoading(false);
 
     } catch (err) {
@@ -220,7 +228,7 @@ const DashBoardParent = ({ token }) => {
         method: 'GET',
         credentials: 'include',
       });
-  
+
       if (response.ok) {
         const data = await response.json();
         setActivities((prevActivities) =>
@@ -259,7 +267,6 @@ const DashBoardParent = ({ token }) => {
     }
   };
   
-
   const handleJoinCarpool = async (carpoolId, activityId) => {
     try {
       const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
@@ -302,7 +309,37 @@ const DashBoardParent = ({ token }) => {
         isClosable: true,
       });
 
-      await fetchCarpoolsForActivity(activityId);
+      setJoinedChildrenInCarpool((prev) => ({
+        ...prev,
+        [carpoolId]: { allJoined: true },
+      }));
+
+      setActivities((prevActivities) =>
+        prevActivities.map((activity) => {
+          if (activity.activity_id === activityId) {
+            return {
+              ...activity,
+              carpools: activity.carpools.map((carpool) =>
+                carpool.id === carpoolId
+                  ? {
+                      ...carpool,
+                      passengers: [
+                        ...carpool.passengers,
+                        { child_id: selectedChildId, parents: [{ parent_id: userId }] },
+                      ],
+                    }
+                  : carpool
+              ),
+            };
+          }
+          return activity;
+        })
+      );
+  
+      setMyActivities((prevActivities) => [
+        ...prevActivities,
+        activities.find((activity) => activity.activity_id === activityId),
+      ]);
 
     } catch (error) {
       toast({
@@ -388,27 +425,42 @@ const DashBoardParent = ({ token }) => {
     onOpen();
   };
 
-  const toggleCarpool = (index, activityId) => {
-    if (openCarpoolIndex === index) {
-      setOpenCarpoolIndex(null);
-    } else {
-      setOpenCarpoolIndex(index);
-      fetchCarpoolsForActivity(activityId);
-    }
+  const toggleCarpoolForUpcoming = (index) => {
+    setOpenCarpoolIndexForUpcoming(openCarpoolIndexForUpcoming === index ? null : index);
   };
 
-const translateCarpoolType = (type) => {
-  switch (type) {
-    case 'drop-off':
-      return 'Avlämning';
-    case 'pick-up':
-      return 'Hämtning';
-    case 'both':
-      return 'Båda';
-    default:
-      return 'Okänd';
-  }
-};
+  const toggleCarpoolForMyActivities = (index) => {
+    setOpenCarpoolIndexForMyActivities(openCarpoolIndexForMyActivities === index ? null : index);
+  };
+
+  const toggleCarpool = (index, activityId) => {
+    const isInMyActivities = myActivities.some(activity => activity.activity_id === activityId);
+  
+    if (isInMyActivities) {
+      const myActivityIndex = myActivities.findIndex(activity => activity.activity_id === activityId);
+      toggleMyCarpool(myActivityIndex);
+    } else {
+      setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
+    }
+  
+    const activity = activities.find(a => a.activity_id === activityId);
+    if (!activity.carpools || activity.carpools.length === 0) {
+      fetchCarpoolsForActivity(activityId);
+    }
+  };  
+
+  const translateCarpoolType = (type) => {
+    switch (type) {
+      case 'drop-off':
+        return 'Avlämning';
+      case 'pick-up':
+        return 'Hämtning';
+      case 'both':
+        return 'Båda';
+      default:
+        return 'Okänd';
+    }
+  };
 
 const handleLoadMore = () => {
   setVisibleActivitiesCount(visibleActivitiesCount + 10);
@@ -471,7 +523,7 @@ const handleLoadMore = () => {
             <Box mb={8}>
               <Heading as="h2" size="md" mb={4} color="gray.600">Mina aktiviteter</Heading>
               <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                {myActivities.map((activity, index) => (
+                {activitiesForMyActivities.map((activity, index) => (
                   <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="gray.50">
                     <Flex justify="space-between" align="center" mb={2}>
                       <Tag size="lg" color="white" backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
@@ -484,6 +536,7 @@ const handleLoadMore = () => {
                     <Text fontWeight="bold">{format(parseISO(activity.dtstart), "d MMMM")}</Text>
                     <Text fontSize="sm" color="gray.600">Start: {format(parseISO(activity.dtstart), "HH:mm")}</Text>
                     <Text>{activity.location}</Text>
+                    <Text mt={2}>{activity.summary.split('//')[0]}</Text>
                     <Collapse in={openMyCarpoolIndex === index} animateOpacity>
                     <Box mt={2} maxHeight="250px" overflowY="auto">
                       <VStack spacing={4}>
@@ -625,7 +678,7 @@ const handleLoadMore = () => {
             />
 
             <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-              {activities.slice(0, visibleActivitiesCount).map((activity, index) => (
+              {activitiesForUpcoming.slice(0, visibleActivitiesCount).map((activity, index) => (
                 <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="white">
                   <Flex justify="space-between" align="center" mb={2}>
                     <Tag size="lg" color={'white'} backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
