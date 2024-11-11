@@ -55,7 +55,6 @@ const DashBoardParent = ({ token }) => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
-  const navigate = useNavigate();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
 
   const roleColors = {
