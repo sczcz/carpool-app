@@ -53,8 +53,6 @@ const DashBoardParent = ({ token }) => {
   const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
   const [selectedCarpool, setSelectedCarpool] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
-  const [openCarpoolIndexForUpcoming, setOpenCarpoolIndexForUpcoming] = useState(null);
-  const [openCarpoolIndexForMyActivities, setOpenCarpoolIndexForMyActivities] = useState(null);
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
   const navigate = useNavigate();
@@ -423,14 +421,6 @@ const DashBoardParent = ({ token }) => {
   const openCarpoolModal = (activityId) => {
     setSelectedActivityId(activityId);
     onOpen();
-  };
-
-  const toggleCarpoolForUpcoming = (index) => {
-    setOpenCarpoolIndexForUpcoming(openCarpoolIndexForUpcoming === index ? null : index);
-  };
-
-  const toggleCarpoolForMyActivities = (index) => {
-    setOpenCarpoolIndexForMyActivities(openCarpoolIndexForMyActivities === index ? null : index);
   };
 
   const toggleCarpool = (index, activityId) => {
