@@ -127,11 +127,11 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
   const translateCarpoolType = (type) => {
     switch (type) {
       case 'drop-off':
-        return 'Avlämning';
+        return 'Avresa';
       case 'pick-up':
-        return 'Hämtning';
+        return 'Hemresa';
       case 'both':
-        return 'Båda';
+        return 'Avresa och Hemresa';
       default:
         return 'Okänd';
     }

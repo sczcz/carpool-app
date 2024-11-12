@@ -19,16 +19,17 @@ import {
 import AddCarModal from './AddCarModal'; // Import AddCarModal
 
 
-const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
+const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) => {
   const [newCar, setNewCar] = useState({
     from: '',
-    destination: '',
+    destination: activity?.location || 'Plats saknas', // Lägg till "?" för att kontrollera om activity är null eller undefined
     spots: '',
     departure_postcode: '',
     departure_city: '',
     car_id: '',
     carpool_type: 'drop-off',
   });
+  
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -36,6 +37,12 @@ const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
   const toastShown = useRef(false); // Track if the toast has been shown
 
   const gridTemplateColumns = useBreakpointValue({ base: '1fr', md: '1fr 1fr' });
+
+  useEffect(() => {
+    if (activity) {
+      setNewCar((prevCar) => ({ ...prevCar, destination: activity.location }));
+    }
+  }, [activity]);
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -171,12 +178,16 @@ const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
                 <Input
                   size="sm"
                   type="text"
-                  placeholder="Destination"
-                  value={newCar.destination}
-                  onChange={(e) => setNewCar({ ...newCar, destination: e.target.value })}
+                  value={activity.location || 'Plats saknas'}
+                  isReadOnly
+                  borderColor="gray.200"
+                  _readOnly={{ opacity: 1, cursor: "not-allowed" }}
                 />
               </FormControl>
             </GridItem>
+
+
+
 
             <GridItem>
               <FormControl isRequired>
@@ -238,15 +249,15 @@ const CarpoolComponent = ({ activityId, onClose, onCarpoolCreated }) => {
 
             <GridItem>
               <FormControl isRequired>
-                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Typ av samåkning</FormLabel>
+                <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Riktning</FormLabel>
                 <Select
                   size="sm"
                   value={newCar.carpool_type}
                   onChange={(e) => setNewCar({ ...newCar, carpool_type: e.target.value })}
                 >
-                  <option value="drop-off">Avlämning</option>
-                  <option value="pick-up">Hämtning</option>
-                  <option value="both">Båda</option>
+                  <option value="drop-off">Avresa</option>
+                  <option value="pick-up">Hemresa</option>
+                  <option value="both">Avresa och Hemresa</option>
                 </Select>
               </FormControl>
             </GridItem>

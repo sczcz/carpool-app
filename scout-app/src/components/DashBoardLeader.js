@@ -58,15 +58,16 @@ const Dashboard = ({ token }) => {
   const translateCarpoolType = (type) => {
     switch (type) {
       case 'drop-off':
-        return 'Avlämning';
+        return 'Avresa';
       case 'pick-up':
-        return 'Hämtning';
+        return 'Hemresa';
       case 'both':
-        return 'Båda';
+        return 'Avresa & Hemresa';
       default:
         return 'Okänd';
     }
   };
+
 
   // Funktion för att hämta samåkningar för en specifik aktivitet
   const fetchCarpoolsForActivity = async (activityId) => {
