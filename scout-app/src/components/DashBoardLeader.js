@@ -55,6 +55,19 @@ const Dashboard = ({ token }) => {
     }
   };
 
+  const translateCarpoolType = (type) => {
+    switch (type) {
+      case 'drop-off':
+        return 'Avlämning';
+      case 'pick-up':
+        return 'Hämtning';
+      case 'both':
+        return 'Båda';
+      default:
+        return 'Okänd';
+    }
+  };
+
   // Funktion för att hämta samåkningar för en specifik aktivitet
   const fetchCarpoolsForActivity = async (activityId) => {
     setFetchingCarpools(true);
@@ -63,9 +76,10 @@ const Dashboard = ({ token }) => {
         method: 'GET',
         credentials: 'include',
       });
-
+  
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched carpools data:", data.carpools); // Debugging log
         setActivities((prevActivities) =>
           prevActivities.map((activity) => {
             if (activity.activity_id === activityId) {
@@ -89,6 +103,7 @@ const Dashboard = ({ token }) => {
       setFetchingCarpools(false);
     }
   };
+  
 
   const toggleActivity = (activityId) => {
     setOpenActivityId(openActivityId === activityId ? null : activityId);
@@ -220,9 +235,30 @@ const Dashboard = ({ token }) => {
                         {activity.carpools ? (
                           activity.carpools.length > 0 ? (
                             activity.carpools.map((carpool) => (
-                              <Text key={carpool.id} color="brand.400">
-                                {carpool.description}
-                              </Text>
+                              <Box key={carpool.id} p={3} bg="gray.100" mb={2} borderRadius="md">
+                                <Text fontWeight="bold" color="brand.600">
+                                  Avresa från: {carpool.departure_address}, {carpool.departure_city}
+                                </Text>
+                                <Text>Typ av samåkning: {translateCarpoolType(carpool?.carpool_type) || 'N/A'}</Text>
+                                <Text>Tillgängliga platser: {carpool.available_seats}</Text>
+                                <Box mt={2}>
+                                  <Text fontWeight="bold">Passagerare:</Text>
+                                  {carpool.passengers.length > 0 ? (
+                                    carpool.passengers.map((passenger) => (
+                                      <Box key={passenger.child_id} ml={4} mt={1}>
+                                        <Text>{passenger.name} - Telefon: {passenger.phone}</Text>
+                                        {passenger.parents.map((parent, i) => (
+                                          <Text key={i} fontSize="sm" ml={4}>
+                                            Förälder: {parent.parent_name} - {parent.parent_phone}
+                                          </Text>
+                                        ))}
+                                      </Box>
+                                    ))
+                                  ) : (
+                                    <Text>Inga passagerare</Text>
+                                  )}
+                                </Box>
+                              </Box>
                             ))
                           ) : (
                             <Text>Inga tillgängliga samåkningar.</Text>
