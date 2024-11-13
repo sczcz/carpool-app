@@ -9,3 +9,4 @@ class Activity(db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id', ondelete='CASCADE'))
     address = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
+    is_visible = db.Column(db.Boolean, nullable=False, default=True) 

@@ -30,7 +30,6 @@ const Dashboard = ({ token }) => {
     fetchActivities();
   }, [token]);
 
-  // Funktion för att hämta aktiviteter
   const fetchActivities = async () => {
     setLoading(true);
     try {
@@ -40,13 +39,18 @@ const Dashboard = ({ token }) => {
           'Content-Type': 'application/json',
         },
       });
-
+  
       if (!response.ok) {
         throw new Error('Något gick fel vid hämtning av aktiviteter');
       }
-
+  
       const data = await response.json();
-      const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
+      const sortedActivities = data.events
+        .map((activity) => ({
+          ...activity,
+          isVisible: activity.is_visible, // Flagga som backend skickar
+        }))
+        .sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
       setActivities(sortedActivities);
     } catch (err) {
       setError(err.message);
@@ -54,6 +58,8 @@ const Dashboard = ({ token }) => {
       setLoading(false);
     }
   };
+  
+  
 
   const translateCarpoolType = (type) => {
     switch (type) {
@@ -67,7 +73,6 @@ const Dashboard = ({ token }) => {
         return 'Okänd';
     }
   };
-
 
   // Funktion för att hämta samåkningar för en specifik aktivitet
   const fetchCarpoolsForActivity = async (activityId) => {
@@ -104,7 +109,48 @@ const Dashboard = ({ token }) => {
       setFetchingCarpools(false);
     }
   };
-  
+
+  const toggleActivityVisibility = async (activityId, isVisible) => {
+    const endpoint = isVisible
+      ? `/api/protected/activity/remove/${activityId}`
+      : `/api/protected/activity/make_visible/${activityId}`;
+    try {
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Misslyckades med att uppdatera aktivitetens synlighet');
+      }
+
+      setActivities((prevActivities) =>
+        prevActivities.map((activity) =>
+          activity.activity_id === activityId
+            ? { ...activity, isVisible: !isVisible }
+            : activity
+        )
+      );
+
+      toast({
+        title: `Aktiviteten har nu blivit ${isVisible ? 'synlig' : 'dold'}.`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Ett fel uppstod vid ändring av synligheten.',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   const toggleActivity = (activityId) => {
     setOpenActivityId(openActivityId === activityId ? null : activityId);
@@ -156,7 +202,7 @@ const Dashboard = ({ token }) => {
       <Heading as="h1" size="xl" mb={8} color="brand.500">
         Dashboard för ledare
       </Heading>
-
+  
       <Grid
         templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
         gap={6}
@@ -172,7 +218,7 @@ const Dashboard = ({ token }) => {
             <Text fontSize="md" color="brand.400">Aktiva användare: 89</Text>
           </Box>
         </GridItem>
-
+  
         <GridItem w="100%">
           <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
             <Heading as="h3" size="lg" mb={4} color="brand.600">
@@ -182,7 +228,7 @@ const Dashboard = ({ token }) => {
             <Text fontSize="md" color="brand.400">Olästa: 3</Text>
           </Box>
         </GridItem>
-
+  
         <GridItem w="100%">
           <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
             <Heading as="h3" size="lg" mb={4} color="brand.600">
@@ -192,13 +238,13 @@ const Dashboard = ({ token }) => {
             <Text fontSize="md" color="brand.400">Kommande transporter: 4</Text>
           </Box>
         </GridItem>
-
+  
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
           <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
             <Heading as="h3" size="lg" mb={4} color="brand.600">
               Aktiviteter
             </Heading>
-
+  
             {/* Rollfiltrering */}
             <Select placeholder="Välj roll" onChange={handleRoleChange} mb={6} value={selectedRole}>
               <option value="Alla roller">Alla roller</option>
@@ -206,7 +252,7 @@ const Dashboard = ({ token }) => {
                 <option key={index} value={role}>{role}</option>
               ))}
             </Select>
-
+  
             {filteredActivities.length === 0 ? (
               <Text fontSize="md" color="brand.400">
                 Inga aktiviteter tillgängliga för denna roll.
@@ -216,11 +262,12 @@ const Dashboard = ({ token }) => {
                 {filteredActivities.slice(0, visibleCount).map((activity) => (
                   <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="sm">
                     <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary}</Text>
-                    <Text fontSize="md" color="brand.500">
-                      Plats: {activity.location}
-                    </Text>
+                    <Text fontSize="md" color="brand.500">Plats: {activity.location}</Text>
                     <Text fontSize="md" color="brand.500">Datum: {new Date(activity.dtstart).toLocaleString()}</Text>
-
+                    <Text fontSize="md" color="brand.400">
+                      Status: {activity.isVisible ? 'Synlig' : 'Dold'}
+                    </Text>
+  
                     <Button
                       mt={2}
                       size="sm"
@@ -230,7 +277,17 @@ const Dashboard = ({ token }) => {
                     >
                       {openActivityId === activity.activity_id ? 'Dölj samåkningar' : 'Visa samåkningar'}
                     </Button>
-
+  
+                    <Button
+                      mt={2}
+                      ml={4}
+                      size="sm"
+                      colorScheme={activity.isVisible ? 'red' : 'green'}
+                      onClick={() => toggleActivityVisibility(activity.activity_id, activity.isVisible)}
+                    >
+                      {activity.isVisible ? 'Dölj aktivitet för användare' : 'Visa aktivitet för användare'}
+                    </Button>
+  
                     <Collapse in={openActivityId === activity.activity_id}>
                       <Box mt={4}>
                         {activity.carpools ? (
@@ -271,7 +328,7 @@ const Dashboard = ({ token }) => {
                     </Collapse>
                   </Box>
                 ))}
-
+  
                 {visibleCount < filteredActivities.length && (
                   <Button mt={6} onClick={loadMoreActivities} colorScheme="teal">
                     Ladda fler
@@ -284,6 +341,9 @@ const Dashboard = ({ token }) => {
       </Grid>
     </Flex>
   );
+
+ 
 };
 
 export default Dashboard;
+

@@ -15,6 +15,7 @@ class Carpool(db.Model):
     departure_city = db.Column(db.String(100), nullable=False)  # Ort för utgångsplats
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # När carpoolen skapades
 
+    car = relationship('Car', backref='carpools', lazy='joined')
     passengers = relationship('Passenger', backref='carpool', lazy='dynamic')  # Lazy loading for better performance
 
     # New column for carpool type

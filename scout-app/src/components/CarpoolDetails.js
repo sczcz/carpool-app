@@ -174,6 +174,10 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                   <Text fontSize={fontSize}>{driverInfo?.phone || 'N/A'}</Text>
                 </HStack>
                 <HStack>
+                  <Text fontSize={fontSize} fontWeight="bold">Bil:</Text>
+                  <Text fontSize={fontSize}>{carpool.car_model_name || 'N/A'}</Text>
+                </HStack>
+                <HStack>
                   <Text fontSize={fontSize} fontWeight="bold">Avgångsadress:</Text>
                   <Text fontSize={fontSize}>{carpool?.departure_address || 'N/A'}</Text>
                 </HStack>

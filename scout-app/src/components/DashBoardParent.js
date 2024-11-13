@@ -242,6 +242,7 @@ const DashBoardParent = ({ token }) => {
                       parent_name: parent.parent_name,
                       parent_phone: parent.parent_phone,
                     })),
+                    car: carpool.car
                   })),
                 })),
               };

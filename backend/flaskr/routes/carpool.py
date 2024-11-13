@@ -3,6 +3,7 @@ from extensions import db
 from models.carpool_model import Carpool, Passenger, Car  # Import your models
 from models.auth_model import Child, ParentChildLink
 from models.activity_model import Activity
+from models.message_model import CarpoolMessage
 from datetime import datetime
 from routes.auth import token_required, User  # Assuming you're using the token for authorization
 
@@ -85,10 +86,13 @@ def list_carpools(current_user):
                     "parents": parent_data
                 })
 
+        car = Car.query.get(carpool.car_id)
+
         carpool_list.append({
             "id": carpool.id,
             "driver_id": carpool.driver_id,
             "car_id": carpool.car_id,
+            "car_model_name": car.model_name if car else "Ingen bil tilldelad",
             "available_seats": carpool.available_seats,
             "departure_address": carpool.departure_address,
             "departure_postcode": carpool.departure_postcode,
@@ -233,6 +237,8 @@ def delete_carpool(current_user, carpool_id):
 
     if not carpool:
         return jsonify({"error": "Carpool not found!"}), 404
+    
+    CarpoolMessage.query.filter_by(carpool_id=carpool_id).delete()
 
     db.session.delete(carpool)
     db.session.commit()

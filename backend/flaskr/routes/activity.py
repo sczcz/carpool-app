@@ -59,7 +59,8 @@ def fetch_calendar_events():
                             end_date=component.get('dtend').dt if component.get('dtend') else None,
                             role_id=role_id,
                             address=str(component.get('location')),
-                            description=str(component.get('description')).split("Aktiviteten hämtad")[0].strip()
+                            description=str(component.get('description')).split("Aktiviteten hämtad")[0].strip(),
+                            is_visible=True  # Default to visible
                         )
                         db.session.add(new_activity)
                         db.session.commit()
@@ -95,7 +96,8 @@ def get_activities_by_role(current_user):
     now = datetime.datetime.now()
     activities = Activity.query.filter(
         Activity.role_id.in_(role_ids),
-        Activity.start_date >= now
+        Activity.start_date >= now,
+        Activity.is_visible == True  # Filter only visible activities
     ).all()
 
     # Skapa en lista av aktiviteter
@@ -116,6 +118,7 @@ def get_activities_by_role(current_user):
     return make_response(jsonify({"events": events_list}), 200)
 
 
+
 @activity_bp.route('/api/protected/activity/all', methods=['GET'])
 @token_required
 def get_all_activities(current_user):
@@ -129,7 +132,52 @@ def get_all_activities(current_user):
         'dtend': str(activity.end_date),
         'location': activity.address,
         'description': activity.description,
+        "is_visible": activity.is_visible,
         'scout_level': list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
     } for activity in activities]
 
     return make_response(jsonify({"events": events_list}), 200)
+
+@activity_bp.route('/api/protected/activity/remove/<int:activity_id>', methods=['PUT'])
+@token_required
+def remove_activity(current_user, activity_id):
+    try:
+        # Hämta aktiviteten från databasen baserat på ID
+        activity = Activity.query.get(activity_id)
+
+        if not activity:
+            return make_response(jsonify({"error": "Aktiviteten hittades inte."}), 404)
+
+        # Uppdatera is_visible till False
+        activity.is_visible = False
+        db.session.commit()
+
+        return make_response(jsonify({
+            "message": "Aktiviteten har tagits bort.",
+            "activity_id": activity_id
+        }), 200)
+    except Exception as e:
+        current_app.logger.error(f"Error removing activity: {e}")
+        return make_response(jsonify({"error": "Ett fel inträffade vid borttagning av aktiviteten."}), 500)
+    
+
+@activity_bp.route('/api/protected/activity/make_visible/<int:activity_id>', methods=['PUT'])
+@token_required
+def make_activity_visible(current_user, activity_id):
+    try:
+        # Hämta aktiviteten från databasen
+        activity = Activity.query.get(activity_id)
+
+        # Kontrollera om aktiviteten finns
+        if not activity:
+            return make_response(jsonify({"error": "Aktiviteten hittades inte."}), 404)
+
+        # Uppdatera is_visible till True
+        activity.is_visible = True
+        db.session.commit()
+
+        return make_response(jsonify({"message": "Aktiviteten är nu synlig igen.", "activity_id": activity.activity_id}), 200)
+
+    except Exception as e:
+        current_app.logger.error(f"Fel vid aktivering av aktivitet: {e}")
+        return make_response(jsonify({"error": "Ett fel uppstod vid aktivering av aktivitet."}), 500)
