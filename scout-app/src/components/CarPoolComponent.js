@@ -88,7 +88,26 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
   const handleCarAdded = (newCar) => {
     setCars((prevCars) => [...prevCars, newCar]);
     setIsAddCarModalOpen(false); // Close the modal after adding a car
+  
+    // Refetch cars to update the list
+    const fetchCars = async () => {
+      try {
+        const response = await fetch('/api/protected/get-cars', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCars(data.cars);
+        }
+      } catch (error) {
+        console.error('Fel vid hämtning av bilar:', error);
+      }
+    };
+  
+    fetchCars();
   };
+  
 
   const handleCarRegistration = async () => {
     if (!newCar.from || !newCar.destination || !newCar.spots || !newCar.car_id || !newCar.departure_postcode || !newCar.departure_city) {

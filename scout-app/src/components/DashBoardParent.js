@@ -520,7 +520,7 @@ const handleLoadMore = () => {
                   <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="gray.50">
                     <Flex justify="space-between" align="center" mb={2}>
                       <Tag size="lg" color="white" backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
-                        <TagLabel>{activity.scout_level}</TagLabel>
+                        <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
                       </Tag>
                       <Button colorScheme="brand" size="sm" onClick={() => toggleMyCarpool(index)}>
                         {openMyCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
