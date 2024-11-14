@@ -1,13 +1,63 @@
 from flask import Blueprint, request, jsonify
 from extensions import db, socketio
 from models.message_model import CarpoolMessage
+from models.auth_model import User, ParentChildLink, Child
+from models.notifications_model import Notification
 from flask_socketio import join_room, leave_room, emit
 from routes.auth import token_required
+from routes.carpool import Carpool
 from datetime import datetime
-from models.auth_model import User
 from dateutil import tz
 
 message_bp = Blueprint('message_bp', __name__)
+
+def create_notification(user_id, carpool_id, message):
+    """Creates a notification for a user about a carpool message."""
+    notification = Notification(
+        user_id=user_id,
+        carpool_id=carpool_id,
+        message=message,
+        is_read=False,
+        created_at=datetime.utcnow()
+    )
+    db.session.add(notification)
+    db.session.commit()
+
+# Helper function to notify users in a carpool
+def notify_users_in_carpool(carpool_id, message, sender_id):
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        print(f"Carpool {carpool_id} not found.")
+        return
+
+    print(f"Notifying users in carpool {carpool_id} with message: {message}")
+
+    # Notify the carpool creator if they are not the sender
+    if carpool.driver_id != sender_id:
+        print(f"Notifying driver {carpool.driver_id}")
+        create_notification(carpool.driver_id, carpool_id, message)
+        socketio.emit('notification', {
+            'carpool_id': carpool_id,
+            'message': message,
+            'user_id': carpool.driver_id
+        }, to=f'user_{carpool.driver_id}')
+
+    # Notify parents of all passengers in the carpool, excluding the sender
+    for passenger in carpool.passengers:
+        child = Child.query.get(passenger.child_id)
+        if child:
+            parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
+            for parent_link in parent_links:
+                if parent_link.user_id != sender_id:
+                    print(f"Notifying parent {parent_link.user_id}")
+                    create_notification(parent_link.user_id, carpool_id, message)
+                    socketio.emit('notification', {
+                        'carpool_id': carpool_id,
+                        'message': message,
+                        'user_id': parent_link.user_id
+                    }, to=f'user_{parent_link.user_id}')
+
+
 
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['GET'])
 @token_required
@@ -112,3 +162,6 @@ def handle_send_message(data):
             'timestamp': local_timestamp.isoformat()  # Sending local time to clients
         }
     }, room=f'carpool_{carpool_id}')
+
+    notification_message = f"Nytt meddelande i samåkning {carpool_id} from {sender.first_name} {sender.last_name}"
+    notify_users_in_carpool(carpool_id, notification_message, message.sender_id)

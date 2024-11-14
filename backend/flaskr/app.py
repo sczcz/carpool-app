@@ -8,6 +8,7 @@ from models.auth_model import User
 from routes.activity import activity_bp
 from routes.carpool import carpool_bp
 from routes.message import message_bp
+from routes.notifications import notifications_bp
 from test_data import add_test_data
 from seed_roles import seed_roles
 
@@ -52,6 +53,7 @@ app.register_blueprint(user_handler)
 app.register_blueprint(activity_bp)
 app.register_blueprint(carpool_bp)
 app.register_blueprint(message_bp)
+app.register_blueprint(notifications_bp)
 
 # Route for rendering index.html
 @app.route('/')

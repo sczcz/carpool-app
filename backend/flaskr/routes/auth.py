@@ -1,12 +1,15 @@
 from flask import Blueprint, request, jsonify, make_response, current_app
 from extensions import db
-from models.auth_model import User, UserRole, Role
+from models.auth_model import User, UserRole, Role, Child, ParentChildLink
+from models.carpool_model import Carpool, Passenger
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 from functools import wraps
-
+from flask_socketio import join_room, emit
+from flask import request
+from extensions import socketio
 auth_bp = Blueprint('auth', __name__)
 # Tillåt CORS med credentials från specifik origin (din React-app)
 
@@ -97,9 +100,51 @@ def login():
     # Skicka JWT-tokenen som en HttpOnly-cookie
     response = make_response(jsonify({"message": "Login successful!"}))
     response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax')  # för lokal utveckling (ändra vid produktion)
+
+    socketio.emit('join_user_carpool_rooms', {'user_id': user.user_id}, room=f'user_{user.user_id}')
     
     return response
 
+@socketio.on('join_user_carpool_rooms')
+def handle_join_user_carpool_rooms(data):
+    user_id = data.get('user_id')
+    if not user_id:
+        emit('error', {'error': 'User ID is required to join carpool rooms.'}, room=request.sid)
+        return
+
+    # Fetch carpools where user is the driver
+    driver_carpools = Carpool.query.filter_by(driver_id=user_id).all()
+    for carpool in driver_carpools:
+        join_room(f'carpool_{carpool.id}')
+        print(f"User {user_id} joined carpool room carpool_{carpool.id} as driver.")
+
+    # Fetch carpools where user is a parent of a passenger
+    parent_carpools = (
+        db.session.query(Carpool)
+        .join(Passenger, Passenger.carpool_id == Carpool.id)  # Join Carpool to Passenger
+        .join(ParentChildLink, ParentChildLink.child_id == Passenger.child_id)  # Join Passenger to ParentChildLink
+        .join(Child, Child.child_id == ParentChildLink.child_id)  # Join ParentChildLink to Child
+        .filter(ParentChildLink.user_id == user_id)
+        .all()
+    )
+
+    for carpool in parent_carpools:
+        join_room(f'carpool_{carpool.id}')
+        print(f"User {user_id} joined carpool room carpool_{carpool.id} as passenger parent.")
+
+    emit('join_success', {'message': f'Joined all relevant carpool chat rooms for user {user_id}'}, room=request.sid)
+
+
+@socketio.on('join_user')
+def handle_join_user(data):
+    user_id = data.get('user_id')
+    if not user_id:
+        emit('error', {'error': 'User ID is required to join a room.'}, room=request.sid)
+        return
+
+    join_room(f'user_{user_id}')
+    print(f"User {user_id} joined their notification room.")
+    emit('join_success', {'message': f'You have joined your notification room.'}, room=request.sid)
 
 @auth_bp.route('/api/logout', methods=['POST'])
 def logout():

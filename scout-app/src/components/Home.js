@@ -3,26 +3,43 @@ import { useNavigate } from 'react-router-dom';
 import { Stack, Flex, Button, Text, VStack, Box, useBreakpointValue, useDisclosure } from '@chakra-ui/react';
 import Login from './Login';
 import Register from './Register';
+import { fetchNotifications } from '../utils/notifications';
+import { io } from 'socket.io-client';
+
+// Initiera Socket.IO-klienten
+const socket = io();
 
 const Home = () => {
   const navigate = useNavigate();
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure();
 
+  
+
   const handleLoginSuccess = async () => {
     try {
-      const response = await fetch('/api/protected/user', {
+      // Hämta användarrollen och användar-ID
+      const userResponse = await fetch('/api/protected/user', {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const userRole = data.user.role;
-
+  
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        const userId = userData.user.user_id; // Hämta användarens ID
+        const userRole = userData.user.role;
+  
+        // Hämta notifikationer
+        const { notifications, unreadCount } = await fetchNotifications();
+  
+        // Kontrollera notifikationer i konsolen
+        console.log('Fetched Notifications:', notifications);
+        console.log('Unread Notifications Count:', unreadCount);
+  
+        // Navigera baserat på användarroll
         if (userRole === 'vårdnadshavare') {
           navigate('/dashboard-parent');
         } else if (userRole === 'ledare') {
@@ -32,9 +49,10 @@ const Home = () => {
         console.error('Misslyckades med att hämta användarroll efter inloggning');
       }
     } catch (error) {
-      console.error('Fel vid hämtning av användarroll efter inloggning:', error);
+      console.error('Fel vid hämtning av användarroll och notiser efter inloggning:', error);
     }
   };
+  
 
   useEffect(() => {
     const checkUserRole = async () => {
