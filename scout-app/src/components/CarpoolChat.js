@@ -10,8 +10,8 @@ import {
   HStack,
 } from '@chakra-ui/react';
 import { format, isSameDay } from 'date-fns';
+import socket from '../utils/socket';
 
-const socket = io('http://localhost:5000'); // Replace with your backend URL
 
 function CarpoolChat({ carpoolId, userName, userId }) {
   const [messages, setMessages] = useState([]);

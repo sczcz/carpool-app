@@ -25,8 +25,10 @@ import Login from './Login';  // Import the Login component
 import Register from './Register'; // Import the Register component
 import { ReactComponent as LilyWhiteIcon } from '../assets/lily-white.svg'; // Adjust the path according to your SVG location
 import ClockNotifications from './ClockNotifications'; // Importera ClockNotifications
+import { useUser } from '../utils/UserContext';
 
 const Navbar = () => {
+  const { userId, loading } = useUser();
   const { isOpen, onOpen, onClose } = useDisclosure();  // Hook to control the drawer
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure(); // Hook for login modal
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
@@ -75,6 +77,10 @@ const Navbar = () => {
       console.error('Error logging out:', error);
     }
   };
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <Box 

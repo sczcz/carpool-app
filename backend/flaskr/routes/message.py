@@ -5,7 +5,7 @@ from models.auth_model import User, ParentChildLink, Child
 from models.notifications_model import Notification
 from flask_socketio import join_room, leave_room, emit
 from routes.auth import token_required
-from routes.carpool import Carpool
+from routes.carpool import Carpool, Passenger
 from datetime import datetime
 from dateutil import tz
 
@@ -40,7 +40,7 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
             'carpool_id': carpool_id,
             'message': message,
             'user_id': carpool.driver_id
-        }, to=f'user_{carpool.driver_id}')
+        }, room=f'user_{carpool.driver_id}')
 
     # Notify parents of all passengers in the carpool, excluding the sender
     for passenger in carpool.passengers:
@@ -55,7 +55,7 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
                         'carpool_id': carpool_id,
                         'message': message,
                         'user_id': parent_link.user_id
-                    }, to=f'user_{parent_link.user_id}')
+                    }, room=f'user_{parent_link.user_id}')
 
 
 
@@ -94,6 +94,7 @@ def handle_join_carpool(data):
         return
 
     join_room(f'carpool_{carpool_id}')
+    print('join success, message: Joined carpool {carpool_id} chat')
     emit('join_success', {'message': f'Joined carpool {carpool_id} chat'}, room=request.sid)
 
 @socketio.on('leave_carpool')
@@ -107,6 +108,18 @@ def handle_leave_carpool(data):
     leave_room(f'carpool_{carpool_id}')
     emit('leave_success', {'message': f'Left carpool {carpool_id} chat'}, room=f'carpool_{carpool_id}')
 
+@socketio.on('join_user')
+def handle_join_user_room(data):
+    user_id = data.get('user_id')
+    if not user_id:
+        emit('error', {'error': 'User ID is required to join personal room.'})
+        return
+
+    # Lägg till användaren i deras personliga notisrum
+    join_room(f'user_{user_id}')
+    print(f"User {user_id} joined their personal notification room: user_{user_id}")
+
+    emit('join_success', {'message': f'Joined personal notification room for user {user_id}'})
 
 @socketio.on('send_message')
 def handle_send_message(data):

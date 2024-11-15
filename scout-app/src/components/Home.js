@@ -4,10 +4,9 @@ import { Stack, Flex, Button, Text, VStack, Box, useBreakpointValue, useDisclosu
 import Login from './Login';
 import Register from './Register';
 import { fetchNotifications } from '../utils/notifications';
-import { io } from 'socket.io-client';
+import socket from '../utils/socket';
 
-// Initiera Socket.IO-klienten
-const socket = io();
+
 
 const Home = () => {
   const navigate = useNavigate();

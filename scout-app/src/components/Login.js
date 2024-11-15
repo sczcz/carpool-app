@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useUser } from '../utils/UserContext'; // Importera UserContext
 import {
   Modal,
   ModalOverlay,
@@ -15,12 +16,11 @@ import {
   useBreakpointValue,
   VStack,
 } from '@chakra-ui/react';
-import { io } from 'socket.io-client';
 
 const apiURL = '/api/login';
-const socket = io();
 
 const Login = ({ isOpen, onClose, onLoginSuccess }) => {
+  const { setUserId } = useUser(); // Få tillgång till setUserId från Context
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,13 +28,12 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Skicka loginförfrågan
       const loginResponse = await fetch(apiURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Skickar cookies
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
@@ -44,13 +43,10 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
         return;
       }
 
-      // Hämta användardata efter lyckad inloggning
       const userResponse = await fetch('/api/protected/user', {
         method: 'GET',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!userResponse.ok) {
@@ -59,17 +55,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
       }
 
       const userData = await userResponse.json();
-      const userRole = userData.user.role;
-      const userId = userData.user.id;
+      setUserId(userData.user.id); // Sätt userId i Context
+      onLoginSuccess(userData.user.role);
 
-      // Kör onLoginSuccess om den finns
-      if (onLoginSuccess) {
-        onLoginSuccess(userRole);
-      }
-
-      socket.emit('join_user_carpool_rooms', { user_id: userId });
-
-      // Rensa formulär och felmeddelanden
       setEmail('');
       setPassword('');
       setError('');
@@ -80,8 +68,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
     }
   };
 
-  const modalSize = useBreakpointValue({ base: 'full', sm: 'md' }); // Anpassa modalens storlek
-  const paddingX = useBreakpointValue({ base: '4', md: '8' }); // Justera padding
+  const modalSize = useBreakpointValue({ base: 'full', sm: 'md' });
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size={modalSize}>
@@ -90,7 +77,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
         <ModalHeader>Logga in</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Box width="full" px={paddingX}>
+          <Box width="full">
             <form onSubmit={handleLogin}>
               <VStack spacing={4} align="stretch">
                 <FormControl id="email" isRequired>
@@ -114,7 +101,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 <Button type="submit" colorScheme="brand" width="full">
                   Logga in
                 </Button>
-                {error && <Text color="red.500">{error}</Text>} {/* Visa felmeddelanden */}
+                {error && <Text color="red.500">{error}</Text>}
               </VStack>
             </form>
           </Box>

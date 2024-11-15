@@ -1,9 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { UserProvider, useUser } from './utils/UserContext';
 import Navbar from './components/Navbar';
 import Header from './components/Header';
-import Login from './components/Login';
-import Register from './components/Register';
 import FetchUsers from './components/FetchUsers';
 import TestSession from './components/TestSession';
 import Home from './components/Home'; // Importera Home
@@ -13,21 +12,38 @@ import Profile from './components/Profile'; // Importera din nya profilsida
 import Footer from './components/Footer'; // Import the Footer component
 
 
-const App = () => {
+function App() {
   return (
-    <Router>
-      <Header /> 
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dashboard-parent" element={<DashBoardParent />} /> {/* Ny rutt för DashBoardParent */}
-        <Route path="/dashboard-leader" element={<DashBoardLeader />} />
-        <Route path="/FetchUsers" element={<FetchUsers />} />
-        <Route path="/TestSession" element={<TestSession />} />
-        <Route path="/profile" element={<Profile />} /> {/* Ny rutt för Profile */}
-      </Routes>
-      <Footer />
-    </Router>
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
+  );
+}
+
+const AppContent = () => {
+  const { loading } = useUser();
+
+  // Visa en laddningsindikator eller ett tomt utrymme medan vi väntar på att användardata ska laddas
+  if (loading) {
+    return <div>Loading...</div>; // Eller en mer avancerad loading-komponent
+  }
+
+  return (
+    <UserProvider>
+      <Router>
+        <Header /> 
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard-parent" element={<DashBoardParent />} /> {/* Ny rutt för DashBoardParent */}
+          <Route path="/dashboard-leader" element={<DashBoardLeader />} />
+          <Route path="/FetchUsers" element={<FetchUsers />} />
+          <Route path="/TestSession" element={<TestSession />} />
+          <Route path="/profile" element={<Profile />} /> {/* Ny rutt för Profile */}
+        </Routes>
+        <Footer />
+      </Router>
+    </UserProvider>
   );
 };
 

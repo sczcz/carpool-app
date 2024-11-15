@@ -8,26 +8,32 @@ import socketio
 
 notifications_bp = Blueprint('notifications_bp', __name__)
 
-# Fetch notifications for the logged-in user
 @notifications_bp.route('/api/notifications', methods=['GET'])
 @token_required
 def get_notifications(current_user):
-    # Fetch all notifications for the user
-    notifications = Notification.query.filter_by(user_id=current_user.user_id).all()
+    # Hämta alla notifikationer för användaren, sorterade efter senaste
+    limit = request.args.get('limit', default=None, type=int)
+    query = Notification.query.filter_by(user_id=current_user.user_id).order_by(Notification.created_at.desc())
     
-    # Format notifications and count unread ones
+    if limit:
+        query = query.limit(limit)
+    
+    notifications = query.all()
+
+    # Format notifications och räkna olästa
     notifications_data = [
         {
             "id": n.id,
             "message": n.message,
             "carpool_id": n.carpool_id,
             "is_read": n.is_read,
-            "created_at": n.created_at
+            "created_at": n.created_at.isoformat()
         } for n in notifications
     ]
     unread_count = sum(1 for n in notifications if not n.is_read)
 
     return jsonify({"notifications": notifications_data, "unreadCount": unread_count}), 200
+
 
 # Mark notifications as read
 @notifications_bp.route('/api/notifications/mark-read', methods=['POST'])
