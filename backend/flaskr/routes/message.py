@@ -23,6 +23,7 @@ def create_notification(user_id, carpool_id, message):
     db.session.add(notification)
     db.session.commit()
 
+
 # Helper function to notify users in a carpool
 def notify_users_in_carpool(carpool_id, message, sender_id):
     carpool = Carpool.query.get(carpool_id)
@@ -32,8 +33,10 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
 
     print(f"Notifying users in carpool {carpool_id} with message: {message}")
 
+    notified_users = set()  # För att undvika duplicerade notiser
+
     # Notify the carpool creator if they are not the sender
-    if carpool.driver_id != sender_id:
+    if carpool.driver_id != sender_id and carpool.driver_id not in notified_users:
         print(f"Notifying driver {carpool.driver_id}")
         create_notification(carpool.driver_id, carpool_id, message)
         socketio.emit('notification', {
@@ -41,6 +44,7 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
             'message': message,
             'user_id': carpool.driver_id
         }, room=f'user_{carpool.driver_id}')
+        notified_users.add(carpool.driver_id)
 
     # Notify parents of all passengers in the carpool, excluding the sender
     for passenger in carpool.passengers:
@@ -48,7 +52,7 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
         if child:
             parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
             for parent_link in parent_links:
-                if parent_link.user_id != sender_id:
+                if parent_link.user_id != sender_id and parent_link.user_id not in notified_users:
                     print(f"Notifying parent {parent_link.user_id}")
                     create_notification(parent_link.user_id, carpool_id, message)
                     socketio.emit('notification', {
@@ -56,7 +60,7 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
                         'message': message,
                         'user_id': parent_link.user_id
                     }, room=f'user_{parent_link.user_id}')
-
+                    notified_users.add(parent_link.user_id)
 
 
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['GET'])

@@ -8,6 +8,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Box,
 } from '@chakra-ui/react';
 import { BellIcon } from '@chakra-ui/icons';
 import { fetchNotifications } from '../utils/notifications';
@@ -43,7 +44,7 @@ const ClockNotifications = () => {
       socket.off('notification', handleNotification);
     };
   }, [userId]);
-      
+
   const markSingleNotificationAsRead = async (notificationId) => {
     try {
       const response = await fetch('/api/notifications/mark-read', {
@@ -66,15 +67,32 @@ const ClockNotifications = () => {
       console.error('Error marking notification as read:', error);
     }
   };
-  
+
   return (
     <Flex align="center">
       <Menu>
         <MenuButton
           as={IconButton}
-          icon={<BellIcon />}
+          icon={
+            <Box position="relative">
+              <BellIcon />
+              {/* Visa röd prick om det finns olästa notiser */}
+              {unreadCount > 0 && (
+                <Box
+                  position="absolute"
+                  top="0"
+                  right="0"
+                  bg="red.500"
+                  w="10px"
+                  h="10px"
+                  borderRadius="full"
+                />
+              )}
+            </Box>
+          }
           variant="outline"
         >
+          {/* Visa även antalet olästa notiser som en Badge */}
           {unreadCount > 0 && (
             <Badge colorScheme="red" ml={-2} mt={-2}>
               {unreadCount}
