@@ -90,4 +90,3 @@ def notify_users_in_carpool(carpool_id, message):
                     'user_id': parent_link.user_id
                 })
 
-# This example assumes you call `notify_users_in_carpool` in your Socket.IO chat message handling
