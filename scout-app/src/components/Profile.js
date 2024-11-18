@@ -56,7 +56,7 @@ const Profile = () => {
 
   // Modal states
   const [isAddChildOpen, setAddChildOpen] = useState(false);
-  const [isAddressInfoOpen, setAddressInfoOpen] = useState(false);
+  const [isAddressInfoOpen, setNewInfoOpen] = useState(false);
   const [isAddCarOpen, setAddCarOpen] = useState(false);
 
   // Car information
@@ -175,7 +175,7 @@ const Profile = () => {
     setCars((prevCars) => [...prevCars, newCar]);
   };
 
-  const handleSaveAddress = async () => {
+  const handleSaveNewinfo = async () => {
     try {
       const response = await fetch('/api/protected/add-user-address', {
         method: 'POST',
@@ -188,21 +188,23 @@ const Profile = () => {
           postcode,
           city,
           phone,
+          firstName,
+          lastName
         }),
       });
   
       if (response.ok) {
         const data = await response.json();
-        alert('Adressen har uppdaterats framgångsrikt!');
+        alert('Profilen har uppdaterats framgångsrikt!');
       } else {
         const error = await response.json();
-        alert(`Error: ${error.message || 'Misslyckades med att uppdatera adressen'}`);
+        alert(`Error: ${error.message || 'Misslyckades med att uppdatera profil'}`);
       }
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred while updating the address');
     } 
-    setAddressInfoOpen(false); // Close the modal after saving
+    setNewInfoOpen(false); // Close the modal after saving
   };
 
   const handleAddChild = async () => {
@@ -380,12 +382,10 @@ const Profile = () => {
   return (
   <Box
         p={5}
-        bg={useColorModeValue('gray.100', 'gray.800')}
         borderRadius="lg"
         boxShadow="lg"
         maxW="1000px"
-        ml={[0, 50, 100, 225]} // Responsive margins
-        mr={[0, 50, 100, 225]} // Responsive margins
+        mx="auto"
         mb={50}
         mt={50}
       >      
@@ -576,8 +576,8 @@ const Profile = () => {
         <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
           Lägg till Barn
         </Button>
-        <Button colorScheme="brand" onClick={() => setAddressInfoOpen(true)}>
-          Adressinformation
+        <Button colorScheme="brand" onClick={() => setNewInfoOpen(true)}>
+          Redigera profil
         </Button>
         <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
           Lägg till Bil
@@ -593,60 +593,93 @@ const Profile = () => {
         onChildAdded={handleChildAdded}
       />
 
-      {/* Modal for Address Information */}
-      <Modal isOpen={isAddressInfoOpen} onClose={() => setAddressInfoOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Adressinformation</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Adress</FormLabel>
-              <Input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Skriv in din adress"
-                isRequired // Accessibility enhancement
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Postnummer</FormLabel>
-              <Input
-                value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                placeholder="Skriv in postnummer"
-                isRequired // Accessibility enhancement
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Stad</FormLabel>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="Skriv in stad"
-                isRequired // Accessibility enhancement
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Telefon</FormLabel>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Skriv in telefonnummer"
-                //isRequired // Accessibility enhancement
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="brand" onClick={handleSaveAddress}>
-              Spara
-            </Button>
-            <Button ml={3} onClick={() => setAddressInfoOpen(false)}>
-              Avbryt
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+<Modal isOpen={isAddressInfoOpen} onClose={() => setNewInfoOpen(false)}>
+  <ModalOverlay />
+  <ModalContent 
+    maxW={{ base: '90%', sm: '500px', lg: '800px' }} // Responsive width
+    p={4} // Add padding for better spacing
+  >
+    <ModalHeader fontSize={{ base: 'lg', lg: '2xl' }}>Redigera profil</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      {/* Flex container for splitting content */}
+      <Flex 
+        direction={{ base: 'column', lg: 'row' }} 
+        gap={8}
+        justifyContent="space-between"
+      >
+        {/* Left side: Name, Last Name, and Phone */}
+        <Box flex="1">
+          <FormControl>
+            <FormLabel>Namn</FormLabel>
+            <Input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Skriv in förnamn"
+            />
+          </FormControl>
+          <FormControl mt={4}>
+            <FormLabel>Efternamn</FormLabel>
+            <Input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Skriv in efternamn"
+            />
+          </FormControl>
+          <FormControl mt={4}>
+            <FormLabel>Telefon</FormLabel>
+            <Input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Skriv in telefonnummer"
+            />
+          </FormControl>
+        </Box>
+
+        {/* Right side: Address Information */}
+        <Box flex="1">
+          <FormControl>
+            <FormLabel>Adress</FormLabel>
+            <Input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Skriv in din adress"
+              isRequired // Accessibility enhancement
+            />
+          </FormControl>
+          <FormControl mt={4}>
+            <FormLabel>Postnummer</FormLabel>
+            <Input
+              value={postcode}
+              onChange={(e) => setPostcode(e.target.value)}
+              placeholder="Skriv in postnummer"
+              isRequired // Accessibility enhancement
+            />
+          </FormControl>
+          <FormControl mt={4}>
+            <FormLabel>Stad</FormLabel>
+            <Input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Skriv in stad"
+              isRequired // Accessibility enhancement
+            />
+          </FormControl>
+        </Box>
+      </Flex>
+    </ModalBody>
+    <ModalFooter>
+      <Button colorScheme="brand" onClick={handleSaveNewinfo}>
+        Spara
+      </Button>
+      <Button ml={3} onClick={() => setNewInfoOpen(false)}>
+        Avbryt
+      </Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
+
 
       {/* AddCarModal */}
       <AddCarModal

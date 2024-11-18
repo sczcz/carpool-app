@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  Image,
   Box,
   Flex,
   Text,
@@ -22,7 +23,8 @@ import {
 import { HamburgerIcon } from '@chakra-ui/icons';
 import Login from './Login';  // Import the Login component
 import Register from './Register'; // Import the Register component
-import { ReactComponent as LilyWhiteIcon } from '../assets/lily-white.svg'; // Adjust the path according to your SVG location
+import LilyWhiteIcon from '../assets/lily-white.svg'; 
+import LilyBlueIcon from '../assets/lily-blue.svg';
 
 const Navbar = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();  // Hook to control the drawer
@@ -30,8 +32,8 @@ const Navbar = () => {
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
   const [isScrolled, setIsScrolled] = useState(false);  // State to manage scroll status
   const links = [
-    { to: '/dashboard-leader', label: 'Dashboard Ledare' },
-    { to: '/dashboard-parent', label: 'Dashboard Vårdnadshavare' },
+    { to: '/dashboard-leader', label: 'Ledare' },
+    { to: '/dashboard-parent', label: 'Vårdnadshavare' },
   ];
 
   // Effect to handle scroll events
@@ -75,116 +77,188 @@ const Navbar = () => {
   };
 
   return (
-    <Box 
-      as="nav" 
-      bg={isScrolled ? "brand.500" : "white"} // Change bg color based on scroll
-      color={isScrolled ? "white" : "brand.500"} // Change text color based on scroll
-      p={4} 
+    <Box
+      as="nav"
+      bg={isScrolled ? 'brand.500' : 'white'}
+      color={isScrolled ? 'white' : 'brand.500'}
+      p={4}
       position="sticky"
-      top={0} 
-      zIndex={1000} 
-      transition="background 0.3s, color 0.3s" // Smooth transition
+      top={0}
+      zIndex={1000}
+      boxShadow={isScrolled ? 'sm' : 'none'}
+      transition="background 0.3s, color 0.3s"
     >
-      <Flex alignItems="center" justifyContent="space-between" maxW="1200px" mx="auto" width="100%">
-        {/* Hamburger Icon Button for Mobile on the left side */}
-        <IconButton
-          aria-label="Open Menu"
-          icon={<HamburgerIcon />}
-          variant="outline"
-          colorScheme={isScrolled ? "white" : "brand"} // Change color based on scroll
-          onClick={onOpen}
-          display={{ base: 'flex', md: 'none' }} 
-          boxSize="40px" 
-          mr="4"
-        />
+    <Flex
+      alignItems="center"
+      justifyContent={{ base: 'center', md: 'center', lg: 'space-between' }}
+      maxW="980px"
+      mx="auto"
+      width="100%"
+    >
+      {/* Hamburger Icon for Mobile and Tablet */}
+      <IconButton
+        aria-label="Open Menu"
+        icon={<HamburgerIcon />}
+        variant="ghost"
+        color={isScrolled ? 'white' : 'brand.500'}
+        onClick={onOpen}
+        boxSize="40px"
+        fontSize="28px"
+        display={{ base: 'flex', md: 'flex', lg: 'none' }}
+        _hover={{
+          backgroundColor: isScrolled ? 'whiteAlpha.300' : 'blackAlpha.200',
+          color: isScrolled ? 'white' : 'brand.700',
+        }}
+        _active={{
+          backgroundColor: isScrolled ? 'whiteAlpha.400' : 'blackAlpha.300',
+          transform: 'scale(0.95)',
+        }}
+        borderRadius="md"
+      />
 
-        <Flex alignItems="center" justifyContent="center" flexGrow={1}> {/* Centering title and buttons */}
-          {isScrolled && (
-            <>
-              <LilyWhiteIcon style={{ width: '30px', height: '30px', marginRight: '8px' }} />
-              <Text fontSize="xl" fontWeight="bold" as={Link} to="/" ml="2" marginRight="4">
-                Jonstorps Kustscoutkår
-              </Text>
-            </>
-          )}
+      <Flex alignItems="center" flexGrow={1} justifyContent={{ base: 'center', md: 'center', lg: 'flex-start' }}>
+        {/* Scouterna Link */}
+        <Flex
+          gap={4} // Consistent spacing between Scouterna and other elements
+          display={{ lg: 'flex' }} // Hidden on mobile and tablet
+        >
+       <a
+          href="https://www.scouterna.se"
+          target="_blank"
+          rel="noopener noreferrer"
+          color={isScrolled ? 'white' : 'brand.500'}
+          style={{
+            fontWeight: 'bold',
+            fontFamily: "'Playfair Display', serif",
+            fontSize: '22px',
+            textDecoration: 'none', // Add to ensure no default underline unless desired
+          }}
+        >
+          Scouterna
+        </a>
 
-          {/* Desktop buttons */}
-          <Flex gap={4} display={{ base: 'none', md: 'flex' }} justifyContent="center">
-            {links.map(({ to, label }) => (
-              <Button 
-                key={to} 
-                as={Link} 
-                to={to} 
-                variant="solid" // Change variant to solid for a filled button style
-                colorScheme={isScrolled ? "white" : "brand"} 
-                size="md" // Size of the button
-                borderRadius="md" // Full rounded corners
-                ml={5}
-                _hover={{ bg: isScrolled ? "whiteAlpha.300" : "brand.600", color: "white" }} // Hover effect
-                _active={{ bg: "brand.600", transform: 'scale(0.95)' }} // Active effect
-              >
-                {label}
-              </Button>
-            ))}
-          </Flex>
         </Flex>
 
-        {/* Profile Icon with Dropdown */}
+        {/* Dynamic Logo */}
+        <Image
+          src={isScrolled ? LilyWhiteIcon : LilyBlueIcon}
+          alt="Jonstorps Kustscoutkår Logo"
+          boxSize="1.5em"
+          ml={2} // Minimal margin after the logo
+        />
+
+        {/* Title */}
+        <Text
+          fontSize={{ base: '2xl', md: '3xl', lg: '3xl' }}
+          fontWeight="extrabold"
+          color={isScrolled ? 'white' : 'brand.500'}
+          fontFamily="playfairFont" 
+          as={Link}
+          to="/"
+          ml="2"
+        >
+          Jonstorps Kustscoutkår
+        </Text>
+      </Flex>
+
+      {/* Buttons and Profile Menu */}
+      <Flex alignItems="center" justifyContent="space-between">
+        {/* Navigation Links */}
+        <Flex gap={4} display={{ base: 'none', lg: 'flex' }}>
+        {links.map(({ to, label }) => (
+          <Button
+            key={to}
+            as={Link}
+            to={to}
+            variant="ghost"
+            color={isScrolled ? 'white' : 'brand.500'}
+            fontWeight="medium"
+            
+            _hover={{
+              textDecoration: 'underline',
+              color: isScrolled ? 'whiteAlpha.700' : 'brand.700',
+            }}
+            _active={{
+              color: 'brand.700',
+            }}
+          >
+            {label}
+          </Button>
+        ))}
+      </Flex>
+
+
+        {/* Profile Menu */}
         <Menu>
           <MenuButton as={Button} variant="link" colorScheme="brand">
             <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" />
-          
           </MenuButton>
           <MenuList>
-            <MenuItem as={Link} to="/profile" color="brand.500">Profile</MenuItem>
+            <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem>
             <MenuItem as={Link} to="/TestSession" color="brand.500">Test Session</MenuItem> 
             <MenuItem as={Link} to="/FetchUsers" color="brand.500">Fetch Users</MenuItem> 
             <MenuItem color="brand.500" onClick={onLoginOpen}>
-              Login
+              Logga in
             </MenuItem>
             <MenuItem color="brand.500" onClick={onRegisterOpen}>
-              Register
+              Registrera
             </MenuItem>
             <MenuItem color="brand.500" onClick={handleLogout}>
-              Logout
+              Logga ut
             </MenuItem>          
           </MenuList>
         </Menu>
       </Flex>
+    </Flex>
 
-      {/* Drawer for mobile menu */}
+
+
+      {/* Drawer for Mobile and Tablet */}
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
           <DrawerHeader>
             <Flex justifyContent="space-between">
-              <Text fontSize="xl" fontWeight="bold" color="brand.500">Menu</Text>
               <CloseButton onClick={onClose} />
             </Flex>
           </DrawerHeader>
           <DrawerBody>
             <Flex direction="column" gap={4}>
+              {/* Add Scouterna Link to Mobile Drawer */}
+              <Button
+                as="a"
+                href="https://www.scouterna.se"
+                target="_blank"
+                variant="ghost"
+                colorScheme="brand"
+                onClick={onClose}
+              >
+                <Image
+                  src= {LilyBlueIcon}
+                  alt="Scouterna Logo"
+                  boxSize="1.5em"
+                  mr="2"
+                />
+                Scouterna
+              </Button>
+
               {links.map(({ to, label }) => (
-                <Button key={to} as={Link} to={to} variant="outline" colorScheme="brand" onClick={onClose}>
+                <Button
+                  key={to}
+                  as={Link}
+                  to={to}
+                  variant="ghost"
+                  colorScheme="brand"
+                  onClick={onClose}
+                >
                   {label}
                 </Button>
               ))}
-              <Button 
-                as="a" 
-                href="https://www.scouterna.se" 
-                target="_blank" 
-                variant="solid" 
-                colorScheme="brand" 
-                onClick={onClose}
-              >
-                Scouterna.se
-              </Button>
             </Flex>
           </DrawerBody>
         </DrawerContent>
       </Drawer>
 
-      {/* Render the Login and Register modal components */}
       <Login isOpen={isLoginOpen} onClose={onLoginClose} />
       <Register isOpen={isRegisterOpen} onClose={onRegisterClose} />
     </Box>
@@ -192,3 +266,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

@@ -1,5 +1,3 @@
-'use client'
-
 import {
   Box,
   chakra,
@@ -15,39 +13,36 @@ import LilyBlueIcon from '../assets/lily-blue.svg'; // Import your new SVG
 export default function Footer() {
   return (
     <Box
+      as="footer" // Semantically mark it as a footer
       bg={useColorModeValue('gray.50', 'gray.900')}
       color={useColorModeValue('gray.700', 'gray.200')}
-      textAlign="center" // Center text alignment
+      textAlign="center"
+      mt="auto" // Ensure it respects flex-grow layout
+      py={4}
     >
-      <Container as={Stack} maxW="6xl" py={4} spacing={4}>
+      <Container as={Stack} maxW="6xl" spacing={4}>
         <Stack direction="row" alignItems="center" justifyContent="center">
-          {/* Use the new SVG icon */}
           <Image 
-            src={LilyBlueIcon} // Use your imported SVG
-            alt="Company Logo" // Update alt text as necessary
-            ml={2} // Adds left margin between text and icon
-            boxSize="1.5em" // Adjust the size of the icon as needed
+            src={LilyBlueIcon} 
+            alt="Company Logo"
+            boxSize="1.5em"
           />
-          {/* Jonstorp kustscoutkår text with responsive display */}
           <Text 
             fontSize="lg" 
             fontWeight="bold" 
             ml={2} 
-            display={{ base: 'none', md: 'block' }} // Hide on mobile
+            display={{ base: 'none', md: 'block' }}
           >
             Jonstorp kustscoutkår
           </Text>
         </Stack>
         
-        {/* Navigation Links */}
         <Stack direction="row" spacing={8} justifyContent="center">
           <Link href="/">Hem</Link>
           <Link href="/about">Om oss</Link>
           <Link href="/services">Services</Link>
           <Link href="/contact">Kontakt</Link>
         </Stack>
-
-        <Text>© {new Date().getFullYear()} Your Company. All rights reserved.</Text>
       </Container>
     </Box>
   )
