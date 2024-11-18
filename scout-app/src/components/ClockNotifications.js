@@ -131,7 +131,7 @@ const ClockNotifications = () => {
                     }
                   }}
                 >
-                  <Text>{notification.message}</Text>
+                  <Text color="blue.700">{notification.message}</Text>
                 </MenuItem>
             ))
           ) : (
