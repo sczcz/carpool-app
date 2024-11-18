@@ -120,7 +120,7 @@ const Navbar = () => {
         {/* Scouterna Link */}
         <Flex
           gap={4} // Consistent spacing between Scouterna and other elements
-          display={{ lg: 'flex' }} // Hidden on mobile and tablet
+          display={{  base: 'none', lg: 'flex' }} // Hidden on mobile and tablet
         >
        <a
           href="https://www.scouterna.se"
