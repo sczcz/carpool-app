@@ -38,55 +38,27 @@ def get_notifications(current_user):
 # Mark notifications as read
 @notifications_bp.route('/api/notifications/mark-read', methods=['POST'])
 @token_required
-def mark_notifications_as_read(current_user):
-    notification_ids = request.json.get('notification_ids', [])
-    
-    if not notification_ids:
-        return jsonify({"error": "No notification IDs provided"}), 400
+def mark_single_notification_as_read(current_user):
+    try:
+        # Logga inkommande data
+        print(f"Current user: {current_user.user_id}, Received JSON body: {request.json}")
+        notification_id = request.json.get('id')
 
-    # Mark each notification as read
-    for notification_id in notification_ids:
+        if not notification_id:
+            return jsonify({"error": "No notification ID provided"}), 400
+
+        # Hitta notifikationen och markera den som läst
         notification = Notification.query.filter_by(id=notification_id, user_id=current_user.user_id).first()
         if notification:
+            print(f"Notification found: {notification.id} for user {current_user.user_id}")
             notification.is_read = True
+            db.session.commit()
+            return jsonify({"message": f"Notification {notification_id} marked as read"}), 200
 
-    db.session.commit()
-    return jsonify({"message": "Notifications marked as read"}), 200
-
-# Helper function to create a new notification
-def create_notification(user_id, carpool_id, message):
-    new_notification = Notification(
-        user_id=user_id,
-        carpool_id=carpool_id,
-        message=message
-    )
-    db.session.add(new_notification)
-    db.session.commit()
-
-# This function should be called when a new message is sent in a carpool chat
-def notify_users_in_carpool(carpool_id, message):
-    carpool = Carpool.query.get(carpool_id)
-    if not carpool:
-        return
-
-    # Notify the carpool creator
-    socketio.emit('notification', {
-    'carpool_id': carpool_id,
-    'message': message,
-    'user_id': carpool.driver_id
-    })
-    print(f"Sent notification to user {carpool.driver_id} for carpool {carpool_id}")
-
-
-    # Notify parents of all passengers in the carpool
-    for passenger in carpool.passengers:
-        child = Child.query.get(passenger.child_id)
-        if child:
-            parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
-            for parent_link in parent_links:
-                socketio.emit('notification', {
-                    'carpool_id': carpool_id,
-                    'message': message,
-                    'user_id': parent_link.user_id
-                })
+        # Logga om notifikationen inte hittades
+        print(f"Notification not found or unauthorized for user {current_user.user_id}")
+        return jsonify({"error": "Notification not found or unauthorized"}), 404
+    except Exception as e:
+        print(f"Error processing request: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 

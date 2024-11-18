@@ -5,6 +5,7 @@ const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
+  const [fullName, setFullName] = useState(''); // Nytt state för hela namnet
   const [loading, setLoading] = useState(true);
 
   // Funktion för att hämta användarinformation
@@ -17,6 +18,7 @@ export const UserProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         setUserId(data.user.id);
+        setFullName(`${data.user.firstName} ${data.user.lastName}`); // Sätt hela namnet
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -30,7 +32,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ userId, setUserId, loading }}>
+    <UserContext.Provider value={{ userId, fullName, setUserId, loading }}>
       {children}
     </UserContext.Provider>
   );

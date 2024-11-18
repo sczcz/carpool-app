@@ -12,11 +12,12 @@ from dateutil import tz
 message_bp = Blueprint('message_bp', __name__)
 active_users = {}
 
-def create_notification(user_id, carpool_id, message):
+def create_notification(user_id, carpool_id, message, message_id=None):
     """Creates a notification for a user about a carpool message."""
     notification = Notification(
         user_id=user_id,
         carpool_id=carpool_id,
+        message_id=message_id,  # Associerar meddelandet om det finns
         message=message,
         is_read=False,
         created_at=datetime.utcnow()
@@ -24,9 +25,30 @@ def create_notification(user_id, carpool_id, message):
     db.session.add(notification)
     db.session.commit()
 
+    # Kontrollera om ID genererades
+    if not notification.id:
+        print("Error: Notification ID not generated after commit!")
+        return None
+
+    # Felsök för att se vad som lagrades
+    print(f"Notification created: {notification.id} | User: {user_id} | Carpool: {carpool_id} | Message: {message}")
+
+    # Kontrollera om vi behöver query
+    created_notification = Notification.query.filter_by(
+        user_id=user_id, 
+        carpool_id=carpool_id, 
+        message_id=message_id,
+        message=message
+    ).order_by(Notification.created_at.desc()).first()
+
+    if created_notification and created_notification.id != notification.id:
+        print(f"Warning: Queried notification ID ({created_notification.id}) "
+              f"does not match direct notification ID ({notification.id})")
+
+    return notification  # Returnera direkt istället för att använda query
 
 # Helper function to notify users in a carpool
-def notify_users_in_carpool(carpool_id, message, sender_id):
+def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
     # Initiera active_users om det saknas
     if carpool_id not in active_users:
         active_users[carpool_id] = set()
@@ -41,7 +63,12 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
     # Notify the carpool creator if they are not the sender or active
     if carpool.driver_id != sender_id and carpool.driver_id not in active_users[carpool_id]:
         if carpool.driver_id not in notified_users:
+            # Skapa notifikation i databasen
+            notification = create_notification(user_id=carpool.driver_id, carpool_id=carpool_id, message=message, message_id=message_id)
+            # Skicka realtidsnotifikation
+            print(f"Sent Socket.IO notification: id={notification.id}, user_id={carpool.driver_id}, carpool_id={carpool_id}")
             socketio.emit('notification', {
+                'id': notification.id,
                 'carpool_id': carpool_id,
                 'message': message,
                 'user_id': carpool.driver_id
@@ -54,7 +81,12 @@ def notify_users_in_carpool(carpool_id, message, sender_id):
         for parent_link in parent_links:
             if parent_link.user_id != sender_id and parent_link.user_id not in active_users[carpool_id]:
                 if parent_link.user_id not in notified_users:
+                    # Skapa notifikation i databasen
+                    notification = create_notification(user_id=parent_link.user_id, carpool_id=carpool_id, message=message, message_id=message_id)
+                    # Skicka realtidsnotifikation
+                    print(f"Sent Socket.IO notification: id={notification.id}, user_id={parent_link.user_id}, carpool_id={carpool_id}")
                     socketio.emit('notification', {
+                        'id': notification.id,
                         'carpool_id': carpool_id,
                         'message': message,
                         'user_id': parent_link.user_id
@@ -184,4 +216,4 @@ def handle_send_message(data):
     }, room=f'carpool_{carpool_id}')
 
     notification_message = f"Nytt meddelande i samåkning {carpool_id} from {sender.first_name} {sender.last_name}"
-    notify_users_in_carpool(carpool_id, notification_message, message.sender_id)
+    notify_users_in_carpool(carpool_id, notification_message, message.sender_id, message.id)

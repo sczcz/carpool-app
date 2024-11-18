@@ -34,7 +34,21 @@ const ClockNotifications = () => {
     loadNotifications();
 
     const handleNotification = (notification) => {
-      setNotifications((prev) => [notification, ...prev]);
+      if (!notification.id) {
+        console.error("Invalid notification received (missing id):", notification);
+        return;
+      }
+    
+      setNotifications((prev) => {
+        // Kontrollera om notifikationen redan finns
+        const exists = prev.some((n) => n.id === notification.id);
+        if (exists) {
+          console.warn("Duplicate notification received:", notification);
+          return prev; // Behåll tidigare lista
+        }
+        return [notification, ...prev];
+      });
+    
       setUnreadCount((prevCount) => prevCount + 1);
     };
 
@@ -43,6 +57,7 @@ const ClockNotifications = () => {
     return () => {
       socket.off('notification', handleNotification);
     };
+
   }, [userId]);
 
   const markSingleNotificationAsRead = async (notificationId) => {
@@ -51,7 +66,7 @@ const ClockNotifications = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ notification_ids: [notificationId] }),
+        body: JSON.stringify({ id: notificationId }), // Skicka ett enda ID
       });
       if (response.ok) {
         setNotifications((prevNotifications) =>
@@ -107,7 +122,14 @@ const ClockNotifications = () => {
               .map((notification, index) => (
                 <MenuItem
                   key={index}
-                  onClick={() => markSingleNotificationAsRead(notification.id)}
+                  onClick={() => {
+                    console.log("Clicked notification:", notification);
+                    if (notification.id) { // Ändra från notification.notification_id till notification.id
+                      markSingleNotificationAsRead(notification.id);
+                    } else {
+                      console.error("Notification ID is missing or undefined in MenuItem onClick:", notification);
+                    }
+                  }}
                 >
                   <Text>{notification.message}</Text>
                 </MenuItem>
