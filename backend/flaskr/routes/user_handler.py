@@ -15,7 +15,7 @@ def protected_route(current_user):
     return jsonify({"logged_in_as": current_user.email}), 200
 
 # Route för att uppdatera användarens adress
-@user_handler.route('/api/protected/add-user-address', methods=['POST'])
+@user_handler.route('/api/protected/edit-user-profile', methods=['POST'])
 @token_required
 def add_address(current_user):
     

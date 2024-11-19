@@ -177,7 +177,7 @@ const Profile = () => {
 
   const handleSaveNewinfo = async () => {
     try {
-      const response = await fetch('/api/protected/add-user-address', {
+      const response = await fetch('/api/protected/edit-user-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,7 +202,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred while updating the address');
+      alert('An error occurred while updating the profile');
     } 
     setNewInfoOpen(false); // Close the modal after saving
   };
