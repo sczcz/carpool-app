@@ -45,6 +45,9 @@ def register():
     last_name = data.get('last_name')
     role = data.get('role')
     phone = data.get('phone')
+    address = data.get('address')  # Nytt fält
+    postcode = data.get('postcode')  # Nytt fält
+    city = data.get('city')  # Nytt fält
 
     # Kontrollera om användaren redan finns
     user_exists = User.query.filter_by(email=email).first()
@@ -56,7 +59,7 @@ def register():
     hashed_password = generate_password_hash(password)
 
     # Skapa och spara ny användare i databasen
-    new_user = User(email=email, password=hashed_password, first_name=first_name, last_name=last_name, phone=phone)
+    new_user = User(email=email, password=hashed_password, first_name=first_name, last_name=last_name, phone=phone, address=address, postcode=postcode, city=city)
     db.session.add(new_user)
     db.session.commit()
 
