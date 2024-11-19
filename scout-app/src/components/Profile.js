@@ -188,8 +188,8 @@ const Profile = () => {
           postcode,
           city,
           phone,
-          firstName,
-          lastName
+          first_name: firstName,
+          last_name: lastName
         }),
       });
   
