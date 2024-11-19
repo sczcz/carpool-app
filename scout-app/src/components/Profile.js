@@ -389,32 +389,55 @@ const Profile = () => {
         mb={50}
         mt={50}
       >      
-    <Flex direction={['column', 'column', 'row']} align="center" mb={8}>
-        <Avatar
-          size="2xl"
-          name={`${firstName} ${lastName}`}
-          src="https://your-avatar-url.com/avatar.png" // Replace with your avatar URL
-          bg="#043A63" // Background color when no image is provided
-          color="white" // Text color for initials
-        />
-        <Stack spacing={1} ml={[0, 0, 4]} textAlign={['center', 'center', 'left']}>
-          <Heading as="h2" size="lg" colorScheme="brand">
-            {firstName} {lastName}
-          </Heading>
-          <Text fontSize="lg" color="gray.600">
-            {email}
-          </Text>
-          <Text fontSize="lg" color="gray.600">
-            Adress: {address}, {postcode}, {city}
-          </Text>
-          <Text fontSize="lg" color="gray.600">
-            Telefon: {phone}
-          </Text>
-          <Text fontSize="md" color="gray.500">
-            Roll: {role}
-          </Text>
-        </Stack>
-      </Flex>
+        <Flex direction={['column', 'column', 'row']} align="center" justify="space-between" mb={8}>
+  {/* User Information */}
+  <Flex align="center">
+    <Avatar
+      size="2xl"
+      name={`${firstName} ${lastName}`}
+      src="https://your-avatar-url.com/avatar.png" // Replace with your avatar URL
+      bg="#043A63" // Background color when no image is provided
+      color="white" // Text color for initials
+      mr={[6, 6, 0]} // Add margin-right for smaller screens (4) and remove it for larger screens (0)
+    />
+    <Stack spacing={1} ml={[0, 0, 4]} textAlign={['center', 'center', 'left']}>
+      <Heading as="h2" size="lg" colorScheme="brand">
+        {firstName} {lastName}
+      </Heading>
+      <Text fontSize="lg" color="gray.600">
+        {email}
+      </Text>
+      <Text fontSize="lg" color="gray.600">
+        Adress: {address}, {postcode}, {city}
+      </Text>
+      <Text fontSize="lg" color="gray.600">
+        Telefon: {phone}
+      </Text>
+      <Text fontSize="md" color="gray.500">
+        Roll: {role}
+      </Text>
+    </Stack>
+  </Flex>
+
+  {/* Buttons */}
+  <HStack 
+    spacing={4} 
+    mt={[4, 4, -2]} // Negative margin to move buttons up
+    alignSelf="center" // Align buttons at the top of the user info
+  >
+    <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
+      Lägg till Barn
+    </Button>
+    <Button colorScheme="brand" onClick={() => setNewInfoOpen(true)}>
+      Redigera profil
+    </Button>
+    <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
+      Lägg till Bil
+    </Button>
+  </HStack>
+</Flex>
+
+
 
       {/* Children Section */}
       <VStack spacing={2} align="start" mt={[4, 4, 0]}>
@@ -570,21 +593,6 @@ const Profile = () => {
       </VStack>
 
       <Divider mb={6} />
-
-      {/* Buttons for Adding Child and Address Information */}
-      <HStack spacing={4} align="start" mt={10} mb={50}>
-        <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
-          Lägg till Barn
-        </Button>
-        <Button colorScheme="brand" onClick={() => setNewInfoOpen(true)}>
-          Redigera profil
-        </Button>
-        <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
-          Lägg till Bil
-        </Button>
-      </HStack>
-
-      <Divider mb={3} />
 
       {/* AddChildModal */}
       <AddChildModal

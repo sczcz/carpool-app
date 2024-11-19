@@ -14,19 +14,24 @@ import {
     RadioGroup,
     Radio,
     Stack,
-    useBreakpointValue,
-    VStack,
+    Grid,
+    GridItem,
     Box,
+    useBreakpointValue,
 } from '@chakra-ui/react';
 
 const Register = ({ isOpen, onClose }) => {
+    const modalSize = useBreakpointValue({ base: "full", lg: "3xl" }); // Wide modal for large screens
     const [first_name, setFirstName] = useState('');
     const [last_name, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [phone, setPhone] = useState('');  // Nytt state för telefonnummer
+    const [phone, setPhone] = useState('');
     const [role, setRole] = useState('Vårdnadshavare');
     const [error, setError] = useState('');
+    const [adress, setAdress] = useState('');
+    const [postcode, setPostcode] = useState('');
+    const [city, setCity] = useState('');
 
     const handleRegister = (e) => {
         e.preventDefault();
@@ -36,32 +41,32 @@ const Register = ({ isOpen, onClose }) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ first_name, last_name, email, password, phone, role })  // Inkludera phone i request body
+            body: JSON.stringify({ first_name, last_name, email, password, phone, role, adress, city, postcode }),
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                setError(data.error);
-            } else {
-                alert(data.message);
-                // Clear fields after successful registration
-                setFirstName('');
-                setLastName('');
-                setEmail('');
-                setPassword('');
-                setPhone('');  
-                setRole('Vårdnadshavare');
-                setError('');
-                onClose(); // Close the modal upon successful registration
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.error) {
+                    setError(data.error);
+                } else {
+                    alert(data.message);
+                    setFirstName('');
+                    setLastName('');
+                    setEmail('');
+                    setPassword('');
+                    setPhone('');
+                    setRole('Vårdnadshavare');
+                    setAdress('');
+                    setCity('');
+                    setPostcode('');
+                    setError('');
+                    onClose();
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
     };
 
-    const modalSize = useBreakpointValue({ base: "full", sm: "md" });
-    
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered size={modalSize}>
             <ModalOverlay />
@@ -71,83 +76,113 @@ const Register = ({ isOpen, onClose }) => {
                 <ModalBody>
                     <Box width="full" p={4}>
                         <form onSubmit={handleRegister}>
-                            <VStack spacing={4} align="stretch">
-                                {/* Förnamn */}
-                                <FormControl isRequired>
-                                    <FormLabel>Förnamn:</FormLabel>
-                                    <Input 
-                                        type="text" 
-                                        value={first_name} 
-                                        onChange={(e) => setFirstName(e.target.value)} 
-                                        required 
-                                        bg="white"
-                                    />
-                                </FormControl>
-                                
-                                {/* Efternamn */}
-                                <FormControl isRequired>
-                                    <FormLabel>Efternamn:</FormLabel>
-                                    <Input 
-                                        type="text" 
-                                        value={last_name} 
-                                        onChange={(e) => setLastName(e.target.value)} 
-                                        required 
-                                        bg="white"
-                                    />
-                                </FormControl>
+                            <Grid
+                                templateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }} // Single column on small screens, two columns on large
+                                gap={4}
+                            >
+                                {/* Left Column */}
+                                <GridItem>
+                                    <FormControl isRequired>
+                                        <FormLabel>Förnamn:</FormLabel>
+                                        <Input
+                                            type="text"
+                                            value={first_name}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                    <FormControl isRequired>
+                                        <FormLabel>Efternamn:</FormLabel>
+                                        <Input
+                                            type="text"
+                                            value={last_name}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                    <FormControl isRequired>
+                                        <FormLabel>E-post:</FormLabel>
+                                        <Input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                    <FormControl isRequired>
+                                        <FormLabel>Lösenord:</FormLabel>
+                                        <Input
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                </GridItem>
 
-                                {/* E-post */}
-                                <FormControl isRequired>
-                                    <FormLabel>E-post:</FormLabel>
-                                    <Input 
-                                        type="email" 
-                                        value={email} 
-                                        onChange={(e) => setEmail(e.target.value)} 
-                                        required 
-                                        bg="white"
-                                    />
-                                </FormControl>
+                                {/* Right Column */}
+                                <GridItem>
+                                    <FormControl isRequired>
+                                        <FormLabel>Telefonnummer:</FormLabel>
+                                        <Input
+                                            type="tel"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                    <FormControl isRequired>
+                                        <FormLabel>Adress:</FormLabel>
+                                        <Input
+                                            type="text"
+                                            value={adress}
+                                            onChange={(e) => setAdress(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                    <FormControl isRequired>
+                                        <FormLabel>Postnummer:</FormLabel>
+                                        <Input
+                                            type="text"
+                                            value={postcode}
+                                            onChange={(e) => setPostcode(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                    <FormControl isRequired>
+                                        <FormLabel>Stad:</FormLabel>
+                                        <Input
+                                            type="text"
+                                            value={city}
+                                            onChange={(e) => setCity(e.target.value)}
+                                            required
+                                            bg="white"
+                                        />
+                                    </FormControl>
+                                </GridItem>
+                            </Grid>
 
-                                {/* Lösenord */}
-                                <FormControl isRequired>
-                                    <FormLabel>Lösenord:</FormLabel>
-                                    <Input 
-                                        type="password" 
-                                        value={password} 
-                                        onChange={(e) => setPassword(e.target.value)} 
-                                        required 
-                                        bg="white"
-                                    />
-                                </FormControl>
+                            <FormControl mt={4} isRequired>
+                                <FormLabel>Roll:</FormLabel>
+                                <RadioGroup onChange={setRole} value={role} colorScheme="brand">
+                                    <Stack direction="row">
+                                        <Radio value="Vårdnadshavare">Vårdnadshavare</Radio>
+                                        <Radio value="Ledare">Ledare</Radio>
+                                    </Stack>
+                                </RadioGroup>
+                            </FormControl>
 
-                                {/* Telefon */}
-                                <FormControl isRequired>  {/* Telefonnummer */}
-                                    <FormLabel>Telefonnummer:</FormLabel>
-                                    <Input 
-                                        type="tel" 
-                                        value={phone} 
-                                        onChange={(e) => setPhone(e.target.value)} 
-                                        required 
-                                        bg="white"
-                                    />
-                                </FormControl>
-
-                                {/* Roll (Vårdnadshavare/Ledare) */}
-                                <FormControl isRequired>
-                                    <FormLabel>Roll:</FormLabel>
-                                    <RadioGroup onChange={setRole} value={role} colorScheme="brand">
-                                        <Stack direction="row">
-                                            <Radio value="Vårdnadshavare">Vårdnadshavare</Radio>
-                                            <Radio value="Ledare">Ledare</Radio>
-                                        </Stack>
-                                    </RadioGroup>
-                                </FormControl>
-                                
-                                <Button type="submit" colorScheme="brand" width="full" onClick={handleRegister}>
-                                    Registrera
-                                </Button>
-                                {error && <Alert status="error" mt={4}>{error}</Alert>} {/* Error message below the button */}
-                            </VStack>
+                            <Button mt={4} type="submit" colorScheme="brand" width="full">
+                                Registrera
+                            </Button>
+                            {error && <Alert status="error" mt={4}>{error}</Alert>}
                         </form>
                     </Box>
                 </ModalBody>
