@@ -481,7 +481,12 @@ const handleLoadMore = () => {
           <Divider mb={6} />
 
           {myActivities.length > 0 && (
-            <Box borderWidth="2px" borderColor="brand.500" p={4} boxShadow="lg" bg="blue.50">
+            <Box p={4}
+            bg="blue.50"  // Sätt en ljusblå bakgrund
+            borderRadius="lg" // Rundade hörn
+            shadow="md" // Mjuk skugga
+            borderWidth="0px" // Ta bort ramen
+          >
               <Heading as="h2" size="md" mb={4} color="gray.600">Mina aktiviteter</Heading>
               <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                 {activitiesForMyActivities.map((activity, index) => (
