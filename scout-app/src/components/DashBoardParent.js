@@ -481,7 +481,7 @@ const handleLoadMore = () => {
           <Divider mb={6} />
 
           {myActivities.length > 0 && (
-            <Box mb={8}>
+            <Box borderWidth="2px" borderColor="brand.500" p={4} boxShadow="lg" bg="blue.50">
               <Heading as="h2" size="md" mb={4} color="gray.600">Mina aktiviteter</Heading>
               <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                 {activitiesForMyActivities.map((activity, index) => (
@@ -626,7 +626,7 @@ const handleLoadMore = () => {
 
           {/* Upcoming activities */}
           <Box mb={8}>
-            <Heading as="h2" size="md" mb={4} color="brand.500">
+            <Heading as="h2" size="md" mb={4} color="brand.500" mt={5}>
               Kommande aktiviteter
             </Heading>
 
