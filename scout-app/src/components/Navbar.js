@@ -157,7 +157,7 @@ const Navbar = () => {
 
       {/* Title */}
       <Text
-        fontSize={{ base: '2xl', md: '3xl', lg: '3xl' }}
+        fontSize={{ base: 'xl', sm: '2xl', md: '3xl', lg: '3xl', }}
         fontWeight="extrabold"
         color={isScrolled ? 'white' : 'brand.500'}
         fontFamily="playfairFont" 
