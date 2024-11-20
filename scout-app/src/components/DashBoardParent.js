@@ -27,20 +27,18 @@ import {
 } from '@chakra-ui/react';
 import { FaUserCircle, FaPlus } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
+import { useUser } from '../utils/UserContext';
 import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
-import { checkIfLoggedIn } from '../utils/auth';
 import CarpoolDetails from './CarpoolDetails';
 import AddChildModal from './AddChildModal';
 
 
 const DashBoardParent = ({ token }) => {
-  const [authLoading, setAuthLoading] = useState(true);
-  const [userName, setUserName] = useState('');
-  const [userId, setUserId] = useState('');
+  const { userId, fullName, loading } = useUser();
   const [activities, setActivities] = useState([]);
   const [myActivities, setMyActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [activityLoading, setActivityLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openCarpoolIndex, setOpenCarpoolIndex] = useState(null);
   const [openMyCarpoolIndex, setOpenMyCarpoolIndex] = useState(null);
@@ -67,23 +65,6 @@ const DashBoardParent = ({ token }) => {
     rover: '#e2e000',        
   };
 
-  useEffect(() => {
-    const verifyUser = async () => {
-      const loggedIn = await checkIfLoggedIn();
-      if (loggedIn) {
-        setAuthLoading(false);
-      }
-    };
-
-    verifyUser();
-  }, []);
-
-  useEffect(() => {
-    if (!authLoading) {
-      fetchUserData();
-    }
-  }, [authLoading]);
-
   const isInMyActivities = (activity) => {
     return activity.carpools.some((carpool) => {
       return (
@@ -97,30 +78,18 @@ const DashBoardParent = ({ token }) => {
 
   const activitiesForUpcoming = activities.filter(activity => !isInMyActivities(activity));
   const activitiesForMyActivities = activities.filter(activity => isInMyActivities(activity));
-
-  const fetchUserData = async () => {
-    try {
-      const response = await fetch('/api/protected/user', {
-        method: 'GET',
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const user = data.user;
-  
-        setUserName(user.first_name + " " + user.last_name);
-        setUserId(user.id);
-      } else {
-        console.error('Failed to fetch user data');
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
   
   useEffect(() => {
-    fetchActivities();
-  }, [token]);
+    if (!loading && !userId) {
+      window.location.href = '/';
+    }
+  }, [loading, userId]);
+
+  useEffect(() => {
+    if (userId && !loading) {
+      fetchActivities();
+    }
+  }, [userId, loading]);
 
   useEffect(() => {
     setMyActivities(activities.filter(activity => isInMyActivities(activity)));
@@ -142,7 +111,7 @@ const DashBoardParent = ({ token }) => {
   
   
   const fetchActivities = async () => {
-    setLoading(true);
+    setActivityLoading(true);
     try {
       const response = await fetch('/api/protected/activity/by_role', { credentials: 'include' });
       const data = await response.json();
@@ -156,12 +125,11 @@ const DashBoardParent = ({ token }) => {
     );
 
     setActivities(activitiesWithCarpools);
-    setLoading(false);
-
     } catch (err) {
       console.error('Error fetching activities:', err);
       setError(err.message);
-      setLoading(false);
+    } finally {
+      setActivityLoading(false);
     }
   };
 
@@ -464,16 +432,16 @@ const handleLoadMore = () => {
     onChatOpen();
   };
 
-  if (authLoading) {
+  if (loading) {
     return (
       <VStack>
         <Spinner size="xl" color="brand.500" />
-        <Text>Kontrollerar åtkomst...</Text>
+        <Text>Laddar...</Text>
       </VStack>
     );
   }
 
-  if (loading) {
+  if (activityLoading) {
     return (
       <VStack>
         <Spinner size="xl" color="brand.500" />
@@ -499,14 +467,14 @@ const handleLoadMore = () => {
           <Flex justify="space-between" align="center" mb={5}>
             <HStack>
               <Icon as={FaUserCircle} w={8} h={8} color="brand.500" />
-              <Heading as="h1" size="lg" color="brand.500">Välkommen, {userName}</Heading>
+              <Heading as="h1" size="lg" color="brand.500">Välkommen, {fullName}</Heading>
             </HStack>
           </Flex>
 
           {/* Welcome message */}
           <Box mb={6}>
             <Text fontSize="lg" color="brand.600">
-              Hej {userName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
+              Hej {fullName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
             </Text>
           </Box>
 
@@ -862,7 +830,7 @@ const handleLoadMore = () => {
               <ModalCloseButton />
               <ModalBody>
                 {/* Rendera CarpoolChat och skicka in valt carpoolId */}
-                <CarpoolChat carpoolId={selectedCarpoolId} userName={userName} userId={userId}/>
+                <CarpoolChat carpoolId={selectedCarpoolId} userName={fullName} userId={userId}/>
               </ModalBody>
             </ModalContent>
           </Modal>
