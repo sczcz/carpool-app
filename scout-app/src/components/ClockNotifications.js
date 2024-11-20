@@ -15,7 +15,7 @@ import { fetchNotifications } from '../utils/notifications';
 import socket from '../utils/socket';
 import { useUser } from '../utils/UserContext';
 
-const ClockNotifications = () => {
+const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring here
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const { userId } = useUser();
@@ -60,6 +60,7 @@ const ClockNotifications = () => {
 
   }, [userId]);
 
+
   const markSingleNotificationAsRead = async (notificationId) => {
     try {
       const response = await fetch('/api/notifications/mark-read', {
@@ -90,41 +91,55 @@ const ClockNotifications = () => {
           as={IconButton}
           icon={
             <Box position="relative">
-              <BellIcon />
-              {/* Visa röd prick om det finns olästa notiser */}
+              <BellIcon color={isScrolled ? 'white' : 'brand.500'} />
               {unreadCount > 0 && (
                 <Box
                   position="absolute"
-                  top="0"
-                  right="0"
+                  top="-1px"
+                  right="-1px"
                   bg="red.500"
-                  w="10px"
-                  h="10px"
+                  w="12px"
+                  h="12px"
                   borderRadius="full"
                 />
               )}
             </Box>
           }
-          variant="outline"
+          variant="ghost"
+          _hover={{
+            bg: isScrolled ? 'whiteAlpha.300' : 'blackAlpha.200',
+          }}
+          _active={{
+            bg: isScrolled ? 'whiteAlpha.400' : 'blackAlpha.300',
+          }}
         >
-          {/* Visa även antalet olästa notiser som en Badge */}
           {unreadCount > 0 && (
-            <Badge colorScheme="red" ml={-2} mt={-2}>
+            <Badge
+              colorScheme="red"
+              variant="solid"
+              position="absolute"
+              top="-1"
+              right="-1"
+              fontSize="0.8em"
+            >
               {unreadCount}
             </Badge>
           )}
         </MenuButton>
-        <MenuList>
-          {console.log('Rendering notifications:', notifications)} {/* Logga notifikationerna */}
+        <MenuList color="brand.500">
+        {console.log('Rendering notifications:', notifications)} {/* Logga notifikationerna */}
           {notifications.filter(notification => !notification.is_read).length > 0 ? (
             notifications
-              .filter(notification => !notification.is_read) // Endast olästa notiser
+              .filter(notification => !notification.is_read)
               .map((notification, index) => (
                 <MenuItem
                   key={index}
+                  _hover={{
+                    bg: isScrolled ? 'gray.700' : 'gray.100',
+                  }}
                   onClick={() => {
                     console.log("Clicked notification:", notification);
-                    if (notification.id) { // Ändra från notification.notification_id till notification.id
+                    if (notification.id) {
                       markSingleNotificationAsRead(notification.id);
                     } else {
                       console.error("Notification ID is missing or undefined in MenuItem onClick:", notification);
@@ -133,7 +148,7 @@ const ClockNotifications = () => {
                 >
                   <Text color="blue.700">{notification.message}</Text>
                 </MenuItem>
-            ))
+              ))
           ) : (
             <MenuItem>
               <Text>No new notifications</Text>

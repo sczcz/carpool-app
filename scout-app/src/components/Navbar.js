@@ -196,7 +196,8 @@ const Navbar = () => {
       </Flex>
 
         {/* Klocka och notiser*/}
-        <ClockNotifications/>
+      
+      <ClockNotifications isScrolled={isScrolled} />
           
 
         {/* Profilmeny */}
