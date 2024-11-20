@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
 import {
   Box,
   Button,
@@ -10,8 +9,8 @@ import {
   HStack,
 } from '@chakra-ui/react';
 import { format, isSameDay } from 'date-fns';
+import socket from '../utils/socket';
 
-const socket = io('http://localhost:5000'); // Replace with your backend URL
 
 function CarpoolChat({ carpoolId, userName, userId }) {
   const [messages, setMessages] = useState([]);
@@ -23,8 +22,8 @@ function CarpoolChat({ carpoolId, userName, userId }) {
   };
 
   useEffect(() => {
-    if (!carpoolId) {
-      console.error("carpoolId saknas, kan inte ladda chatten");
+    if (!carpoolId || !userId) {
+      console.error("carpoolId eller userId saknas, kan inte ladda chatten");
       return;
     }
 
@@ -46,7 +45,7 @@ function CarpoolChat({ carpoolId, userName, userId }) {
     };
     fetchMessages();
 
-    socket.emit('join_carpool', { carpool_id: parseInt(carpoolId) });
+    socket.emit('join_carpool', { carpool_id: parseInt(carpoolId), user_id: userId });
     socket.on('new_message', (data) => {
       if (data.carpool_id === parseInt(carpoolId)) {
         setMessages((prevMessages) => [...prevMessages, data.message]);
@@ -54,10 +53,10 @@ function CarpoolChat({ carpoolId, userName, userId }) {
     });
 
     return () => {
-      socket.emit('leave_carpool', { carpool_id: parseInt(carpoolId) });
+      socket.emit('leave_carpool', { carpool_id: parseInt(carpoolId), user_id: userId });
       socket.off('new_message');
     };
-  }, [carpoolId]);
+  }, [carpoolId, userId]);
 
   useEffect(() => {
     scrollToBottom();

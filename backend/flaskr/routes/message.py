@@ -1,13 +1,99 @@
 from flask import Blueprint, request, jsonify
 from extensions import db, socketio
 from models.message_model import CarpoolMessage
+from models.auth_model import User, ParentChildLink, Child
+from models.notifications_model import Notification
 from flask_socketio import join_room, leave_room, emit
 from routes.auth import token_required
+from routes.carpool import Carpool, Passenger
 from datetime import datetime
-from models.auth_model import User
 from dateutil import tz
 
 message_bp = Blueprint('message_bp', __name__)
+active_users = {}
+
+def create_notification(user_id, carpool_id, message, message_id=None):
+    """Creates a notification for a user about a carpool message."""
+    notification = Notification(
+        user_id=user_id,
+        carpool_id=carpool_id,
+        message_id=message_id,  # Associerar meddelandet om det finns
+        message=message,
+        is_read=False,
+        created_at=datetime.utcnow()
+    )
+    db.session.add(notification)
+    db.session.commit()
+
+    # Kontrollera om ID genererades
+    if not notification.id:
+        print("Error: Notification ID not generated after commit!")
+        return None
+
+    # Felsök för att se vad som lagrades
+    print(f"Notification created: {notification.id} | User: {user_id} | Carpool: {carpool_id} | Message: {message}")
+
+    # Kontrollera om vi behöver query
+    created_notification = Notification.query.filter_by(
+        user_id=user_id, 
+        carpool_id=carpool_id, 
+        message_id=message_id,
+        message=message
+    ).order_by(Notification.created_at.desc()).first()
+
+    if created_notification and created_notification.id != notification.id:
+        print(f"Warning: Queried notification ID ({created_notification.id}) "
+              f"does not match direct notification ID ({notification.id})")
+
+    return notification  # Returnera direkt istället för att använda query
+
+# Helper function to notify users in a carpool
+def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
+    # Initiera active_users om det saknas
+    if carpool_id not in active_users:
+        active_users[carpool_id] = set()
+
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        print(f"Carpool {carpool_id} not found.")
+        return
+
+    notified_users = set()  # För att undvika dubblerade notifieringar
+
+    # Notify the carpool creator if they are not the sender or active
+    if carpool.driver_id != sender_id and carpool.driver_id not in active_users[carpool_id]:
+        if carpool.driver_id not in notified_users:
+            # Skapa notifikation i databasen
+            notification = create_notification(user_id=carpool.driver_id, carpool_id=carpool_id, message=message, message_id=message_id)
+            # Skicka realtidsnotifikation
+            print(f"Sent Socket.IO notification: id={notification.id}, user_id={carpool.driver_id}, carpool_id={carpool_id}")
+            socketio.emit('notification', {
+                'id': notification.id,
+                'carpool_id': carpool_id,
+                'message': message,
+                'user_id': carpool.driver_id
+            }, room=f'user_{carpool.driver_id}')
+            notified_users.add(carpool.driver_id)
+
+    # Notify parents of passengers if they are not active
+    for passenger in carpool.passengers:
+        parent_links = ParentChildLink.query.filter_by(child_id=passenger.child_id).all()
+        for parent_link in parent_links:
+            if parent_link.user_id != sender_id and parent_link.user_id not in active_users[carpool_id]:
+                if parent_link.user_id not in notified_users:
+                    # Skapa notifikation i databasen
+                    notification = create_notification(user_id=parent_link.user_id, carpool_id=carpool_id, message=message, message_id=message_id)
+                    # Skicka realtidsnotifikation
+                    print(f"Sent Socket.IO notification: id={notification.id}, user_id={parent_link.user_id}, carpool_id={carpool_id}")
+                    socketio.emit('notification', {
+                        'id': notification.id,
+                        'carpool_id': carpool_id,
+                        'message': message,
+                        'user_id': parent_link.user_id
+                    }, room=f'user_{parent_link.user_id}')
+                    notified_users.add(parent_link.user_id)
+
+    print(f"Notified users for carpool {carpool_id}: {notified_users}")
 
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['GET'])
 @token_required
@@ -33,30 +119,46 @@ def get_carpool_messages(current_user, carpool_id):
 
     return jsonify(messages_data), 200
 
-
 # Socket.IO-händelsehanterare för anslutning, chattrum och meddelanden
 @socketio.on('join_carpool')
 def handle_join_carpool(data):
-    """Prenumererar användaren på en carpool-chatt baserat på carpool_id."""
     carpool_id = data.get('carpool_id')
-    if carpool_id is None:
-        emit('error', {'error': 'Carpool ID is required to join the room.'}, room=request.sid)
+    user_id = data.get('user_id')
+    if not carpool_id or not user_id:
+        emit('error', {'error': 'Carpool ID and User ID are required to join the room.'}, room=request.sid)
         return
 
     join_room(f'carpool_{carpool_id}')
-    emit('join_success', {'message': f'Joined carpool {carpool_id} chat'}, room=request.sid)
+    if carpool_id not in active_users:
+        active_users[carpool_id] = set()
+    active_users[carpool_id].add(user_id)
 
 @socketio.on('leave_carpool')
 def handle_leave_carpool(data):
-    """Kopplar bort användaren från en carpool-chatt."""
     carpool_id = data.get('carpool_id')
-    if carpool_id is None:
-        emit('error', {'error': 'Carpool ID is required to leave the room.'}, room=request.sid)
+    user_id = data.get('user_id')
+    if not carpool_id or not user_id:
+        emit('error', {'error': 'Carpool ID and User ID are required to leave the room.'}, room=request.sid)
         return
 
     leave_room(f'carpool_{carpool_id}')
-    emit('leave_success', {'message': f'Left carpool {carpool_id} chat'}, room=f'carpool_{carpool_id}')
+    if carpool_id in active_users:
+        active_users[carpool_id].discard(user_id)
+        if not active_users[carpool_id]:  # Rensa tomma rum
+            del active_users[carpool_id]
 
+@socketio.on('join_user')
+def handle_join_user_room(data):
+    user_id = data.get('user_id')
+    if not user_id:
+        emit('error', {'error': 'User ID is required to join personal room.'})
+        return
+
+    # Lägg till användaren i deras personliga notisrum
+    join_room(f'user_{user_id}')
+    print(f"User {user_id} joined their personal notification room: user_{user_id}")
+
+    emit('join_success', {'message': f'Joined personal notification room for user {user_id}'})
 
 @socketio.on('send_message')
 def handle_send_message(data):
@@ -112,3 +214,6 @@ def handle_send_message(data):
             'timestamp': local_timestamp.isoformat()  # Sending local time to clients
         }
     }, room=f'carpool_{carpool_id}')
+
+    notification_message = f"Nytt meddelande i samåkning {carpool_id} from {sender.first_name} {sender.last_name}"
+    notify_users_in_carpool(carpool_id, notification_message, message.sender_id, message.id)

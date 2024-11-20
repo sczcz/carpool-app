@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { UserProvider, useUser } from './utils/UserContext';
 import Navbar from './components/Navbar';
 import FetchUsers from './components/FetchUsers';
 import TestSession from './components/TestSession';
@@ -10,30 +11,41 @@ import Profile from './components/Profile'; // Import your profile page
 import Footer from './components/Footer'; // Import the Footer component
 import { Box } from '@chakra-ui/react';
 
-const App = () => {
+function App() {
   return (
-    <Router>
-      {/* Flexbox layout for full-height behavior */}
-      <Box display="flex" flexDirection="column" minHeight="100vh">
-        {/* Navbar */}
-        <Navbar />
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
+  );
+}
 
-        {/* Main Content */}
-        <Box flex="1" as="main">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard-parent" element={<DashBoardParent />} /> {/* New route for DashBoardParent */}
-            <Route path="/dashboard-leader" element={<DashBoardLeader />} />
-            <Route path="/FetchUsers" element={<FetchUsers />} />
-            <Route path="/TestSession" element={<TestSession />} />
-            <Route path="/profile" element={<Profile />} /> {/* New route for Profile */}
-          </Routes>
+const AppContent = () => {
+  const { loading } = useUser();
+
+  // Visa en laddningsindikator eller ett tomt utrymme medan vi väntar på att användardata ska laddas
+  if (loading) {
+    return <div>Loading...</div>; // Eller en mer avancerad loading-komponent
+  }
+
+  return (
+    <UserProvider>
+      <Router>
+        <Box display="flex" flexDirection="column" minHeight="100vh">
+          <Navbar />
+          <Box flex="1" as="main">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/dashboard-parent" element={<DashBoardParent />} /> {/* Ny rutt för DashBoardParent */}
+              <Route path="/dashboard-leader" element={<DashBoardLeader />} />
+              <Route path="/FetchUsers" element={<FetchUsers />} />
+              <Route path="/TestSession" element={<TestSession />} />
+              <Route path="/profile" element={<Profile />} /> {/* Ny rutt för Profile */}
+            </Routes>
+          </Box>
+          <Footer />
         </Box>
-
-        {/* Footer */}
-        <Footer />
-      </Box>
-    </Router>
+      </Router>
+    </UserProvider>
   );
 };
 

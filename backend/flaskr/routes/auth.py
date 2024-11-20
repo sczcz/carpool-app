@@ -1,12 +1,15 @@
 from flask import Blueprint, request, jsonify, make_response, current_app
 from extensions import db
-from models.auth_model import User, UserRole, Role
+from models.auth_model import User, UserRole, Role, Child, ParentChildLink
+from models.carpool_model import Carpool, Passenger
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 from functools import wraps
-
+from flask_socketio import join_room, emit
+from flask import request
+from extensions import socketio
 auth_bp = Blueprint('auth', __name__)
 # Tillåt CORS med credentials från specifik origin (din React-app)
 
@@ -100,9 +103,19 @@ def login():
     # Skicka JWT-tokenen som en HttpOnly-cookie
     response = make_response(jsonify({"message": "Login successful!"}))
     response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax')  # för lokal utveckling (ändra vid produktion)
-    
+
     return response
 
+@socketio.on('join_user')
+def handle_join_user(data):
+    user_id = data.get('user_id')
+    if not user_id:
+        emit('error', {'error': 'User ID is required to join a room.'}, room=request.sid)
+        return
+
+    join_room(f'user_{user_id}')
+    print(f"User {user_id} joined their notification room.")
+    emit('join_success', {'message': f'You have joined your notification room.'}, room=request.sid)
 
 @auth_bp.route('/api/logout', methods=['POST'])
 def logout():
