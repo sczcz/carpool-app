@@ -17,8 +17,9 @@ export const UserProvider = ({ children }) => {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log("User data fetched:", data);
         setUserId(data.user.id);
-        setFullName(`${data.user.firstName} ${data.user.lastName}`); // Sätt hela namnet
+        setFullName(`${data.user.first_name} ${data.user.last_name}`); // Sätt hela namnet
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
