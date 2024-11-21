@@ -1,10 +1,7 @@
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models.notifications_model import Notification
-from models.auth_model import User, Child, ParentChildLink
-from models.carpool_model import Carpool
 from routes.auth import token_required
-import socketio
 
 notifications_bp = Blueprint('notifications_bp', __name__)
 
@@ -50,7 +47,6 @@ def mark_single_notification_as_read(current_user):
         # Hitta notifikationen och markera den som läst
         notification = Notification.query.filter_by(id=notification_id, user_id=current_user.user_id).first()
         if notification:
-            print(f"Notification found: {notification.id} for user {current_user.user_id}")
             notification.is_read = True
             db.session.commit()
             return jsonify({"message": f"Notification {notification_id} marked as read"}), 200

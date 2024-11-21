@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify
 from extensions import db
-from models.carpool_model import Carpool, Passenger, Car  # Import your models
+from models.carpool_model import Carpool, Passenger, Car
 from models.auth_model import Child, ParentChildLink
 from models.activity_model import Activity
 from models.message_model import CarpoolMessage
 from datetime import datetime
-from routes.auth import token_required, User  # Assuming you're using the token for authorization
+from routes.auth import token_required, User
 
 carpool_bp = Blueprint('carpool_bp', __name__)
 

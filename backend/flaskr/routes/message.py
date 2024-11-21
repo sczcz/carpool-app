@@ -17,21 +17,13 @@ def create_notification(user_id, carpool_id, message, message_id=None):
     notification = Notification(
         user_id=user_id,
         carpool_id=carpool_id,
-        message_id=message_id,  # Associerar meddelandet om det finns
+        message_id=message_id,
         message=message,
         is_read=False,
         created_at=datetime.utcnow()
     )
     db.session.add(notification)
     db.session.commit()
-
-    # Kontrollera om ID genererades
-    if not notification.id:
-        print("Error: Notification ID not generated after commit!")
-        return None
-
-    # Felsök för att se vad som lagrades
-    print(f"Notification created: {notification.id} | User: {user_id} | Carpool: {carpool_id} | Message: {message}")
 
     # Kontrollera om vi behöver query
     created_notification = Notification.query.filter_by(
@@ -41,11 +33,7 @@ def create_notification(user_id, carpool_id, message, message_id=None):
         message=message
     ).order_by(Notification.created_at.desc()).first()
 
-    if created_notification and created_notification.id != notification.id:
-        print(f"Warning: Queried notification ID ({created_notification.id}) "
-              f"does not match direct notification ID ({notification.id})")
-
-    return notification  # Returnera direkt istället för att använda query
+    return notification
 
 # Helper function to notify users in a carpool
 def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
@@ -66,7 +54,6 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
             # Skapa notifikation i databasen
             notification = create_notification(user_id=carpool.driver_id, carpool_id=carpool_id, message=message, message_id=message_id)
             # Skicka realtidsnotifikation
-            print(f"Sent Socket.IO notification: id={notification.id}, user_id={carpool.driver_id}, carpool_id={carpool_id}")
             socketio.emit('notification', {
                 'id': notification.id,
                 'carpool_id': carpool_id,
@@ -156,8 +143,6 @@ def handle_join_user_room(data):
 
     # Lägg till användaren i deras personliga notisrum
     join_room(f'user_{user_id}')
-    print(f"User {user_id} joined their personal notification room: user_{user_id}")
-
     emit('join_success', {'message': f'Joined personal notification room for user {user_id}'})
 
 @socketio.on('send_message')

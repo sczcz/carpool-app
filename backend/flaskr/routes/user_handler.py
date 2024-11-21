@@ -69,8 +69,6 @@ def get_logged_in_user(current_user):
 
     return jsonify({"user": user_data}), 200
 
-
-
 @user_handler.route('/api/protected/add-child', methods=['POST'])
 @token_required
 def add_child(current_user):
