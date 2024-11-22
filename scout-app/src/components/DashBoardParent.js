@@ -66,22 +66,19 @@ const DashBoardParent = ({ token }) => {
     rover: '#e2e000',        
   };
 
-  const isInMyActivities = (activity) => {    
+  const isInMyActivities = (activity) => {
     return activity.carpools?.some((carpool) => {
-      return (
-        carpool.driver_id === userId ||
-        carpool.passengers?.some((passenger) => {
-          return (
-            passenger.user_id === userId ||
-            passenger.parents?.some((parent) => {
-
-              return parent.parent_id === userId;
-            })
-          );
-        })
+      const isDriver = carpool.driver_id === userId;
+      const hasSelfAsPassenger = carpool.passengers?.some(
+        (passenger) => passenger.user_id === userId // Kontrollera user_id för vuxna
       );
+      const hasChildAsPassenger = carpool.passengers?.some((passenger) =>
+        passenger.parents?.some((parent) => parent.parent_id === userId) // Kontrollera föräldrar
+      );
+      return isDriver || hasSelfAsPassenger || hasChildAsPassenger;
     });
   };
+  
 
   const activitiesForUpcoming = activities.filter(activity => !isInMyActivities(activity));
   const activitiesForMyActivities = activities.filter((activity) => 

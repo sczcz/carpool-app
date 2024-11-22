@@ -63,31 +63,43 @@ def list_carpools(current_user):
     for carpool in carpools:
         passengers = []
         for passenger in carpool.passengers:
-            child = Child.query.get(passenger.child_id)
-            if child:
-                # Hämta föräldrar från ParentChildLink
-                parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
-                parents = [User.query.get(link.user_id) for link in parent_links]
+            # Hantera om passageraren är ett barn
+            if passenger.child_id:
+                child = Child.query.get(passenger.child_id)
+                if child:
+                    # Hämta föräldrar från ParentChildLink
+                    parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
+                    parents = [
+                        {
+                            "parent_id": parent.user_id,
+                            "parent_name": f"{User.query.get(parent.user_id).first_name} {User.query.get(parent.user_id).last_name}",
+                            "parent_phone": User.query.get(parent.user_id).phone
+                        }
+                        for parent in parent_links
+                    ]
+                    passengers.append({
+                        "type": "child",
+                        "child_id": child.child_id,
+                        "name": f"{child.first_name} {child.last_name}",
+                        "phone": child.phone,
+                        "parents": parents
+                    })
 
-                # Skapa en lista med föräldrars namn och telefonnummer
-                parent_data = [
-                    {
-                        "parent_id": parent.user_id,  # Lägg till parent_id för att underlätta frontend-kontrollen
-                        "parent_name": f"{parent.first_name} {parent.last_name}" if parent else None,
-                        "parent_phone": parent.phone if parent else None
-                    }
-                    for parent in parents if parent
-                ]
+            # Hantera om passageraren är en användare
+            elif passenger.user_id:
+                user = User.query.get(passenger.user_id)
+                if user:
+                    passengers.append({
+                        "type": "user",
+                        "user_id": user.user_id,
+                        "name": f"{user.first_name} {user.last_name}",
+                        "phone": user.phone
+                    })
 
-                passengers.append({
-                    "child_id": child.child_id,
-                    "name": f"{child.first_name} {child.last_name}",
-                    "phone": child.phone,
-                    "parents": parent_data
-                })
-
+        # Hämta bilinformation om den finns
         car = Car.query.get(carpool.car_id)
 
+        # Bygg carpool-objektet
         carpool_list.append({
             "id": carpool.id,
             "driver_id": carpool.driver_id,
@@ -102,6 +114,7 @@ def list_carpools(current_user):
         })
 
     return jsonify({"carpools": carpool_list}), 200
+
 
 
 
