@@ -28,7 +28,6 @@ const AppContent = () => {
   }
 
   return (
-    <UserProvider>
       <Router>
         <Box display="flex" flexDirection="column" minHeight="100vh">
           <Navbar />
@@ -45,7 +44,6 @@ const AppContent = () => {
           <Footer />
         </Box>
       </Router>
-    </UserProvider>
   );
 };
 
