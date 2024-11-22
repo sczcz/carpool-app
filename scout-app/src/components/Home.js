@@ -3,84 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { Stack, Flex, Button, Text, VStack, Box, useBreakpointValue, useDisclosure } from '@chakra-ui/react';
 import Login from './Login';
 import Register from './Register';
-import { fetchNotifications } from '../utils/notifications';
-import socket from '../utils/socket';
-
-
+import { useUser } from '../utils/UserContext';
 
 const Home = () => {
+  const { userId, role, fetchUserData, isInitialized } = useUser();
   const navigate = useNavigate();
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure();
-
-  
-
-  const handleLoginSuccess = async () => {
-    try {
-      // Hämta användarrollen och användar-ID
-      const userResponse = await fetch('/api/protected/user', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        const userId = userData.user.user_id; // Hämta användarens ID
-        const userRole = userData.user.role;
-  
-        // Hämta notifikationer
-        const { notifications, unreadCount } = await fetchNotifications();
-  
-        // Kontrollera notifikationer i konsolen
-        console.log('Fetched Notifications:', notifications);
-        console.log('Unread Notifications Count:', unreadCount);
-  
-        // Navigera baserat på användarroll
-        if (userRole === 'vårdnadshavare') {
-          navigate('/dashboard-parent');
-        } else if (userRole === 'ledare') {
-          navigate('/dashboard-leader');
-        }
-      } else {
-        console.error('Misslyckades med att hämta användarroll efter inloggning');
+ 
+  useEffect(() => {
+    if (isInitialized && userId && role) {
+      if (role === 'vårdnadshavare') {
+        navigate('/dashboard-parent');
+      } else if (role === 'ledare') {
+        navigate('/dashboard-leader');
       }
-    } catch (error) {
-      console.error('Fel vid hämtning av användarroll och notiser efter inloggning:', error);
     }
-  };
-  
+  }, [userId, role, isInitialized, navigate]);
 
   useEffect(() => {
-    const checkUserRole = async () => {
-      try {
-        const response = await fetch('/api/protected/user', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const userRole = data.user.role;
-
-          if (userRole === 'vårdnadshavare') {
-            navigate('/dashboard-parent');
-          } else if (userRole === 'ledare') {
-            navigate('/dashboard-leader');
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
-    checkUserRole();
-  }, [navigate]);
+    if (!isInitialized) {
+      fetchUserData();
+    }
+  }, [isInitialized, fetchUserData]);
+  
+  
 
   return (
     <Flex
@@ -146,7 +93,7 @@ const Home = () => {
           </Stack>
         </Box>
 
-        <Login isOpen={isLoginOpen} onClose={onLoginClose} onLoginSuccess={handleLoginSuccess} />
+        <Login isOpen={isLoginOpen} onClose={onLoginClose}/>
         <Register isOpen={isRegisterOpen} onClose={onRegisterClose} />
       </VStack>
     </Flex>

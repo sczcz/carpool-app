@@ -19,8 +19,8 @@ import {
 
 const apiURL = '/api/login';
 
-const Login = ({ isOpen, onClose, onLoginSuccess }) => {
-  const { setUserId } = useUser(); // Få tillgång till setUserId från Context
+const Login = ({ isOpen, onClose }) => {
+  const { fetchUserData } = useUser(); // Hämta fetchUserData från UserContext
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -43,25 +43,12 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
         return;
       }
 
-      const userResponse = await fetch('/api/protected/user', {
-        method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!userResponse.ok) {
-        setError('Misslyckades med att hämta användarinformation.');
-        return;
-      }
-
-      const userData = await userResponse.json();
-      setUserId(userData.user.id); // Sätt userId i Context
-      onLoginSuccess(userData.user.role);
-
+      await fetchUserData(); // Uppdatera användardata via UserContext
       setEmail('');
       setPassword('');
       setError('');
-      onClose(); // Stäng modal
+      onClose(); // Stäng modal vid framgång
+      window.location.reload();
     } catch (err) {
       console.error('Fel vid inloggning:', err);
       setError('Ett oväntat fel inträffade, försök igen.');

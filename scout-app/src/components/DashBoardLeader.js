@@ -59,8 +59,6 @@ const Dashboard = ({ token }) => {
     }
   };
   
-  
-
   const translateCarpoolType = (type) => {
     switch (type) {
       case 'drop-off':
