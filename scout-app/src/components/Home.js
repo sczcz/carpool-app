@@ -20,20 +20,6 @@ const Home = () => {
       }
     }
   }, [userId, role, navigate]);
-
-  const handleLoginSuccess = async () => {
-    try {
-      await fetchUserData();
-
-      if (role === 'vårdnadshavare') {
-        navigate('/dashboard-parent');
-      } else if (role === 'ledare') {
-        navigate('/dashboard-leader');
-      }
-    } catch (error) {
-      console.error('Fel vid inloggning:', error);
-    }
-  };
   
   return (
     <Flex

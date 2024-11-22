@@ -26,7 +26,7 @@ const AppContent = () => {
     if (!isInitialized) {
       fetchUserData(); 
     }
-  }, [isInitialized]);
+  }, [isInitialized, fetchUserData]);
 
   if (!isInitialized || loading) {
     return <div>Laddar...</div>;
