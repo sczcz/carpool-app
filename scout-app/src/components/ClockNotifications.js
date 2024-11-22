@@ -151,7 +151,7 @@ const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring her
               ))
           ) : (
             <MenuItem>
-              <Text>No new notifications</Text>
+              <Text>Inga nya notiser</Text>
             </MenuItem>
           )}
         </MenuList>

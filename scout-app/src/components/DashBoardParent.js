@@ -44,6 +44,7 @@ const DashBoardParent = ({ token }) => {
   const [openMyCarpoolIndex, setOpenMyCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
+  const [fetchedCarpools, setFetchedCarpools] = useState(new Set());
   const [selectedActivityId, setSelectedActivityId] = useState(null);
   const [joinedChildrenInCarpool, setJoinedChildrenInCarpool] = useState({});
   const [childrenWithSameRole, setChildrenWithSameRole] = useState({});
@@ -404,11 +405,11 @@ const DashBoardParent = ({ token }) => {
       setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
     }
   
-    const activity = activities.find(a => a.activity_id === activityId);
-    if (!activity.carpools || activity.carpools.length === 0) {
+    if (!fetchedCarpools.has(activityId)) {
       fetchCarpoolsForActivity(activityId);
+      setFetchedCarpools((prevSet) => new Set(prevSet).add(activityId));
     }
-  };  
+  }; 
 
   const translateCarpoolType = (type) => {
     switch (type) {

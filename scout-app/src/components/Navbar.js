@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, navigate } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Image,
@@ -31,6 +31,7 @@ import { useUser } from '../utils/UserContext';
 
 const Navbar = () => {
   const { userId, loading } = useUser();
+  const { clearUserData } = useUser();
   const { isOpen, onOpen, onClose } = useDisclosure();  // Hook to control the drawer
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure(); // Hook for login modal
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
@@ -72,8 +73,8 @@ const Navbar = () => {
       });
       
       if (response.ok) {
-        alert('Logout successful!');
-        window.location.reload(); // Reload the page to reflect logout
+        clearUserData(); 
+        navigate('/');
       }
     } catch (error) {
       console.error('Error logging out:', error);
