@@ -105,21 +105,25 @@ def list_carpools(current_user):
 
 
 
-# Endpoint to add a passenger to a carpool
 @carpool_bp.route('/api/carpool/add-passenger', methods=['POST'])
 @token_required
 def add_passenger(current_user):
     data = request.get_json()
-    carpool_id = request.args.get('carpool_id')
+    carpool_id = data.get('carpool_id')
     child_id = data.get('child_id')
+    user_id = data.get('user_id', current_user.user_id) if data.get('add_self') else None
 
     if not carpool_id:
         return jsonify({"error": "Carpool ID is required!"}), 400
 
-    # Kontrollera om barnet redan är i carpoolen
-    existing_passenger = Passenger.query.filter_by(carpool_id=carpool_id, child_id=child_id).first()
+    # Kontrollera att minst en av `child_id` eller `user_id` är angiven
+    if not child_id and not user_id:
+        return jsonify({"error": "Either child_id or user_id must be provided!"}), 400
+
+    # Kontrollera om passageraren redan är i carpoolen
+    existing_passenger = Passenger.query.filter_by(carpool_id=carpool_id, child_id=child_id, user_id=user_id).first()
     if existing_passenger:
-        return jsonify({"error": "Child already added to this carpool!"}), 401
+        return jsonify({"error": "Passenger already added to this carpool!"}), 401
 
     # Hitta carpoolen och kontrollera att det finns platser
     carpool = Carpool.query.get(carpool_id)
@@ -129,14 +133,13 @@ def add_passenger(current_user):
     if carpool.available_seats <= 0:
         return jsonify({"error": "No available seats in this carpool!"}), 402
 
-    # Om `child_id` inte angivits, hämta barnets ID baserat på roll och nuvarande användares ID i `ParentChildLink`
-    if not child_id:
+    # Om `child_id` inte är angivet och `user_id` inte används, hämta barn baserat på roll och användare
+    if not child_id and not user_id:
         activity = Activity.query.get(carpool.activity_id)
         if not activity or not activity.role_id:
             return jsonify({"error": "Associated activity or role not found!"}), 404
 
         desired_role = activity.role_id
-        # Hämta barn kopplade till nuvarande användare med den önskade rollen
         child = Child.query.join(ParentChildLink, ParentChildLink.child_id == Child.child_id)\
                            .filter(ParentChildLink.user_id == current_user.user_id,
                                    Child.role_id == desired_role)\
@@ -145,14 +148,15 @@ def add_passenger(current_user):
             return jsonify({"error": "Child not found for this parent and role!"}), 404
         child_id = child.child_id
 
-    # Lägg till barnet i carpoolen och uppdatera tillgängliga platser
-    new_passenger = Passenger(child_id=child_id, carpool_id=carpool_id)
+    # Lägg till passageraren och uppdatera tillgängliga platser
+    new_passenger = Passenger(child_id=child_id, user_id=user_id, carpool_id=carpool_id)
     carpool.available_seats -= 1
 
     db.session.add(new_passenger)
     db.session.commit()
 
     return jsonify({"message": "Passenger added successfully!"}), 201
+
 
 
 
@@ -229,21 +233,32 @@ def all_children_joined(current_user):
 
 
 
-# Endpoint to delete a carpool
 @carpool_bp.route('/api/carpool/<int:carpool_id>/delete', methods=['DELETE'])
 @token_required
 def delete_carpool(current_user, carpool_id):
-    carpool = Carpool.query.get(carpool_id)
+    try:
+        # Hämta carpool
+        carpool = Carpool.query.get(carpool_id)
 
-    if not carpool:
-        return jsonify({"error": "Carpool not found!"}), 404
-    
-    CarpoolMessage.query.filter_by(carpool_id=carpool_id).delete()
+        if not carpool:
+            return jsonify({"error": "Carpool not found!"}), 404
 
-    db.session.delete(carpool)
-    db.session.commit()
+        # Ta bort alla relaterade passagerare
+        Passenger.query.filter_by(carpool_id=carpool_id).delete()
 
-    return jsonify({"message": "Carpool deleted successfully!"}), 200
+        # Ta bort alla relaterade meddelanden
+        CarpoolMessage.query.filter_by(carpool_id=carpool_id).delete()
+
+        # Ta bort carpool
+        db.session.delete(carpool)
+        db.session.commit()
+
+        return jsonify({"message": "Carpool deleted successfully!"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 
 @carpool_bp.route('/api/carpool/<int:carpool_id>/passengers', methods=['GET'])
@@ -253,25 +268,37 @@ def list_passengers(current_user, carpool_id):
 
     passenger_data = []
     for passenger in passengers:
-        child = Child.query.get(passenger.child_id)
-        parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
-        parents = [
-            {
-                "parent_id": parent.user_id,
-                "parent_name": f"{User.query.get(parent.user_id).first_name} {User.query.get(parent.user_id).last_name}",
-                "parent_phone": User.query.get(parent.user_id).phone
-            }
-            for parent in parent_links
-        ]
-
-        passenger_data.append({
-            "child_id": child.child_id,
-            "child_name": f"{child.first_name} {child.last_name}",
-            "child_phone": child.phone,
-            "parents": parents
-        })
+        if passenger.child_id:  # Om passageraren är ett barn
+            child = Child.query.get(passenger.child_id)
+            if child:
+                parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
+                parents = [
+                    {
+                        "parent_id": parent.user_id,
+                        "parent_name": f"{User.query.get(parent.user_id).first_name} {User.query.get(parent.user_id).last_name}",
+                        "parent_phone": User.query.get(parent.user_id).phone
+                    }
+                    for parent in parent_links
+                ]
+                passenger_data.append({
+                    "type": "child",
+                    "child_id": child.child_id,
+                    "child_name": f"{child.first_name} {child.last_name}",
+                    "child_phone": child.phone,
+                    "parents": parents
+                })
+        elif passenger.user_id:  # Om passageraren är en användare
+            user = User.query.get(passenger.user_id)
+            if user:
+                passenger_data.append({
+                    "type": "user",
+                    "user_id": user.user_id,
+                    "user_name": f"{user.first_name} {user.last_name}",
+                    "user_phone": user.phone
+                })
 
     return jsonify({"passengers": passenger_data}), 200
+
 
 
 @carpool_bp.route('/api/protected/add-car', methods=['POST'])
@@ -346,20 +373,26 @@ def delete_car(current_user, car_id):
 @carpool_bp.route('/api/carpool/remove-passenger', methods=['DELETE'])
 @token_required
 def remove_passenger(current_user):
-    """Tar bort en passagerare från en carpool."""
+    """Tar bort en passagerare (användare eller barn) från en carpool."""
     data = request.get_json()
     carpool_id = data.get('carpool_id')
-    child_id = data.get('child_id')
+    child_id = data.get('child_id')  # För barn
+    user_id = data.get('user_id')  # För användare
 
-    if not carpool_id or not child_id:
-        return jsonify({"error": "Både carpool_id och child_id krävs för att ta bort en passagerare"}), 400
+    if not carpool_id or (not child_id and not user_id):
+        return jsonify({"error": "carpool_id och antingen child_id eller user_id krävs för att ta bort en passagerare"}), 400
 
     # Kontrollera om passageraren finns i carpoolen
-    passenger = Passenger.query.filter_by(carpool_id=carpool_id, child_id=child_id).first()
-    
+    passenger = None
+    if child_id:
+        passenger = Passenger.query.filter_by(carpool_id=carpool_id, child_id=child_id).first()
+    elif user_id:
+        passenger = Passenger.query.filter_by(carpool_id=carpool_id, user_id=user_id).first()
+
     if not passenger:
         return jsonify({"error": "Passageraren finns inte i den angivna carpoolen"}), 404
-    
+
+    # Hämta carpoolen och validera att den existerar
     carpool = Carpool.query.get(carpool_id)
     if not carpool:
         return jsonify({"error": "Carpool not found!"}), 404
@@ -372,7 +405,8 @@ def remove_passenger(current_user):
         return jsonify({"message": "Passageraren har tagits bort från carpoolen"}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "Ett fel inträffade vid borttagningen av passageraren"}), 500
+        return jsonify({"error": f"Ett fel inträffade vid borttagningen av passageraren: {str(e)}"}), 500
+
 
 @carpool_bp.route('/api/carpool/<int:carpool_id>/driver', methods=['GET'])
 @token_required

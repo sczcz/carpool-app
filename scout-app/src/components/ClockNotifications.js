@@ -127,7 +127,6 @@ const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring her
           )}
         </MenuButton>
         <MenuList color="brand.500">
-        {console.log('Rendering notifications:', notifications)} {/* Logga notifikationerna */}
           {notifications.filter(notification => !notification.is_read).length > 0 ? (
             notifications
               .filter(notification => !notification.is_read)
@@ -138,7 +137,6 @@ const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring her
                     bg: isScrolled ? 'gray.700' : 'gray.100',
                   }}
                   onClick={() => {
-                    console.log("Clicked notification:", notification);
                     if (notification.id) {
                       markSingleNotificationAsRead(notification.id);
                     } else {

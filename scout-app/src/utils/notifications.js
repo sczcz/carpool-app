@@ -10,7 +10,6 @@ export const fetchNotifications = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('Notifications fetched successfully:', data); // Loggar notifikationerna
       return {
         notifications: data.notifications,
         unreadCount: data.unreadCount,

@@ -89,25 +89,40 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
     }
   };
 
-  const handleUnbook = async (child_id) => {
+  const handleUnbook = async (id, type) => {
     try {
+      const payload = {
+        carpool_id: carpool.id,
+        ...(type === 'user' ? { user_id: id } : { child_id: id }),
+      };
+  
       const response = await fetch(`/api/carpool/remove-passenger`, {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ carpool_id: carpool.id, child_id }),
+        body: JSON.stringify(payload),
       });
-
+  
       if (!response.ok) throw new Error('Misslyckades med att ta bort från samåkning');
-
+  
       toast({
         title: 'Borttagen från samåkning',
-        description: 'Barnet har framgångsrikt tagits bort från samåkningen!',
+        description: type === 'user'
+          ? 'Du har framgångsrikt tagits bort från samåkningen!'
+          : 'Barnet har framgångsrikt tagits bort från samåkningen!',
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
-      setPassengers((prevPassengers) => prevPassengers.filter((p) => p.child_id !== child_id));
+  
+      // Uppdatera passagerarlistan i frontend
+      setPassengers((prevPassengers) =>
+        type === 'user'
+          ? prevPassengers.filter((p) => p.user_id !== id)
+          : prevPassengers.filter((p) => p.child_id !== id)
+      );
+  
+      // Hämta uppdaterade carpools
       await fetchCarpoolsForActivity(activity.activity_id);
     } catch (error) {
       toast({
@@ -119,6 +134,8 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
       });
     }
   };
+  
+  
 
   const isParentOfChild = (passenger) => {
     return passenger.parents && passenger.parents.some((parent) => parent.parent_id === currentUserId);
@@ -201,15 +218,33 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                           <HStack spacing={2}>
                             <Icon as={FaUser} color="gray.500" />
                             <Text fontSize="sm" fontWeight="bold">Namn:</Text>
-                            <Text fontSize="sm">{passenger.child_name || 'Unknown'}</Text>
+                            <Text fontSize="sm">
+                              {passenger.type === 'user'
+                                ? passenger.user_name || 'Okänd'
+                                : passenger.child_name || 'Okänd'}
+                            </Text>
                           </HStack>
 
-                          {isParentOfChild(passenger) && (
+                          {/* Kontrollera om passageraren är barn och nuvarande användare är en förälder */}
+                          {passenger.type === 'child' && isParentOfChild(passenger) && (
                             <IconButton
                               icon={<FaTrash />}
                               colorScheme="red"
                               aria-label="Ta bort barnet från samåkning"
-                              onClick={() => handleUnbook(passenger.child_id)}
+                              onClick={() => handleUnbook(passenger.child_id, 'child')}
+                              variant="outline"
+                              size="sm"
+                              ml={3}
+                            />
+                          )}
+
+                          {/* Kontrollera om passageraren är användaren själv */}
+                          {passenger.type === 'user' && passenger.user_id === currentUserId && (
+                            <IconButton
+                              icon={<FaTrash />}
+                              colorScheme="red"
+                              aria-label="Ta bort dig själv från samåkning"
+                              onClick={() => handleUnbook(passenger.user_id, 'user')}
                               variant="outline"
                               size="sm"
                               ml={3}
@@ -219,27 +254,15 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
                         <Stack spacing={1} mt={2}>
                           <HStack spacing={2}>
                             <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
-                            <Text fontSize="sm">{passenger.child_phone || 'N/A'}</Text>
+                            <Text fontSize="sm">
+                              {passenger.type === 'user'
+                                ? passenger.user_phone || 'N/A'
+                                : passenger.child_phone || 'N/A'}
+                            </Text>
                           </HStack>
-
-                          {passenger.parents && passenger.parents.length > 0 ? (
-                            passenger.parents.map((parent, i) => (
-                              <Box key={i} pl={4} mt={2} borderLeft="1px solid" borderColor="gray.200">
-                                <HStack spacing={2}>
-                                  <Text fontSize="sm" fontWeight="bold">Vårdnadshavare:</Text>
-                                  <Text fontSize="sm">{parent.parent_name || 'N/A'}</Text>
-                                </HStack>
-                                <HStack spacing={2}>
-                                  <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
-                                  <Text fontSize="sm">{parent.parent_phone || 'N/A'}</Text>
-                                </HStack>
-                              </Box>
-                            ))
-                          ) : (
-                            <Text fontSize="sm" color="gray.500">Inga vårdnadshavare hittade.</Text>
-                          )}
                         </Stack>
                       </Box>
+
                     ))
                   ) : (
                     <Text fontSize="sm" color="gray.500">Inga passagerare hittade.</Text>

@@ -1,6 +1,6 @@
 from extensions import db
 from datetime import datetime
-from sqlalchemy import Enum
+from sqlalchemy import Enum, CheckConstraint
 from sqlalchemy.orm import relationship
 
 class Carpool(db.Model):
@@ -21,12 +21,17 @@ class Carpool(db.Model):
     # New column for carpool type
     carpool_type = db.Column(Enum('drop-off', 'pick-up', 'both', name='carpool_type_enum'), nullable=False)
 
-# Passagerar-tabell
 class Passenger(db.Model):
     __tablename__ = 'passengers'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    child_id = db.Column(db.Integer, db.ForeignKey('children.child_id', ondelete='CASCADE'))  
-    carpool_id = db.Column(db.Integer, db.ForeignKey('carpool.id', ondelete='CASCADE'))
+    child_id = db.Column(db.Integer, db.ForeignKey('children.child_id', ondelete='CASCADE'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=True)
+    carpool_id = db.Column(db.Integer, db.ForeignKey('carpool.id', ondelete='CASCADE'), nullable=False)
+
+    # Ensure at least one of child_id or user_id is NOT NULL
+    __table_args__ = (
+        CheckConstraint('(child_id IS NOT NULL OR user_id IS NOT NULL)', name='check_child_or_user'),
+    )
 
 class Car(db.Model):
     __tablename__ = 'cars'

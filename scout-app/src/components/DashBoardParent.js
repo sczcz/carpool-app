@@ -66,19 +66,45 @@ const DashBoardParent = ({ token }) => {
     rover: '#e2e000',        
   };
 
-  const isInMyActivities = (activity) => {
-    return activity.carpools.some((carpool) => {
+  const isInMyActivities = (activity) => {    
+    return activity.carpools?.some((carpool) => {
       return (
         carpool.driver_id === userId ||
-        carpool.passengers.some((passenger) =>
-          passenger.parents.some((parent) => parent.parent_id === userId)
-        )
+        carpool.passengers?.some((passenger) => {
+          return (
+            passenger.user_id === userId ||
+            passenger.parents?.some((parent) => {
+
+              return parent.parent_id === userId;
+            })
+          );
+        })
       );
     });
   };
 
   const activitiesForUpcoming = activities.filter(activity => !isInMyActivities(activity));
-  const activitiesForMyActivities = activities.filter(activity => isInMyActivities(activity));
+  const activitiesForMyActivities = activities.filter((activity) => 
+    Array.isArray(activity.carpools) && isInMyActivities(activity)
+  );
+
+  useEffect(() => {
+    const updatedMyActivities = activities.filter((activity) =>
+      activity.carpools?.some((carpool) => {
+        const isDriver = carpool.driver_id === userId;
+        const hasSelfAsPassenger = carpool.passengers?.some(
+          (passenger) => passenger.user_id === userId
+        );
+        const hasChildAsPassenger = carpool.passengers?.some((passenger) =>
+          passenger.parents?.some((parent) => parent.parent_id === userId)
+        );
+        return isDriver || hasSelfAsPassenger || hasChildAsPassenger;
+      })
+    );
+  
+    setMyActivities(updatedMyActivities);
+  }, [activities, userId]);
+  
   
   useEffect(() => {
     if (!loading && !userId) {
@@ -95,20 +121,31 @@ const DashBoardParent = ({ token }) => {
   useEffect(() => {
     setMyActivities(activities.filter(activity => isInMyActivities(activity)));
   }, [activities]);
-
+/*
   useEffect(() => {
     const filteredMyActivities = activities.filter((activity) =>
+      Array.isArray(activity.carpools) &&
       activity.carpools.some((carpool) => {
         const isDriver = carpool.driver_id === userId;
-        const hasChildAsPassenger = carpool.passengers.some((passenger) =>
-          passenger.parents.some((parent) => parent.parent_id === userId)
-        );
-        return isDriver || hasChildAsPassenger;
+        const hasSelfAsPassenger =
+          Array.isArray(carpool.passengers) &&
+          carpool.passengers.some((passenger) => passenger.user_id === userId);
+        const hasChildAsPassenger =
+          Array.isArray(carpool.passengers) &&
+          carpool.passengers.some((passenger) =>
+            Array.isArray(passenger.parents) &&
+            passenger.parents.some((parent) => parent.parent_id === userId)
+          );
+        return isDriver || hasSelfAsPassenger || hasChildAsPassenger; // Lägg till alla kriterier
       })
     );
   
     setMyActivities(filteredMyActivities);
   }, [activities, userId]);
+
+  */
+  
+  
   
   
   const fetchActivities = async () => {
@@ -116,16 +153,22 @@ const DashBoardParent = ({ token }) => {
     try {
       const response = await fetch('/api/protected/activity/by_role', { credentials: 'include' });
       const data = await response.json();
+      console.log("Fetched activities:", data); // Logga alla aktiviteter här
+      
       const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
-
-      const activitiesWithCarpools = await Promise.all(sortedActivities.map(async (activity) => {
-        const carpoolResponse = await fetch(`/api/carpool/list?activity_id=${activity.activity_id}`, { credentials: 'include' });
-        const carpoolData = await carpoolResponse.json();
-        return { ...activity, carpools: carpoolData.carpools || [] };
-      })
-    );
-
-    setActivities(activitiesWithCarpools);
+  
+      const activitiesWithCarpools = await Promise.all(
+        sortedActivities.map(async (activity) => {
+          const carpoolResponse = await fetch(`/api/carpool/list?activity_id=${activity.activity_id}`, {
+            credentials: 'include',
+          });
+          const carpoolData = await carpoolResponse.json();
+          console.log("Fetched carpools for activity:", activity.activity_id, carpoolData); // Logga carpools
+          return { ...activity, carpools: carpoolData.carpools || [] };
+        })
+      );
+  
+      setActivities(activitiesWithCarpools);
     } catch (err) {
       console.error('Error fetching activities:', err);
       setError(err.message);
@@ -133,6 +176,7 @@ const DashBoardParent = ({ token }) => {
       setActivityLoading(false);
     }
   };
+  
 
   const toggleUpcomingCarpool = (index) => {
     setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
@@ -237,88 +281,100 @@ const DashBoardParent = ({ token }) => {
   
   const handleJoinCarpool = async (carpoolId, activityId) => {
     try {
-      const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const checkData = await checkResponse.json();
-      setChildrenWithSameRole((prev) => ({
-        ...prev,
-        [carpoolId]: checkData.children,
-      }));
-
-      let selectedChildId = -1;
-
-      if (checkData.multiple) {
-        selectedChildId = prompt(
-          `Select child ID:\n${checkData.children.map(child => `${child.child_id}: ${child.name}`).join('\n')}`
-        );
-        if (!selectedChildId) return;
-      } else {
-        selectedChildId = checkData.child_id;
+      const addSelf = window.confirm('Vill du lägga till dig själv som passagerare?');
+      let selectedChildId = null;
+  
+      if (!addSelf) {
+        const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+  
+        const checkData = await checkResponse.json();
+        setChildrenWithSameRole((prev) => ({
+          ...prev,
+          [carpoolId]: checkData.children,
+        }));
+  
+        if (checkData.multiple) {
+          selectedChildId = prompt(
+            `Välj barnets ID:\n${checkData.children.map((child) => `${child.child_id}: ${child.name}`).join('\n')}`
+          );
+          if (!selectedChildId) return;
+        } else {
+          selectedChildId = checkData.child_id;
+          if (!selectedChildId) {
+            throw new Error('Inga barn hittades för den här rollen.');
+          }
+        }
       }
-
-      const response = await fetch(`/api/carpool/add-passenger?carpool_id=${carpoolId}`, {
+  
+      const response = await fetch(`/api/carpool/add-passenger`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ child_id: selectedChildId }),
+        body: JSON.stringify({
+          carpool_id: carpoolId,
+          ...(addSelf ? { add_self: true } : { child_id: selectedChildId }),
+        }),
       });
-
-      if (!response.ok) throw new Error('Failed to join carpool');
-
+  
+      if (!response.ok) throw new Error('Misslyckades med att gå med i samåkningen');
+  
       toast({
-        title: 'Joined Carpool',
-        description: 'Successfully joined the carpool!',
+        title: 'Samåkning uppdaterad',
+        description: addSelf
+          ? 'Du har gått med i samåkningen!'
+          : 'Barnet har lagts till i samåkningen!',
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
-
-      setJoinedChildrenInCarpool((prev) => ({
-        ...prev,
-        [carpoolId]: { allJoined: true },
-      }));
-
-      setActivities((prevActivities) =>
-        prevActivities.map((activity) => {
-          if (activity.activity_id === activityId) {
-            return {
-              ...activity,
-              carpools: activity.carpools.map((carpool) =>
-                carpool.id === carpoolId
-                  ? {
-                      ...carpool,
-                      passengers: [
-                        ...carpool.passengers,
-                        { child_id: selectedChildId, parents: [{ parent_id: userId }] },
-                      ],
-                    }
-                  : carpool
-              ),
-            };
-          }
-          return activity;
-        })
+  
+      const newPassenger = addSelf
+        ? { user_id: userId, type: 'user', user_name: fullName }
+        : { child_id: selectedChildId, parents: [{ parent_id: userId }] };
+  
+      const updatedActivities = activities.map((activity) => {
+        if (activity.activity_id === activityId) {
+          return {
+            ...activity,
+            carpools: activity.carpools.map((carpool) =>
+              carpool.id === carpoolId
+                ? {
+                    ...carpool,
+                    passengers: [...carpool.passengers, newPassenger],
+                  }
+                : carpool
+            ),
+          };
+        }
+        return activity;
+      });
+  
+      setActivities(updatedActivities);
+  
+      // Uppdatera "Mina aktiviteter"
+      const updatedMyActivities = updatedActivities.filter((activity) =>
+        activity.carpools.some((carpool) =>
+          carpool.driver_id === userId ||
+          carpool.passengers.some((passenger) => passenger.user_id === userId)
+        )
       );
   
-      setMyActivities((prevActivities) => [
-        ...prevActivities,
-        activities.find((activity) => activity.activity_id === activityId),
-      ]);
-
+      setMyActivities(updatedMyActivities);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error.message || 'Unable to join carpool',
+        title: 'Fel',
+        description: error.message || 'Ett fel inträffade vid försök att gå med i samåkningen.',
         status: 'error',
         duration: 5000,
         isClosable: true,
       });
     }
   };
+  
 
   const handleDeleteCarpool = async (carpoolId, activityId) => {
     try {
