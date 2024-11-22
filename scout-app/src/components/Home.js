@@ -6,21 +6,29 @@ import Register from './Register';
 import { useUser } from '../utils/UserContext';
 
 const Home = () => {
-  const { userId, role, fetchUserData } = useUser();
+  const { userId, role, fetchUserData, isInitialized } = useUser();
   const navigate = useNavigate();
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure();
-
+ 
   useEffect(() => {
-    if (userId && role) {
+    if (isInitialized && userId && role) {
       if (role === 'vårdnadshavare') {
         navigate('/dashboard-parent');
       } else if (role === 'ledare') {
         navigate('/dashboard-leader');
       }
     }
-  }, [userId, role, navigate]);
+  }, [userId, role, isInitialized, navigate]);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      fetchUserData();
+    }
+  }, [isInitialized, fetchUserData]);
   
+  
+
   return (
     <Flex
       w={'full'}
@@ -85,7 +93,7 @@ const Home = () => {
           </Stack>
         </Box>
 
-        <Login isOpen={isLoginOpen} onClose={onLoginClose} onLoginSuccess={handleLoginSuccess} />
+        <Login isOpen={isLoginOpen} onClose={onLoginClose}/>
         <Register isOpen={isRegisterOpen} onClose={onRegisterClose} />
       </VStack>
     </Flex>

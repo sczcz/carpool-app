@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUser, fetchUserData } from '../utils/UserContext'; // Importera UserContext
+import { useUser } from '../utils/UserContext'; // Importera UserContext
 import {
   Modal,
   ModalOverlay,
@@ -19,42 +19,41 @@ import {
 
 const apiURL = '/api/login';
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    const loginResponse = await fetch(apiURL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+const Login = ({ isOpen, onClose }) => {
+  const { fetchUserData } = useUser(); // Hämta fetchUserData från UserContext
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-    if (!loginResponse.ok) {
-      const errorData = await loginResponse.json();
-      setError(errorData.error || 'Fel vid inloggning.');
-      return;
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const loginResponse = await fetch(apiURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!loginResponse.ok) {
+        const errorData = await loginResponse.json();
+        setError(errorData.error || 'Fel vid inloggning.');
+        return;
+      }
+
+      await fetchUserData(); // Uppdatera användardata via UserContext
+      setEmail('');
+      setPassword('');
+      setError('');
+      onClose(); // Stäng modal vid framgång
+      window.location.reload();
+    } catch (err) {
+      console.error('Fel vid inloggning:', err);
+      setError('Ett oväntat fel inträffade, försök igen.');
     }
-
-    // Hämta användardata och roll
-    await fetchUserData();
-
-    // Direktnavigera baserat på roll
-    if (role === 'vårdnadshavare') {
-      onClose();
-      navigate('/dashboard-parent');
-    } else if (role === 'ledare') {
-      onClose();
-      navigate('/dashboard-leader');
-    }
-  } catch (err) {
-    console.error('Fel vid inloggning:', err);
-    setError('Ett oväntat fel inträffade, försök igen.');
-  }
-};
-
-  
+  };
 
   const modalSize = useBreakpointValue({ base: 'full', sm: 'md' });
 
