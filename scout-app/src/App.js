@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import FetchUsers from './components/FetchUsers';
 import TestSession from './components/TestSession';
 import Home from './components/Home'; // Import Home
+import DashBoardAdmin from './components/DashBoardAdmin';
 import DashBoardLeader from './components/DashBoardLeader';
 import DashBoardParent from './components/DashBoardParent'; // Import your dashboard
 import Profile from './components/Profile'; // Import your profile page
@@ -41,6 +42,7 @@ const AppContent = () => {
             <Route path="/" element={<Home />} />
             <Route path="/dashboard-parent" element={<DashBoardParent />} />
             <Route path="/dashboard-leader" element={<DashBoardLeader />} />
+            <Route path="/dashboard-admin" element={<DashBoardAdmin />} />
             <Route path="/FetchUsers" element={<FetchUsers />} />
             <Route path="/TestSession" element={<TestSession />} />
             <Route path="/profile" element={<Profile />} />
