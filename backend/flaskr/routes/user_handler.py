@@ -46,13 +46,12 @@ def add_address(current_user):
 @user_handler.route('/api/protected/user', methods=['GET'])
 @token_required
 def get_logged_in_user(current_user):
-    # Hämta användarens roll
-    user_role = db.session.query(UserRole, Role).filter(
-        UserRole.user_id == current_user.user_id,
-        UserRole.role_id == Role.role_id
-    ).first()
+    # Hämta användarens roll(er)
+    user_roles = db.session.query(Role.name).join(UserRole, Role.role_id == UserRole.role_id).filter(
+        UserRole.user_id == current_user.user_id
+    ).all()
 
-    role_name = user_role.Role.name if user_role else "Ingen roll tilldelad"
+    role_names = [role.name for role in user_roles] if user_roles else ["Ingen roll tilldelad"]
 
     # Skapa ett svar med den inloggade användarens information
     user_data = {
@@ -63,7 +62,7 @@ def get_logged_in_user(current_user):
         "address": current_user.address,
         "postcode": current_user.postcode,
         "city": current_user.city,
-        "role": role_name,
+        "roles": role_names,
         "phone": current_user.phone  
     }
 

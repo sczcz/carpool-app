@@ -6,29 +6,23 @@ import Register from './Register';
 import { useUser } from '../utils/UserContext';
 
 const Home = () => {
-  const { userId, role, fetchUserData, isInitialized } = useUser();
+  const { userId, roles, isInitialized } = useUser();
   const navigate = useNavigate();
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure();
  
   useEffect(() => {
-    if (isInitialized && userId && role) {
-      if (role === 'vårdnadshavare') {
+    if (isInitialized && userId && roles?.length) {
+      if (roles.includes('vårdnadshavare')) {
         navigate('/dashboard-parent');
-      } else if (role === 'ledare') {
+      } else if (roles.includes('ledare')) {
         navigate('/dashboard-leader');
+      } else if (roles.includes('admin')) {
+        navigate('/dashboard-admin');
       }
     }
-  }, [userId, role, isInitialized, navigate]);
-
-  useEffect(() => {
-    if (!isInitialized) {
-      fetchUserData();
-    }
-  }, [isInitialized, fetchUserData]);
+  }, [userId, roles, isInitialized, navigate]);
   
-  
-
   return (
     <Flex
       w={'full'}

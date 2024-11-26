@@ -34,5 +34,9 @@ def seed_roles():
     if not Role.query.filter_by(name='rover').first():
         rover_role = Role(name='rover')
         db.session.add(rover_role)
+    
+    if not Role.query.filter_by(name='admin').first():
+        admin_role = Role(name='admin')
+        db.session.add(admin_role)
 
     db.session.commit()

@@ -11,6 +11,7 @@ from routes.message import message_bp
 from routes.notifications import notifications_bp
 from test_data import add_test_data
 from seed_roles import seed_roles
+from seed_admin import seed_admin
 
 
 app = Flask(__name__)
@@ -45,6 +46,7 @@ with app.app_context():
 
     # Check if any users exist, if not, call add_test_data
     if not User.query.first():
+        seed_admin()
         add_test_data()
 
 # Register blueprints

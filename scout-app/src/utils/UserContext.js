@@ -5,7 +5,7 @@ const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState(null);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -21,7 +21,7 @@ export const UserProvider = ({ children }) => {
         const data = await response.json();
         setUserId(data.user.id);
         setFullName(`${data.user.first_name} ${data.user.last_name}`);
-        setRole(data.user.role);
+        setRoles(data.user.roles);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -34,10 +34,12 @@ export const UserProvider = ({ children }) => {
   const clearUserData = () => {
     setUserId(null);
     setFullName('');
-    setRole('');
+    setRoles([]);
     setIsInitialized(false);
     setLoading(false);
   };
+
+  const hasRole = (role) => roles.includes(role);
 
   return (
     <UserContext.Provider 
@@ -45,11 +47,12 @@ export const UserProvider = ({ children }) => {
         userId, 
         setUserId, 
         fullName, 
-        role, 
+        roles, 
         fetchUserData, 
         loading,
         isInitialized,
-        clearUserData }}>
+        clearUserData,
+        hasRole }}>
           {children}
     </UserContext.Provider>
   );

@@ -1,5 +1,5 @@
-import React, { useEffect, useState, navigate } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Image,
   Box,
@@ -30,19 +30,20 @@ import ClockNotifications from './ClockNotifications'; // Importera ClockNotific
 import { useUser } from '../utils/UserContext';
 
 const Navbar = () => {
-  const { userId, loading } = useUser();
-  const { clearUserData } = useUser();
+  const { userId, loading, clearUserData, hasRole } = useUser();
   const { isOpen, onOpen, onClose } = useDisclosure();  // Hook to control the drawer
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure(); // Hook for login modal
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
   const [isScrolled, setIsScrolled] = useState(false);  // State to manage scroll status
+  const navigate = useNavigate();
   const links = [
     { to: '/dashboard-leader', label: 'Ledare' },
     { to: '/dashboard-parent', label: 'Vårdnadshavare' },
-    { to: '/dashboard-admin', label: 'Admin' },
-
-
   ];
+
+  if (hasRole('admin')) {
+    links.unshift({ to: '/dashboard-admin', label: 'Admin' }); // Add "Admin" link first
+  }
 
   // Effect to handle scroll events
   useEffect(() => {

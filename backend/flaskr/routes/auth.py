@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response, current_app
 from extensions import db
-from models.auth_model import User, UserRole
+from models.auth_model import User, UserRole, Role
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
@@ -148,3 +148,23 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
 
     return decorated
+
+def requires_role(required_role):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(current_user, *args, **kwargs):
+            user_roles = (
+                Role.query
+                .join(UserRole, Role.role_id == UserRole.role_id)
+                .filter(UserRole.user_id == current_user.user_id)
+                .with_entities(Role.name)
+                .all()
+            )
+
+            user_roles = [role.name for role in user_roles]
+            if required_role not in user_roles:
+                return jsonify({"error": "Access denied! Insufficient role."}), 403
+
+            return f(current_user, *args, **kwargs)
+        return decorated_function
+    return decorator

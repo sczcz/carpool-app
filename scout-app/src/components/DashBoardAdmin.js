@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Heading,
@@ -11,10 +12,28 @@ import {
   CardFooter,
   useBreakpointValue,
 } from "@chakra-ui/react";
+import { useUser } from "../utils/UserContext";
 
 const DashBoardAdmin = () => {
+  const { roles, isInitialized, fetchUserData } = useUser();
+  const navigate = useNavigate();
   // Breakpoint-specific button size
   const buttonSize = useBreakpointValue({ base: "sm", md: "md" });
+
+  useEffect(() => {
+    // Hämta användardata om det inte redan är initierat
+    if (!isInitialized) {
+      fetchUserData();
+    }
+  }, [isInitialized, fetchUserData]);
+
+  useEffect(() => {
+    // Kontrollera om användaren har "admin"-rollen
+    if (isInitialized && !roles.includes("admin")) {
+      // Omdirigera till en 403-sida eller inloggningssida
+      navigate("/"); // Du kan skapa en separat 403-sida eller ändra till "/login"
+    }
+  }, [roles, isInitialized, navigate]);
 
   return (
     <Box p={[4, 6]}>
