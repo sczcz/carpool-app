@@ -39,6 +39,9 @@ const Navbar = () => {
   const links = [
     { to: '/dashboard-leader', label: 'Ledare' },
     { to: '/dashboard-parent', label: 'Vårdnadshavare' },
+    { to: '/dashboard-admin', label: 'Admin' },
+
+
   ];
 
   // Effect to handle scroll events
