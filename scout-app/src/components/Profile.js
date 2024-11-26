@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrash } from "react-icons/fa"; // Import trash can icon from react-icons library
-import AddChildModal from './AddChildModal';  // Import AddChildModal
+import { FaTrash } from "react-icons/fa"; 
+import AddChildModal from './AddChildModal';
 import AddCarModal from './AddCarModal';
+import { useUser } from '../utils/UserContext';
 import {
   Box,
   Heading,
@@ -30,22 +31,29 @@ import {
   ModalFooter,
   Spacer,
 } from '@chakra-ui/react';
-import { checkIfLoggedIn } from '../utils/auth';
 
 const Profile = () => {
   const toast = useToast();
-  // User information (auto-fill from backend)
+  const {
+    email,
+    fullName,
+    roles,
+    address: contextAddress,
+    postcode: contextPostcode,
+    city: contextCity,
+    phone: contextPhone,
+    fetchUserData,
+    updateUserData,
+    isInitialized,
+    userId,
+  } = useUser();
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState('');
-
-  // Address information
   const [address, setAddress] = useState('');
   const [postcode, setPostcode] = useState('');
   const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
-
   // Children information
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
@@ -87,124 +95,111 @@ const Profile = () => {
     Electric: 'teal.400',
   };
 
-    // Fetch user, children, and cars data
-    const fetchCars = async () => {
-      try {
-        const response = await fetch('/api/protected/get-cars', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setCars(data.cars);  // Set the fetched cars in state
-        } else {
-          console.error('Failed to fetch cars data');
-        }
-      } catch (error) {
-        console.error('Error fetching cars data:', error);
+  const fetchChildren = async () => {
+    try {
+      const response = await fetch('/api/protected/get-children', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setChildren(data.children.map(child => ({
+          childId: child.child_id,
+          firstName: child.first_name,
+          lastName: child.last_name,
+          role: child.role,
+          phone: child.phone,
+        })));
       }
-    };
+    } catch (error) {
+      console.error('Error fetching children:', error);
+    }
+  };
+
+  const fetchCars = async () => {
+    try {
+      const response = await fetch('/api/protected/get-cars', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCars(data.cars);
+      }
+    } catch (error) {
+      console.error('Error fetching cars:', error);
+    }
+  };
 
   useEffect(() => {
-      checkIfLoggedIn(); // Kollar om användaren är inloggad och omdirigerar vid behov
-    }, []);
+    const fetchData = async () => {
+      if (!isInitialized) {
+        await fetchUserData();
+      }
+  
+      if (userId && isInitialized) {
+        await Promise.all([fetchChildren(), fetchCars()]);
+      }
+    };
+  
+    fetchData();
+  }, [isInitialized, userId, fetchUserData]);
 
-  // Fetch logged-in user information on component mount
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch('/api/protected/user', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const user = data.user;
+    if (fullName) {
+      const [fName, lName] = fullName.split(' ');
+      setFirstName(fName || '');
+      setLastName(lName || '');
+    }
+    setAddress(contextAddress || '');
+    setPostcode(contextPostcode || '');
+    setCity(contextCity || '');
+    setPhone(contextPhone || '');
+  }, [fullName, contextAddress, contextPostcode, contextCity, contextPhone]);
 
-          // Set state with user information
-          setFirstName(user.first_name);
-          setLastName(user.last_name);
-          setEmail(user.email);
-          setRole(user.role);
-          setAddress(user.address || '');
-          setPostcode(user.postcode || '');
-          setCity(user.city || '');
-          setPhone(user.phone || '');
-        } else {
-          console.error('Failed to fetch user data');
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
-    const fetchChildren = async () => {
-      try {
-        const response = await fetch('/api/protected/get-children', {
-          method: 'GET',
-          credentials: 'include', // Include cookies for authentication
-        });
-        if (response.ok) {
-          const data = await response.json();
-    
-          const mappedChildren = data.children.map(child => ({
-            childId: child.child_id,
-            firstName: child.first_name,
-            lastName: child.last_name,
-            role: child.role,
-            originalRole: child.role.toLowerCase(), 
-            phone: child.phone
-          }));
-    
-          setChildren(mappedChildren);  // Set state with the mapped children
-        } else {
-          console.error('Misslyckades med att hämta barndata');
-        }
-      } catch (error) {
-        console.error('Fel vid hämtning av barndata:', error);
-      }
-    };
-
-    fetchUserData();
-    fetchChildren();
-    fetchCars();  // Fetch cars on mount
-  }, []);
   
   // Handle new car addition
   const handleCarAdded = (newCar) => {
     setCars((prevCars) => [...prevCars, newCar]);
   };
 
-  const handleSaveNewinfo = async () => {
+  const handleSaveNewInfo = async () => {
     try {
       const response = await fetch('/api/protected/edit-user-profile', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          address,
-          postcode,
-          city,
-          phone,
-          first_name: firstName,
-          last_name: lastName
-        }),
+        body: JSON.stringify({ address, postcode, city, phone, first_name: firstName, last_name: lastName }),
       });
   
       if (response.ok) {
-        const data = await response.json();
-        alert('Profilen har uppdaterats framgångsrikt!');
+        updateUserData({ address, postcode, city, phone, firstName, lastName }); // Uppdatera kontexten
+        toast({
+          title: 'Profilen har uppdaterats framgångsrikt!',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.message || 'Misslyckades med att uppdatera profil'}`);
+        toast({
+          title: 'Fel vid uppdatering',
+          description: 'Misslyckades med att uppdatera profilen',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred while updating the profile');
-    } 
-    setNewInfoOpen(false); // Close the modal after saving
+      toast({
+        title: 'Ett fel uppstod',
+        description: 'Kontakta support om problemet kvarstår.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+     setNewInfoOpen(false);
   };
 
   const handleAddChild = async () => {
@@ -340,7 +335,6 @@ const Profile = () => {
     }
   };
   
-
   const handleUpdateChild = (index, updatedRole) => {
     const updatedChildren = children.map((child, i) => {
       if (i === index) {
@@ -378,66 +372,65 @@ const Profile = () => {
     );
   };
 
+  const roleList = roles.join(', ');
 
   return (
   <Box
-        p={5}
-        borderRadius="lg"
-        boxShadow="lg"
-        maxW="1000px"
-        mx="auto"
-        mb={50}
-        mt={50}
-      >      
-        <Flex direction={['column', 'column', 'row']} align="center" justify="space-between" mb={8}>
-  {/* User Information */}
-  <Flex align="center">
-    <Avatar
-      size="2xl"
-      name={`${firstName} ${lastName}`}
-      src="https://your-avatar-url.com/avatar.png" // Replace with your avatar URL
-      bg="#043A63" // Background color when no image is provided
-      color="white" // Text color for initials
-      mr={[6, 6, 0]} // Add margin-right for smaller screens (4) and remove it for larger screens (0)
-    />
-    <Stack spacing={1} ml={[0, 0, 4]} textAlign={['center', 'center', 'left']}>
-      <Heading as="h2" size="lg" colorScheme="brand">
-        {firstName} {lastName}
-      </Heading>
-      <Text fontSize="lg" color="gray.600">
-        {email}
-      </Text>
-      <Text fontSize="lg" color="gray.600">
-        Adress: {address}, {postcode}, {city}
-      </Text>
-      <Text fontSize="lg" color="gray.600">
-        Telefon: {phone}
-      </Text>
-      <Text fontSize="md" color="gray.500">
-        Roll: {role}
-      </Text>
-    </Stack>
-  </Flex>
+    p={5}
+    borderRadius="lg"
+    boxShadow="lg"
+    maxW="1000px"
+    mx="auto"
+    mb={50}
+    mt={50}
+  >      
+    <Flex direction={['column', 'column', 'row']} align="center" justify="space-between" mb={8}>
+      {/* User Information */}
+      <Flex align="center">
+        <Avatar
+          size="2xl"
+          name={fullName}
+          src="https://your-avatar-url.com/avatar.png" // Replace with your avatar URL
+          bg="#043A63" // Background color when no image is provided
+          color="white" // Text color for initials
+          mr={[6, 6, 0]} // Add margin-right for smaller screens (4) and remove it for larger screens (0)
+        />
+        <Stack spacing={1} ml={[0, 0, 4]} textAlign={['center', 'center', 'left']}>
+          <Heading as="h2" size="lg" colorScheme="brand">
+            {firstName} {lastName}
+          </Heading>
+          <Text fontSize="lg" color="gray.600">
+            {email}
+          </Text>
+          <Text fontSize="lg" color="gray.600">
+            Adress: {address || 'Saknas'}, {postcode || 'Saknas'}, {city || 'Saknas'}
+          </Text>
+          <Text fontSize="lg" color="gray.600">
+            Telefon: {phone || 'Saknas'}
+          </Text>
+          <Text fontSize="md" color="gray.500">
+            Roller: {roleList || 'Inga roller'}
+          </Text>
+        </Stack>
+      </Flex>
 
-  {/* Buttons */}
-  <HStack 
-    spacing={4} 
-    mt={[4, 4, -2]} // Negative margin to move buttons up
-    alignSelf="center" // Align buttons at the top of the user info
-  >
-    <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
-      Lägg till Barn
-    </Button>
-    <Button colorScheme="brand" onClick={() => setNewInfoOpen(true)}>
-      Redigera profil
-    </Button>
-    <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
-      Lägg till Bil
-    </Button>
-  </HStack>
-</Flex>
-
-
+      {/* Buttons */}
+      <HStack 
+        spacing={4} 
+        mt={[4, 4, -2]} // Negative margin to move buttons up
+        alignSelf="center" // Align buttons at the top of the user info
+      >
+        <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
+          Lägg till Barn
+        </Button>
+        <Button colorScheme="brand" onClick={() => setNewInfoOpen(true)}>
+          Redigera profil
+        </Button>
+        <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
+          Lägg till Bil
+        </Button>
+      </HStack>
+    </Flex>
 
       {/* Children Section */}
       <VStack spacing={2} align="start" mt={[4, 4, 0]}>
@@ -537,59 +530,58 @@ const Profile = () => {
             </Box>
           ))}
         </SimpleGrid>
-          {/* Render the cars below children */}
-          <Heading as="h4" size="md" mt={6} colorScheme="brand">
+        {/* Render the cars below children */}
+        <Heading as="h4" size="md" mt={6} colorScheme="brand">
           Bilar:
         </Heading>
         <SimpleGrid mt={3} columns={[1, 1, 2]} spacing={4} width="full">
-  {cars.map((car, index) => (
-    car ? ( // Check if car is not undefined
-      <Box
-        key={index}
-        borderWidth="1px"
-        borderTopRadius="lg" // Rounded top corners
-        borderBottomRadius="lg" // Rounded bottom corners
-        overflow="hidden"
-        boxShadow="lg"
-        p={4}
-        bg="white" // Background color of the card
-        borderColor="gray.300" // Border color
-      >
-        {/* Colored Header for the Car Information */}
-        <Box
-          bg={fuelTypeColors[car.fuel_type] || 'gray.200'} // Use default color if fuel_type is missing
-          borderTopRadius="lg"
-          p={3}
-        >
-          <Text fontSize="lg" fontWeight="bold" color="black">
-            {car.model_name || 'Unknown Model'} - {car.reg_number ? car.reg_number.toUpperCase() : 'Unknown Reg'}
-          </Text>
-        </Box>
+          {cars.map((car, index) => (
+            car ? ( // Check if car is not undefined
+              <Box
+                key={index}
+                borderWidth="1px"
+                borderTopRadius="lg" // Rounded top corners
+                borderBottomRadius="lg" // Rounded bottom corners
+                overflow="hidden"
+                boxShadow="lg"
+                p={4}
+                bg="white" // Background color of the card
+                borderColor="gray.300" // Border color
+              >
+                {/* Colored Header for the Car Information */}
+                <Box
+                  bg={fuelTypeColors[car.fuel_type] || 'gray.200'} // Use default color if fuel_type is missing
+                  borderTopRadius="lg"
+                  p={3}
+                >
+                  <Text fontSize="lg" fontWeight="bold" color="black">
+                    {car.model_name || 'Unknown Model'} - {car.reg_number ? car.reg_number.toUpperCase() : 'Unknown Reg'}
+                  </Text>
+                </Box>
 
-        {/* Main Content with Centered Text and Delete Button */}
-        <HStack justifyContent="space-between" mt={3} alignItems="center">
-          <Text
-            fontSize={{ base: "sm", sm: "md" }}
-            color="black"
-          >
-            Fuel Type: {car.fuel_type || 'Unknown'}, Consumption: {car.consumption || 'N/A'} l/kWh
-          </Text>
+                {/* Main Content with Centered Text and Delete Button */}
+                <HStack justifyContent="space-between" mt={3} alignItems="center">
+                  <Text
+                    fontSize={{ base: "sm", sm: "md" }}
+                    color="black"
+                  >
+                    Fuel Type: {car.fuel_type || 'Unknown'}, Consumption: {car.consumption || 'N/A'} l/kWh
+                  </Text>
 
-          {/* Button Section */}
-          <Button
-            colorScheme="red"
-            onClick={() => handleRemoveCar(car.car_id)}
-            variant="outline"
-            aria-label="Remove Car"
-          >
-            <Icon as={FaTrash} color="red.500" />
-          </Button>
-        </HStack>
-      </Box>
-    ) : null // Skip rendering if car is undefined
-  ))}
-</SimpleGrid>
-
+                  {/* Button Section */}
+                  <Button
+                    colorScheme="red"
+                    onClick={() => handleRemoveCar(car.car_id)}
+                    variant="outline"
+                    aria-label="Remove Car"
+                  >
+                    <Icon as={FaTrash} color="red.500" />
+                  </Button>
+                </HStack>
+              </Box>
+            ) : null // Skip rendering if car is undefined
+          ))}
+        </SimpleGrid>
       </VStack>
 
       <Divider mb={6} />
@@ -677,7 +669,7 @@ const Profile = () => {
       </Flex>
     </ModalBody>
     <ModalFooter>
-      <Button colorScheme="brand" onClick={handleSaveNewinfo}>
+      <Button colorScheme="brand" onClick={handleSaveNewInfo}>
         Spara
       </Button>
       <Button ml={3} onClick={() => setNewInfoOpen(false)}>
@@ -686,9 +678,6 @@ const Profile = () => {
     </ModalFooter>
   </ModalContent>
 </Modal>
-
-
-
       {/* AddCarModal */}
       <AddCarModal
         isOpen={isAddCarOpen}

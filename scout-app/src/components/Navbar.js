@@ -31,22 +31,23 @@ import ClockNotifications from './ClockNotifications'; // Importera ClockNotific
 import { useUser } from '../utils/UserContext';
 
 const Navbar = () => {
-  const { userId, roles, isInitialized, clearUserData } = useUser(); // Hämta roll och inloggningsstatus
+  const { roles, isInitialized, clearUserData } = useUser(); // Hämta roll och inloggningsstatus
   const { isOpen, onOpen, onClose } = useDisclosure();  // Hook to control the drawer
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure(); // Hook for login modal
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
   const [isScrolled, setIsScrolled] = useState(false);  // State to manage scroll status
   const links = [];
-  if (isInitialized && roles.includes('ledare')) {
-    links.push({ to: '/dashboard-leader', label: 'Ledare' });
-  } else if (isInitialized && roles.includes('vårdnadshavare')) {
-    links.push({ to: '/dashboard-parent', label: 'Vårdnadshavare' });
-  } else if (isInitialized && roles.includes('admin')) {
-    links.push(
-      { to: '/dashboard-leader', label: 'Ledare' },
-      { to: '/dashboard-parent', label: 'Vårdnadshavare' },
-      { to: '/dashboard-admin', label: 'Admin' }
-    );
+
+  if (isInitialized) {
+    if (roles.includes('admin')) {
+      links.push({ to: '/dashboard-admin', label: 'Admin' });
+    }
+    if (roles.includes('ledare')) {
+      links.push({ to: '/dashboard-leader', label: 'Ledare' });
+    }
+    if (roles.includes('vårdnadshavare')) {
+      links.push({ to: '/dashboard-parent', label: 'Vårdnadshavare' });
+    }
   }
 
   // Effect to handle scroll events
