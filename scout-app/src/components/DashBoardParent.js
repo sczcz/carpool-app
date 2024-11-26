@@ -341,6 +341,7 @@ const DashBoardParent = ({ token }) => {
               carpool.id === carpoolId
                 ? {
                     ...carpool,
+                    available_seats: carpool.available_seats - 1,
                     passengers: [...carpool.passengers, newPassenger],
                   }
                 : carpool
