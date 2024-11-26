@@ -1,4 +1,5 @@
 import React, { useEffect, useState, navigate } from 'react';
+import { FaArrowRight } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import {
   Image,
@@ -243,20 +244,36 @@ const Navbar = () => {
             <Flex direction="column" gap={4}>
               {/* Add Scouterna Link to Mobile Drawer */}
               <Button
-                as="a"
-                href="https://www.scouterna.se"
-                target="_blank"
-                variant="ghost"
-                colorScheme="brand"
-                onClick={onClose}
+              as="scouterna.se"
+              href="https://www.scouterna.se"
+              target="_blank"
+              variant="ghost"
+              cursor="pointer"
+              colorScheme="brand"
+              onClick={onClose}
+              position="relative" // Make it a relative container for the icon
+              width="full" // Ensure the button spans the available space
               >
+              {/* Logo and Text */}
+              <Flex align="center" justify="center" width="100%">
                 <Image
-                  src= {LilyBlueIcon}
+                  src={LilyBlueIcon}
                   alt="Scouterna Logo"
                   boxSize="1.5em"
-                  mr="2"
+                  mr="2" // Space between logo and text
                 />
                 Scouterna
+              </Flex>
+
+              {/* Right Icon */}
+              <Box
+                position="absolute" // Position it relative to the button container
+                right="1rem" // Space from the right edge
+                top="50%" // Center vertically
+                transform="translateY(-50%)" // Adjust for perfect vertical centering
+              >
+                <FaArrowRight />
+              </Box>
               </Button>
 
               {links.map(({ to, label }) => (
@@ -269,6 +286,16 @@ const Navbar = () => {
                   onClick={onClose}
                 >
                   {label}
+                  {/* Right Icon */}
+                  <Box
+                    position="absolute" // Position it relative to the button container
+                    right="1rem" // Space from the right edge
+                    top="50%" // Center vertically
+                    transform="translateY(-50%)" // Adjust for perfect vertical centering
+                  >
+                    <FaArrowRight />
+                  </Box>
+
                 </Button>
               ))}
             </Flex>

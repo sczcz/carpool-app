@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaArrowRight, FaArrowLeft, FaArrowsAltH } from 'react-icons/fa';
+import { FaCarSide, FaArrowRight, FaArrowLeft, FaArrowsAltH } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -563,6 +563,7 @@ const handleLoadMore = () => {
                       <VStack spacing={4}>
                         <Button
                           leftIcon={<FaPlus />}
+                          rightIcon={<FaCarSide/>}
                           colorScheme="brand"
                           size="sm"
                         onClick={(e) => {
@@ -668,6 +669,18 @@ const handleLoadMore = () => {
                                 >
                                   Chat
                                 </Button>
+                                <Button
+                                    display={{ base: 'inline-flex', md: 'none' }} // Visible only on smaller screens
+                                    colorScheme="cyan"
+                                    color="white"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCarpoolClick(activity, carpool); // Open carpool details modal
+                                    }}
+                                  >
+                                    Info
+                                  </Button>
                               </Flex>
                             </Flex>
                             </Box>
@@ -841,6 +854,17 @@ const handleLoadMore = () => {
                                     }}
                                   >
                                     Chat
+                                  </Button>
+                                  <Button
+                                    display={{ base: 'inline-flex', md: 'none' }} // Visible only on smaller screens
+                                    colorScheme="cyan"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCarpoolClick(activity, carpool); // Open carpool details modal
+                                    }}
+                                  >
+                                    Info
                                   </Button>
                                 </Flex>
                               </Flex>
