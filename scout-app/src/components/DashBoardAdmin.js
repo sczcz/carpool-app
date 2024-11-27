@@ -159,7 +159,6 @@ const DashBoardAdmin = () => {
       );
   };
 
-  // Funktion för att ta bort en användare
   const deleteUser = (userId) => {
     fetch(`/api/admin/delete-user/${userId}`, {
       method: 'DELETE',
@@ -168,8 +167,9 @@ const DashBoardAdmin = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.message) {
-          // Uppdatera state för att ta bort användaren
+          // Uppdatera både unacceptedUsers och allUsers
           setUnacceptedUsers((prev) => prev.filter((user) => user.user_id !== userId));
+          setAllUsers((prev) => prev.filter((user) => user.id !== userId)); // Uppdatera allUsers
           toast({
             title: 'Användare borttagen',
             description: data.message,
@@ -338,6 +338,7 @@ const DashBoardAdmin = () => {
                           size={buttonSize}
                           borderRadius="full"
                           width={["100%", "auto"]}
+                          onClick={() => deleteUser(user.id)}
                         >
                           Ta Bort
                         </Button>

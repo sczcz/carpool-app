@@ -38,20 +38,23 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);  // State to manage scroll status
   const links = [];
 
+  const addLink = (to, label) => {
+    if (!links.some(link => link.to === to)) {
+      links.push({ to, label });
+    }
+  };
+  
   if (isInitialized) {
     if (roles.includes('admin')) {
-      links.push(
-        { to: '/dashboard-admin', label: 'Admin' },
-        { to: '/dashboard-leader', label: 'Ledare' },
-        { to: '/dashboard-parent', label: 'Vårdnadshavare' }
-
-      );
+      addLink('/dashboard-admin', 'Admin');
+      addLink('/dashboard-leader', 'Ledare');
+      addLink('/dashboard-parent', 'Vårdnadshavare');
     }
     if (roles.includes('ledare')) {
-      links.push({ to: '/dashboard-leader', label: 'Ledare' });
+      addLink('/dashboard-leader', 'Ledare');
     }
     if (roles.includes('vårdnadshavare')) {
-      links.push({ to: '/dashboard-parent', label: 'Vårdnadshavare' });
+      addLink('/dashboard-parent', 'Vårdnadshavare');
     }
   }
 
