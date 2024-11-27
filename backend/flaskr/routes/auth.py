@@ -88,7 +88,10 @@ def login():
 
     if not user or not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password!"}), 401
-
+    
+    if not user.is_accepted:
+        return jsonify({"error": "User account is not accepted yet!"}), 402
+    
     # Skapa JWT-token
     token = jwt.encode({
         'sub': user.user_id,
@@ -139,7 +142,11 @@ def token_required(f):
 
             if current_user is None:
                 return jsonify({"error": "User not found!"}), 401
-
+            
+            # Kontrollera accepteringsstatus
+            if not current_user.is_accepted:
+                return jsonify({"error": "User has not been accepted by admin."}), 403
+                    
         except jwt.ExpiredSignatureError:
             return jsonify({"error": "Token has expired!"}), 401
         except Exception as e:

@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext } from 'react';
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
+  const [isAccepted, setIsAccepted] = useState(false);
   const [userId, setUserId] = useState(null);
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
@@ -34,6 +35,7 @@ export const UserProvider = ({ children }) => {
         setPostcode(user.postcode || '');
         setCity(user.city || '');
         setPhone(user.phone || '');
+        setIsAccepted(user.is_accepted);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -53,6 +55,7 @@ export const UserProvider = ({ children }) => {
     setPhone('');
     setIsInitialized(false);
     setLoading(false);
+    setIsAccepted(false);
   };
 
   const updateUserData = (updatedData) => {
@@ -78,7 +81,8 @@ export const UserProvider = ({ children }) => {
         address, 
         postcode, 
         city, 
-        phone, 
+        phone,
+        isAccepted, 
         fetchUserData, 
         loading,
         isInitialized,

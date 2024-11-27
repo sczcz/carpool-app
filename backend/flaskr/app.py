@@ -8,6 +8,7 @@ from models.auth_model import User
 from routes.activity import activity_bp
 from routes.carpool import carpool_bp
 from routes.message import message_bp
+from routes.admin import admin_bp
 from routes.notifications import notifications_bp
 from test_data import add_test_data
 from seed_roles import seed_roles
@@ -56,18 +57,13 @@ app.register_blueprint(activity_bp)
 app.register_blueprint(carpool_bp)
 app.register_blueprint(message_bp)
 app.register_blueprint(notifications_bp)
+app.register_blueprint(admin_bp)
 
 # Route for rendering index.html
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Route to get all users
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    users_list = [{"id": user.user_id, "email": user.email} for user in users]
-    return jsonify(users_list), 200
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', allow_unsafe_werkzeug=True)

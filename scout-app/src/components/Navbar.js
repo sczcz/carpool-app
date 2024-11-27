@@ -40,7 +40,12 @@ const Navbar = () => {
 
   if (isInitialized) {
     if (roles.includes('admin')) {
-      links.push({ to: '/dashboard-admin', label: 'Admin' });
+      links.push(
+        { to: '/dashboard-admin', label: 'Admin' },
+        { to: '/dashboard-leader', label: 'Ledare' },
+        { to: '/dashboard-parent', label: 'Vårdnadshavare' }
+
+      );
     }
     if (roles.includes('ledare')) {
       links.push({ to: '/dashboard-leader', label: 'Ledare' });
@@ -214,8 +219,7 @@ const Navbar = () => {
           </MenuButton>
           <MenuList>
             <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem>
-            <MenuItem as={Link} to="/TestSession" color="brand.500">Test Session</MenuItem> 
-            <MenuItem as={Link} to="/FetchUsers" color="brand.500">Fetch Users</MenuItem> 
+            <MenuItem as={Link} to="/TestSession" color="brand.500">Test Session</MenuItem>  
             <MenuItem color="brand.500" onClick={onLoginOpen}>
               Logga in
             </MenuItem>

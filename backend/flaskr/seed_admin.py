@@ -32,6 +32,8 @@ def seed_admin():
         postcode=None,
         city=None,
         phone=None,
+        is_accepted=True,
+    
     )
     db.session.add(admin_user)
     db.session.commit()

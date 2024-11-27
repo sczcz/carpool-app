@@ -1,4 +1,5 @@
 from extensions import db
+from _pydatetime import datetime
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -18,6 +19,7 @@ class User(db.Model):
     postcode = db.Column(db.String(20), nullable=True)
     city = db.Column(db.String(100), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
+    is_accepted = db.Column(db.Boolean, nullable=False, default=False)
 
 
 # Sambandstabell mellan User och Role

@@ -63,7 +63,8 @@ def get_logged_in_user(current_user):
         "postcode": current_user.postcode,
         "city": current_user.city,
         "roles": role_names,
-        "phone": current_user.phone  
+        "phone": current_user.phone,
+        "is_accepted": current_user.is_accepted  
     }
 
     return jsonify({"user": user_data}), 200
