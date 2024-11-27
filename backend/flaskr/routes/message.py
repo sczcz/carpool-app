@@ -234,7 +234,7 @@ def handle_send_message(data):
     }, room=f'carpool_{carpool_id}')
 
     # Skapa och skicka notifikation
-    notification_message = f"Nytt meddelande i samåkning till {activity_address} från {sender.first_name} {sender.last_name}"
+    notification_message = f"meddelande i samåkning till {activity_address}"
     notify_users_in_carpool(carpool_id, notification_message, message.sender_id, message.id)
 
 
