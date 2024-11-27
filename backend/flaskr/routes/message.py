@@ -8,6 +8,7 @@ from routes.auth import token_required
 from routes.carpool import Carpool, Passenger
 from datetime import datetime
 from dateutil import tz
+from models.activity_model import Activity
 
 message_bp = Blueprint('message_bp', __name__)
 active_users = {}
@@ -48,18 +49,36 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
 
     notified_users = set()  # För att undvika dubblerade notifieringar
 
-    # Notify the carpool creator if they are not the sender or active
+    # Hämta bilinformation (om det finns)
+    car_info = f"{carpool.car.model_name}" if carpool.car else "Ingen bil tilldelad"
+
+    # Hämta övergripande information om carpoolen
+    carpool_details = {
+        "carpool_id": carpool.id,
+        "carpool_type": carpool.carpool_type,
+        "available_seats": carpool.available_seats,
+        "departure_address": carpool.departure_address,
+        "departure_city": carpool.departure_city,
+        "departure_postcode": carpool.departure_postcode,
+        "car_info": car_info,
+    }
+
+    # Notify the carpool driver if they are not the sender or active
     if carpool.driver_id != sender_id and carpool.driver_id not in active_users[carpool_id]:
         if carpool.driver_id not in notified_users:
-            # Skapa notifikation i databasen
-            notification = create_notification(user_id=carpool.driver_id, carpool_id=carpool_id, message=message, message_id=message_id)
-            # Skicka realtidsnotifikation
-            socketio.emit('notification', {
-                'id': notification.id,
-                'carpool_id': carpool_id,
-                'message': message,
-                'user_id': carpool.driver_id
-            }, room=f'user_{carpool.driver_id}')
+            notification = create_notification(
+                user_id=carpool.driver_id, carpool_id=carpool_id, message=message, message_id=message_id
+            )
+            socketio.emit(
+                'notification',
+                {
+                    'id': notification.id,
+                    'message': message,
+                    'carpool_details': carpool_details,
+                    'user_id': carpool.driver_id
+                },
+                room=f'user_{carpool.driver_id}'
+            )
             notified_users.add(carpool.driver_id)
 
     # Notify parents of passengers if they are not active
@@ -68,19 +87,23 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
         for parent_link in parent_links:
             if parent_link.user_id != sender_id and parent_link.user_id not in active_users[carpool_id]:
                 if parent_link.user_id not in notified_users:
-                    # Skapa notifikation i databasen
-                    notification = create_notification(user_id=parent_link.user_id, carpool_id=carpool_id, message=message, message_id=message_id)
-                    # Skicka realtidsnotifikation
-                    print(f"Sent Socket.IO notification: id={notification.id}, user_id={parent_link.user_id}, carpool_id={carpool_id}")
-                    socketio.emit('notification', {
-                        'id': notification.id,
-                        'carpool_id': carpool_id,
-                        'message': message,
-                        'user_id': parent_link.user_id
-                    }, room=f'user_{parent_link.user_id}')
+                    notification = create_notification(
+                        user_id=parent_link.user_id, carpool_id=carpool_id, message=message, message_id=message_id
+                    )
+                    socketio.emit(
+                        'notification',
+                        {
+                            'id': notification.id,
+                            'message': message,
+                            'carpool_details': carpool_details,
+                            'user_id': parent_link.user_id
+                        },
+                        room=f'user_{parent_link.user_id}'
+                    )
                     notified_users.add(parent_link.user_id)
 
     print(f"Notified users for carpool {carpool_id}: {notified_users}")
+
 
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['GET'])
 @token_required
@@ -164,7 +187,17 @@ def handle_send_message(data):
     if not sender:
         emit('error', {'error': 'Sender not found.'}, room=request.sid)
         return
-    
+
+    # Hämta `activity_id` från `Carpool`
+    carpool = db.session.query(Carpool).filter_by(id=carpool_id).first()
+    if not carpool:
+        emit('error', {'error': 'Carpool not found.'}, room=request.sid)
+        return
+
+    # Hämta `address` från `Activity` baserat på `activity_id`
+    activity = db.session.query(Activity).filter_by(activity_id=carpool.activity_id).first()
+    activity_address = activity.address if activity else "okänd destination"
+
     # Define timezone conversion
     from_zone = tz.tzutc()
     to_zone = tz.tzlocal()  # This converts to the server's local timezone
@@ -200,5 +233,9 @@ def handle_send_message(data):
         }
     }, room=f'carpool_{carpool_id}')
 
-    notification_message = f"Nytt meddelande i samåkning {carpool_id} from {sender.first_name} {sender.last_name}"
+    # Skapa och skicka notifikation
+    notification_message = f"Nytt meddelande i samåkning till {activity_address} från {sender.first_name} {sender.last_name}"
     notify_users_in_carpool(carpool_id, notification_message, message.sender_id, message.id)
+
+
+
