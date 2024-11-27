@@ -164,134 +164,145 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={modalSize}>
-      <ModalOverlay />
-      <ModalContent maxW={{ base: '90%', md: '800px' }} mx="auto">
-        <ModalHeader fontSize={{ base: 'lg', md: 'xl' }} textAlign="center">
-          {carpool.departure_city} - {activity.location}
-        </ModalHeader>
-        <HStack justify="center" mb={2}>
-          <Tag color="white" backgroundColor={roleColors[activity.scout_level] || 'gray.200'} size="lg" fontWeight="bold" alignSelf="center">
-            <Icon as={FaFlag} mr={1} />
-            <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
-          </Tag>
-        </HStack>
-        <ModalCloseButton size="sm" />
-        <ModalBody p={{ base: 4, md: 6 }}>
-          <HStack spacing={{ base: 4, md: 8 }} align="start" w="full" flexDirection={{ base: 'column', md: 'row' }} justify="center">
-            <VStack align="start" spacing={4} flex={1} w="full" px={{ base: 4, md: 0 }}>
-              <Text fontWeight="bold" fontSize={fontSize} mt={4}>Samåkningsinformation:</Text>
-              <VStack align="start" spacing={1} w="full">
-                <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Förare:</Text>
-                  <Text fontSize={fontSize}>{driverInfo ? `${driverInfo.first_name} ${driverInfo.last_name}` : 'Laddar...'}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Telefon:</Text>
-                  <Text fontSize={fontSize}>{driverInfo?.phone || 'N/A'}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Bil:</Text>
-                  <Text fontSize={fontSize}>{carpool.car_model_name || 'N/A'}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Avgångsadress:</Text>
-                  <Text fontSize={fontSize}>{carpool?.departure_address || 'N/A'}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Tillgängliga platser:</Text>
-                  <Text fontSize={fontSize}>{carpool?.available_seats || '0'}</Text>
-                </HStack>
-                <HStack>
-                  <Text fontSize={fontSize} fontWeight="bold">Typ av samåkning:</Text>
-                  <Text fontSize={fontSize}>{translateCarpoolType(carpool?.carpool_type) || 'N/A'}</Text>
-                </HStack>
-              </VStack>
+<Modal isOpen={isOpen} onClose={onClose} size={modalSize}>
+  <ModalOverlay />
+  <ModalContent maxW={{ base: '90%', md: '800px' }} mx="auto">
+    <ModalHeader fontSize={{ base: 'lg', md: 'xl' }} textAlign="center">
+      {carpool.departure_city} - {activity.location}
+    </ModalHeader>
+    <HStack justify="center" mb={2}>
+      <Tag color="white" backgroundColor={roleColors[activity.scout_level] || 'gray.200'} size="lg" fontWeight="bold" alignSelf="center">
+        <Icon as={FaFlag} mr={1} />
+        <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
+      </Tag>
+    </HStack>
+    <ModalCloseButton size="sm" />
+    <ModalBody p={{ base: 4, md: 6 }}>
+      <HStack spacing={{ base: 4, md: 8 }} align="start" w="full" flexDirection={{ base: 'column', md: 'row' }} justify="center">
+        <VStack align="start" spacing={4} flex={1} w="full" px={{ base: 4, md: 0 }}>
+          <Text fontWeight="bold" fontSize={fontSize} mt={4}>Samåkningsinformation:</Text>
+          <VStack align="start" spacing={1} w="full">
+            {/* Driver info */}
+            <HStack>
+              <Text fontSize={fontSize} fontWeight="bold">Förare:</Text>
+              <Text fontSize={fontSize}>{driverInfo ? `${driverInfo.first_name} ${driverInfo.last_name}` : 'Laddar...'}</Text>
+            </HStack>
+            <HStack>
+              <Text fontSize={fontSize} fontWeight="bold">Telefon:</Text>
+              <Text fontSize={fontSize}>{driverInfo?.phone || 'N/A'}</Text>
+            </HStack>
+            <HStack>
+              <Text fontSize={fontSize} fontWeight="bold">Bil:</Text>
+              <Text fontSize={fontSize}>{carpool.car_model_name || 'N/A'}</Text>
+            </HStack>
+            <HStack>
+              <Text fontSize={fontSize} fontWeight="bold">Avgångsadress:</Text>
+              <Text fontSize={fontSize}>{carpool?.departure_address || 'N/A'}</Text>
+            </HStack>
+            <HStack>
+              <Text fontSize={fontSize} fontWeight="bold">Tillgängliga platser:</Text>
+              <Text fontSize={fontSize}>{carpool?.available_seats || '0'}</Text>
+            </HStack>
+            <HStack>
+              <Text fontSize={fontSize} fontWeight="bold">Typ av samåkning:</Text>
+              <Text fontSize={fontSize}>{translateCarpoolType(carpool?.carpool_type) || 'N/A'}</Text>
+            </HStack>
+          </VStack>
 
-              <Text fontWeight="bold" fontSize={fontSize} mt={4}>Passagerare:</Text>
-              <Box w="full" maxH={{ base: '200px', md: '300px' }} overflowY="auto" borderWidth={1} borderColor="gray.200" borderRadius="md" bg="gray.50" p={2}>
-                <Stack spacing={3} w="full">
-                  {passengers.length > 0 ? (
-                    passengers.map((passenger, index) => (
-                      <Box key={index} w="full" p={3} borderRadius="md" bg="white" boxShadow="sm">
-                        <HStack spacing={2} justifyContent="space-between">
-                          <HStack spacing={2}>
-                            <Icon as={FaUser} color="gray.500" />
-                            <Text fontSize="sm" fontWeight="bold">Namn:</Text>
-                            <Text fontSize="sm">
-                              {passenger.type === 'user'
-                                ? passenger.user_name || 'Okänd'
-                                : passenger.child_name || 'Okänd'}
+          <Text fontWeight="bold" fontSize={fontSize} mt={4}>Passagerare:</Text>
+          <Box w="full" maxH={{ base: '200px', md: '300px' }} overflowY="auto" borderWidth={1} borderColor="gray.200" borderRadius="md" bg="gray.50" p={2}>
+            <Stack spacing={3} w="full">
+              {passengers.length > 0 ? (
+                passengers.map((passenger, index) => (
+                  <Box key={index} w="full" p={3} borderRadius="md" bg="white" boxShadow="sm">
+                    <HStack spacing={2} justifyContent="space-between">
+                      <HStack spacing={2}>
+                        <Icon as={FaUser} color="gray.500" />
+                        <Text fontSize="sm" fontWeight="bold">Namn:</Text>
+                        <Text fontSize="sm">
+                          {passenger.type === 'user'
+                            ? passenger.user_name || 'Okänd'
+                            : passenger.child_name || 'Okänd'}
+                        </Text>
+                      </HStack>
+
+                      {/* Kontrollera om passageraren är barn och nuvarande användare är en förälder */}
+                      {passenger.type === 'child' && isParentOfChild(passenger) && (
+                        <IconButton
+                          icon={<FaTrash />}
+                          colorScheme="red"
+                          aria-label="Ta bort barnet från samåkning"
+                          onClick={() => handleUnbook(passenger.child_id, 'child')}
+                          variant="outline"
+                          size="sm"
+                          ml={3}
+                        />
+                      )}
+
+                      {/* Kontrollera om passageraren är användaren själv */}
+                      {passenger.type === 'user' && passenger.user_id === currentUserId && (
+                        <IconButton
+                          icon={<FaTrash />}
+                          colorScheme="red"
+                          aria-label="Ta bort dig själv från samåkning"
+                          onClick={() => handleUnbook(passenger.user_id, 'user')}
+                          variant="outline"
+                          size="sm"
+                          ml={3}
+                        />
+                      )}
+                    </HStack>
+                    <Stack spacing={1} mt={2}>
+                      <HStack spacing={2}>
+                        <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
+                        <Text fontSize="sm">
+                          {passenger.type === 'user'
+                            ? passenger.user_phone || 'N/A'
+                            : passenger.child_phone || 'N/A'}
+                        </Text>
+                      </HStack>
+                      {passenger.type === 'child' && passenger.parents?.length > 0 && (
+                        <Box mt={2}>
+                          <Text fontSize="sm" fontWeight="bold">Vårdnadshavare:</Text>
+                          {passenger.parents.map((parent, idx) => (
+                            <Text key={idx} fontSize="sm">
+                              {parent.parent_name} - {parent.parent_phone}
                             </Text>
-                          </HStack>
+                          ))}
+                        </Box>
+                      )}
+                    </Stack>
+                  </Box>
+                ))
+              ) : (
+                <Text fontSize="sm" color="gray.500">Inga passagerare hittade.</Text>
+              )}
+            </Stack>
+          </Box>
+        </VStack>
 
-                          {/* Kontrollera om passageraren är barn och nuvarande användare är en förälder */}
-                          {passenger.type === 'child' && isParentOfChild(passenger) && (
-                            <IconButton
-                              icon={<FaTrash />}
-                              colorScheme="red"
-                              aria-label="Ta bort barnet från samåkning"
-                              onClick={() => handleUnbook(passenger.child_id, 'child')}
-                              variant="outline"
-                              size="sm"
-                              ml={3}
-                            />
-                          )}
+        <Box flex={1} w="full" mt={{ base: 4, md: 0 }} px={{ base: 4, md: 0 }}>
+          <Text fontWeight="bold" fontSize={fontSize} mt={4}>Aktivitetsdetaljer:</Text>
+          <Box w="full">
+            <Text fontSize="sm" color="gray.500" mb={1}><Icon as={FaMapMarkerAlt} mr={1} /> Plats:</Text>
+            <Text fontSize={fontSize}>{activity.location}</Text>
 
-                          {/* Kontrollera om passageraren är användaren själv */}
-                          {passenger.type === 'user' && passenger.user_id === currentUserId && (
-                            <IconButton
-                              icon={<FaTrash />}
-                              colorScheme="red"
-                              aria-label="Ta bort dig själv från samåkning"
-                              onClick={() => handleUnbook(passenger.user_id, 'user')}
-                              variant="outline"
-                              size="sm"
-                              ml={3}
-                            />
-                          )}
-                        </HStack>
-                        <Stack spacing={1} mt={2}>
-                          <HStack spacing={2}>
-                            <Text fontSize="sm" fontWeight="bold">Telefon:</Text>
-                            <Text fontSize="sm">
-                              {passenger.type === 'user'
-                                ? passenger.user_phone || 'N/A'
-                                : passenger.child_phone || 'N/A'}
-                            </Text>
-                          </HStack>
-                        </Stack>
-                      </Box>
+            <Text fontSize="sm" color="gray.500" mt={3}><Icon as={FaClock} mr={1} /> Start tid:</Text>
+            <Text fontSize={fontSize}>
+              {activity.dtstart ? format(parseISO(activity.dtstart), "d MMMM 'kl' HH:mm") : 'Datum inte tillgängliga'}
+            </Text>
 
-                    ))
-                  ) : (
-                    <Text fontSize="sm" color="gray.500">Inga passagerare hittade.</Text>
-                  )}
-                </Stack>
-              </Box>
-            </VStack>
-
-            <Box flex={1} w="full" mt={{ base: 4, md: 0 }} px={{ base: 4, md: 0 }}>
-              <Text fontWeight="bold" fontSize={fontSize} mt={4}>Aktivitetsdetaljer:</Text>
-              <Box w="full">
-                <Text fontSize="sm" color="gray.500" mb={1}><Icon as={FaMapMarkerAlt} mr={1} /> Plats:</Text>
-                <Text fontSize={fontSize}>{activity.location}</Text>
-
-                <Text fontSize="sm" color="gray.500" mt={3}><Icon as={FaClock} mr={1} /> Start tid:</Text>
-                <Text fontSize={fontSize}>
-                  {activity.dtstart ? format(parseISO(activity.dtstart), "d MMMM 'kl' HH:mm") : 'Datum inte tillgängliga'}
-                </Text>
-
-                <Box>
-                  <Text fontSize="sm" color="gray.500" mt={3}><Icon as={FaInfoCircle} mr={1} /> Beskrivning:</Text>
-                  <ExpandableText text={activity.description} fontSize={fontSize} />
-                </Box>
-              </Box>
+            <Box>
+              <Text fontSize="sm" color="gray.500" mt={3}><Icon as={FaInfoCircle} mr={1} /> Beskrivning:</Text>
+              <ExpandableText text={activity.description} fontSize={fontSize} />
             </Box>
-          </HStack>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+          </Box>
+        </Box>
+      </HStack>
+    </ModalBody>
+  </ModalContent>
+</Modal>
+
   );
 };
 
