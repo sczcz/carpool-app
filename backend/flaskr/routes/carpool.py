@@ -115,9 +115,6 @@ def list_carpools(current_user):
 
     return jsonify({"carpools": carpool_list}), 200
 
-
-
-
 @carpool_bp.route('/api/carpool/add-passenger', methods=['POST'])
 @token_required
 def add_passenger(current_user):
@@ -307,7 +304,8 @@ def list_passengers(current_user, carpool_id):
                     "type": "user",
                     "user_id": user.user_id,
                     "user_name": f"{user.first_name} {user.last_name}",
-                    "user_phone": user.phone
+                    "user_phone": user.phone,
+                    "parents": []  # Lägg till tom lista för att matcha frontend-struktur
                 })
 
     return jsonify({"passengers": passenger_data}), 200

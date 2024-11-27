@@ -246,14 +246,27 @@ const DashBoardParent = ({ token }) => {
                 ...activity,
                 carpools: data.carpools.map((carpool) => ({
                   ...carpool,
-                  passengers: carpool.passengers.map((passenger) => ({
-                    ...passenger,
-                    parents: passenger.parents.map((parent) => ({
-                      parent_name: parent.parent_name,
-                      parent_phone: parent.parent_phone,
-                    })),
-                    car: carpool.car
-                  })),
+                  passengers: carpool.passengers.map((passenger) => {
+                    if (passenger.type === "child") {
+                      // Hantera om passageraren är ett barn
+                      return {
+                        ...passenger,
+                        parents: passenger.parents.map((parent) => ({
+                          parent_name: parent.parent_name,
+                          parent_phone: parent.parent_phone,
+                        })),
+                        car: carpool.car,
+                      };
+                    } else if (passenger.type === "user") {
+                      // Hantera om passageraren är en användare
+                      return {
+                        ...passenger,
+                        parents: [], // Ingen "parents" för användare
+                        car: carpool.car,
+                      };
+                    }
+                    return passenger;
+                  }),
                 })),
               };
             }
@@ -263,6 +276,7 @@ const DashBoardParent = ({ token }) => {
       } else {
         throw new Error('Misslyckades med att hämta samåkningar');
       }
+      
     } catch (error) {
       toast({
         title: 'Fel vid hämtning av samåkningar.',
