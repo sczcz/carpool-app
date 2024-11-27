@@ -150,7 +150,6 @@ const DashBoardParent = ({ token }) => {
     try {
       const response = await fetch('/api/protected/activity/by_role', { credentials: 'include' });
       const data = await response.json();
-      console.log("Fetched activities:", data); // Logga alla aktiviteter här
       
       const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
   
@@ -160,7 +159,6 @@ const DashBoardParent = ({ token }) => {
             credentials: 'include',
           });
           const carpoolData = await carpoolResponse.json();
-          console.log("Fetched carpools for activity:", activity.activity_id, carpoolData); // Logga carpools
           return { ...activity, carpools: carpoolData.carpools || [] };
         })
       );

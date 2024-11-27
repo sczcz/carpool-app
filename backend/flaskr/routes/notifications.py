@@ -2,13 +2,13 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from models.notifications_model import Notification
 from routes.auth import token_required
+from models.carpool_model import Carpool
 
 notifications_bp = Blueprint('notifications_bp', __name__)
 
 @notifications_bp.route('/api/notifications', methods=['GET'])
 @token_required
 def get_notifications(current_user):
-    # Hämta alla notifikationer för användaren, sorterade efter senaste
     limit = request.args.get('limit', default=None, type=int)
     query = Notification.query.filter_by(user_id=current_user.user_id).order_by(Notification.created_at.desc())
     
@@ -17,18 +17,30 @@ def get_notifications(current_user):
     
     notifications = query.all()
 
-    # Format notifications och räkna olästa
-    notifications_data = [
-        {
+    notifications_data = []
+    for n in notifications:
+        carpool = Carpool.query.get(n.carpool_id)
+        carpool_details = {
+            "carpool_id": carpool.id,
+            "carpool_type": carpool.carpool_type,
+            "available_seats": carpool.available_seats,
+            "departure_address": carpool.departure_address,
+            "departure_city": carpool.departure_city,
+            "departure_postcode": carpool.departure_postcode,
+            "car_info": f"{carpool.car.model_name}" if carpool.car else "Ingen bil tilldelad",
+        } if carpool else None
+
+        notifications_data.append({
             "id": n.id,
             "message": n.message,
-            "carpool_id": n.carpool_id,
+            "carpool_details": carpool_details,
             "is_read": n.is_read,
             "created_at": n.created_at.isoformat()
-        } for n in notifications
-    ]
+        })
+
     unread_count = sum(1 for n in notifications if not n.is_read)
     return jsonify({"notifications": notifications_data, "unreadCount": unread_count}), 200
+
 
 
 # Mark notifications for a carpool as read

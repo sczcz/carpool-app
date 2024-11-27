@@ -24,8 +24,8 @@ import { useUser } from '../utils/UserContext';
 import CarpoolChat from './CarpoolChat';
 
 const ClockNotifications = ({ isScrolled }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]); // Alla notiser
+  const [unreadCount, setUnreadCount] = useState(0); // Antal olästa notiser
   const { userId, fullName } = useUser();
   const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
 
@@ -34,22 +34,18 @@ const ClockNotifications = ({ isScrolled }) => {
   useEffect(() => {
     if (!userId) return;
 
+    // Anslut till användarens socket-kanal
     socket.emit('join_user', { user_id: userId });
 
+    // Ladda notiser från backend
     const loadNotifications = async () => {
       try {
         const { notifications: fetchedNotifications, unreadCount: fetchedUnreadCount } =
           await fetchNotifications();
+
+        // Uppdatera state med alla notiser
+        setNotifications(fetchedNotifications);
     
-        // Filtrera endast olästa notiser från backend
-        const unreadNotifications = fetchedNotifications.filter((n) => !n.is_read);
-    
-        console.log('Olästa notiser från backend:', unreadNotifications);
-    
-        // Anropa handleNotification för varje oläst notis
-        unreadNotifications.forEach((notification) => handleNotification(notification));
-    
-        // Uppdatera det totala antalet olästa
         setUnreadCount(fetchedUnreadCount);
       } catch (error) {
         console.error('Error loading notifications:', error);
@@ -58,23 +54,11 @@ const ClockNotifications = ({ isScrolled }) => {
 
     loadNotifications();
 
+    // Hantera inkommande realtidsnotiser
     const handleNotification = (notification) => {
-      if (!notification.id) {
-        console.error('Invalid notification received (missing id):', notification);
-        return;
-      }
 
-      // Lägg till inkommande notis om den inte redan finns
-      setNotifications((prevNotifications) => {
-        const exists = prevNotifications.some((n) => n.id === notification.id);
-        if (!exists) {
-          return [notification, ...prevNotifications];
-        }
-        return prevNotifications;
-      });
-      
-
-      // Öka antalet olästa notiser
+      // Lägg till den nya notisen och uppdatera state
+      setNotifications((prevNotifications) => [notification, ...prevNotifications]);
       setUnreadCount((prevCount) => prevCount + 1);
     };
 
@@ -85,22 +69,46 @@ const ClockNotifications = ({ isScrolled }) => {
     };
   }, [userId]);
 
-  const markNotificationsForCarpoolAsRead = (carpoolId) => {
-    setNotifications((prevNotifications) =>
-      prevNotifications.filter(
-        (notification) => notification.carpool_details?.carpool_id !== carpoolId
-      )
-    );
-
-    // Uppdatera antalet olästa notiser
-    setUnreadCount((prevCount) =>
-      Math.max(
-        prevCount -
-          notifications.filter((n) => n.carpool_details?.carpool_id === carpoolId).length,
-        0
-      )
-    );
+  const markNotificationsForCarpoolAsRead = async (carpoolId) => {
+    try {
+      const response = await fetch('/api/notifications/mark-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ carpool_id: carpoolId }),
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+  
+        setNotifications((prevNotifications) =>
+          prevNotifications.map((notification) =>
+            notification.carpool_details?.carpool_id === carpoolId
+              ? { ...notification, is_read: true }
+              : notification
+          )
+        );
+  
+        setUnreadCount((prevCount) =>
+          Math.max(
+            prevCount -
+              notifications.filter(
+                (n) => n.carpool_details?.carpool_id === carpoolId && !n.is_read
+              ).length,
+            0
+          )
+        );
+      } else {
+        console.error('Misslyckades att markera som läst:', result);
+      }
+    } catch (error) {
+      console.error('Fel vid markering av notiser som lästa:', error);
+    }
   };
+  
 
   const handleNotificationClick = (notification) => {
     const carpoolId = notification.carpool_details?.carpool_id;
@@ -111,9 +119,11 @@ const ClockNotifications = ({ isScrolled }) => {
     }
   };
 
-  const groupedNotifications = notifications.reduce((acc, notification) => {
-    const carpoolId = notification.carpool_details?.carpool_id;
-    if (!carpoolId) return acc;
+  // Gruppar notiser för visning
+  const groupedNotifications = notifications
+  .filter((notification) => !notification.is_read) // Filtrera bort lästa notiser
+  .reduce((acc, notification) => {
+    const carpoolId = notification.carpool_details?.carpool_id || 'unknown'; // Hantera saknade carpool_id
 
     if (!acc[carpoolId]) {
       acc[carpoolId] = { ...notification, count: 0 };
@@ -122,6 +132,8 @@ const ClockNotifications = ({ isScrolled }) => {
 
     return acc;
   }, {});
+
+  
 
   const displayedNotifications = Object.values(groupedNotifications);
 
@@ -134,7 +146,7 @@ const ClockNotifications = ({ isScrolled }) => {
             icon={
               <Box position="relative">
                 <BellIcon color={isScrolled ? 'white' : 'brand.500'} />
-                {displayedNotifications.length > 0 && (
+                {unreadCount > 0 && (
                   <Box
                     position="absolute"
                     top="-1px"
@@ -155,7 +167,7 @@ const ClockNotifications = ({ isScrolled }) => {
               bg: isScrolled ? 'whiteAlpha.400' : 'blackAlpha.300',
             }}
           >
-            {displayedNotifications.length > 0 && (
+            {unreadCount > 0 && (
               <Badge
                 colorScheme="red"
                 variant="solid"
