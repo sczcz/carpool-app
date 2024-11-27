@@ -52,6 +52,7 @@ const Navbar = () => {
     }
     if (roles.includes('ledare')) {
       addLink('/dashboard-leader', 'Ledare');
+      addLink('/dashboard-parent', 'Vårdnadshavare');
     }
     if (roles.includes('vårdnadshavare')) {
       addLink('/dashboard-parent', 'Vårdnadshavare');

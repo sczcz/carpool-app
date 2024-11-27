@@ -257,75 +257,90 @@ const Dashboard = ({ token }) => {
               </Text>
             ) : (
               <>
-                {filteredActivities.slice(0, visibleCount).map((activity) => (
-                  <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="sm">
-                    <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary}</Text>
-                    <Text fontSize="md" color="brand.500">Plats: {activity.location}</Text>
-                    <Text fontSize="md" color="brand.500">Datum: {new Date(activity.dtstart).toLocaleString()}</Text>
-                    <Text fontSize="md" color="brand.400">
-                      Status: {activity.isVisible ? 'Synlig' : 'Dold'}
-                    </Text>
-  
-                    <Button
-                      mt={2}
-                      size="sm"
-                      colorScheme="blue"
-                      onClick={() => toggleActivity(activity.activity_id)}
-                      rightIcon={openActivityId === activity.activity_id ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                    >
-                      {openActivityId === activity.activity_id ? 'Dölj samåkningar' : 'Visa samåkningar'}
-                    </Button>
-  
-                    <Button
-                      mt={2}
-                      ml={4}
-                      size="sm"
-                      colorScheme={activity.isVisible ? 'red' : 'green'}
-                      onClick={() => toggleActivityVisibility(activity.activity_id, activity.isVisible)}
-                    >
-                      {activity.isVisible ? 'Dölj aktivitet för användare' : 'Visa aktivitet för användare'}
-                    </Button>
-  
-                    <Collapse in={openActivityId === activity.activity_id}>
-                      <Box mt={4}>
-                        {activity.carpools ? (
-                          activity.carpools.length > 0 ? (
-                            activity.carpools.map((carpool) => (
-                              <Box key={carpool.id} p={3} bg="gray.100" mb={2} borderRadius="md">
-                                <Text fontWeight="bold" color="brand.600">
-                                  Avresa från: {carpool.departure_address}, {carpool.departure_city}
-                                </Text>
-                                <Text>Typ av samåkning: {translateCarpoolType(carpool?.carpool_type) || 'N/A'}</Text>
-                                <Text>Tillgängliga platser: {carpool.available_seats}</Text>
-                                <Box mt={2}>
-                                  <Text fontWeight="bold">Passagerare:</Text>
-                                  {carpool.passengers.length > 0 ? (
-                                    carpool.passengers.map((passenger) => (
-                                      <Box key={passenger.child_id} ml={4} mt={1}>
-                                        <Text>{passenger.name} - Telefon: {passenger.phone}</Text>
-                                        {passenger.parents.map((parent, i) => (
-                                          <Text key={i} fontSize="sm" ml={4}>
-                                            Förälder: {parent.parent_name} - {parent.parent_phone}
+              {filteredActivities.slice(0, visibleCount).map((activity) => (
+                <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="sm">
+                  <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary}</Text>
+                  <Text fontSize="md" color="brand.500">Plats: {activity.location}</Text>
+                  <Text fontSize="md" color="brand.500">Datum: {new Date(activity.dtstart).toLocaleString()}</Text>
+                  <Text fontSize="md" color="brand.400">
+                    Status: {activity.isVisible ? 'Synlig' : 'Dold'}
+                  </Text>
+
+                  <Button
+                    mt={2}
+                    size="sm"
+                    colorScheme="blue"
+                    onClick={() => toggleActivity(activity.activity_id)}
+                    rightIcon={openActivityId === activity.activity_id ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                  >
+                    {openActivityId === activity.activity_id ? 'Dölj samåkningar' : 'Visa samåkningar'}
+                  </Button>
+
+                  <Button
+                    mt={2}
+                    ml={4}
+                    size="sm"
+                    colorScheme={activity.isVisible ? 'red' : 'green'}
+                    onClick={() => toggleActivityVisibility(activity.activity_id, activity.isVisible)}
+                  >
+                    {activity.isVisible ? 'Dölj aktivitet för användare' : 'Visa aktivitet för användare'}
+                  </Button>
+
+                  <Collapse in={openActivityId === activity.activity_id}>
+                    <Box mt={4}>
+                      {activity.carpools ? (
+                        activity.carpools.length > 0 ? (
+                          activity.carpools.map((carpool) => (
+                            <Box key={carpool.id} p={3} bg="gray.100" mb={2} borderRadius="md">
+                              <Text fontWeight="bold" color="brand.600">
+                                Avresa från: {carpool.departure_address || "Ingen adress tillgänglig"}, {carpool.departure_city || "Ingen stad tillgänglig"}
+                              </Text>
+                              <Text>Typ av samåkning: {translateCarpoolType(carpool?.carpool_type) || 'N/A'}</Text>
+                              <Text>Tillgängliga platser: {carpool.available_seats || 0}</Text>
+                              <Box mt={2}>
+                                <Text fontWeight="bold">Passagerare:</Text>
+                                {carpool.passengers && carpool.passengers.length > 0 ? (
+                                  carpool.passengers.map((passenger, index) => (
+                                    <Box key={index} ml={4} mt={1}>
+                                      <Text fontWeight="bold">
+                                        Namn:{" "}
+                                        {passenger.type === "user"
+                                          ? passenger.name || "Okänd användare"
+                                          : passenger.name || "Okänt barn"}
+                                      </Text>
+                                      <Text>Telefon: {passenger.phone || "Ingen telefon tillgänglig"}</Text>
+
+                                      {passenger.type === "child" && passenger.parents?.length > 0 && (
+                                        <Box mt={2} pl={4}>
+                                          <Text fontSize="sm" fontWeight="bold" color="gray.600">
+                                            Vårdnadshavare:
                                           </Text>
-                                        ))}
-                                      </Box>
-                                    ))
-                                  ) : (
-                                    <Text>Inga passagerare</Text>
-                                  )}
-                                </Box>
+                                          {passenger.parents.map((parent, idx) => (
+                                            <Text key={idx} fontSize="sm" color="gray.500" ml={2}>
+                                              {parent.parent_name || "Okänd"} - {parent.parent_phone || "Ingen telefon"}
+                                            </Text>
+                                          ))}
+                                        </Box>
+                                      )}
+                                    </Box>
+                                  ))
+                                ) : (
+                                  <Text>Inga passagerare</Text>
+                                )}
                               </Box>
-                            ))
-                          ) : (
-                            <Text>Inga tillgängliga samåkningar.</Text>
-                          )
+                            </Box>
+                          ))
                         ) : (
-                          <Text>Laddar samåkningar...</Text>
-                        )}
-                      </Box>
-                    </Collapse>
-                  </Box>
-                ))}
+                          <Text>Inga tillgängliga samåkningar.</Text>
+                        )
+                      ) : (
+                        <Text>Laddar samåkningar...</Text>
+                      )}
+                    </Box>
+                  </Collapse>
+                </Box>
+              ))}
+
   
                 {visibleCount < filteredActivities.length && (
                   <Button mt={6} onClick={loadMoreActivities} colorScheme="teal">
