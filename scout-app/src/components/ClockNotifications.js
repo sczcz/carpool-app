@@ -9,16 +9,27 @@ import {
   MenuList,
   MenuItem,
   Box,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { BellIcon } from '@chakra-ui/icons';
 import { fetchNotifications } from '../utils/notifications';
 import socket from '../utils/socket';
 import { useUser } from '../utils/UserContext';
+import CarpoolChat from './CarpoolChat';
 
 const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring here
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { userId } = useUser();
+  const { userId, fullName } = useUser();
+  const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
+  
+  const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure();
 
   useEffect(() => {
     if (!userId) return;
@@ -84,7 +95,16 @@ const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring her
     }
   };
 
+  const handleNotificationClick = (notification) => {
+    if (notification.carpool_details.carpool_id) {
+      setSelectedCarpoolId(notification.carpool_details.carpool_id); // Sätt vilket samåknings-ID som ska visas
+      onChatOpen(); // Öppna chatmodulen
+    }
+  };
+  
+
   return (
+    <>
     <Flex align="center">
       <Menu>
         <MenuButton
@@ -139,6 +159,7 @@ const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring her
                   onClick={() => {
                     if (notification.id) {
                       markSingleNotificationAsRead(notification.id);
+                      handleNotificationClick(notification)
                     } else {
                       console.error("Notification ID is missing or undefined in MenuItem onClick:", notification);
                     }
@@ -155,6 +176,19 @@ const ClockNotifications = ({ isScrolled }) => {  // Corrected destructuring her
         </MenuList>
       </Menu>
     </Flex>
+    {/* Modal för Carpool Chat */}
+    <Modal isOpen={isChatOpen} onClose={onChatClose} size="lg">
+    <ModalOverlay />
+    <ModalContent>
+      <ModalHeader>Carpool Chat</ModalHeader>
+      <ModalCloseButton />
+      <ModalBody>
+        <CarpoolChat carpoolId={selectedCarpoolId} userName={fullName} userId={userId} />
+      </ModalBody>
+    </ModalContent>
+  </Modal>
+</>
+    
   );
 };
 
