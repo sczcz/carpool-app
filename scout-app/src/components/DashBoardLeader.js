@@ -14,8 +14,10 @@ import {
   Select
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import useRoleProtection from "../utils/useRoleProtection";
 
 const Dashboard = ({ token }) => {
+  useRoleProtection(["admin", "ledare"]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

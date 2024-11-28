@@ -14,9 +14,11 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useUser } from "../utils/UserContext";
+import useRoleProtection from "../utils/useRoleProtection";
 
 const DashBoardAdmin = () => {
-  const { roles, isInitialized, fetchUserData } = useUser();
+  useRoleProtection(["admin"]);
+  const { isInitialized, fetchUserData, hasRole } = useUser();
   const [unacceptedUsers, setUnacceptedUsers] = useState([]); // State för icke-accepterade användare
   const toast = useToast(); // Chakra UI toast för notifieringar
   const navigate = useNavigate();
@@ -98,8 +100,6 @@ const DashBoardAdmin = () => {
         })
       );
   }, [toast]);
-
-
 
   // Hämta icke-accepterade användare vid laddning
   useEffect(() => {
