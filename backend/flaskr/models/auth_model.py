@@ -20,6 +20,7 @@ class User(db.Model):
     city = db.Column(db.String(100), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
     is_accepted = db.Column(db.Boolean, nullable=False, default=False)
+    last_logged_in = db.Column(db.DateTime, nullable=True)
 
 
 # Sambandstabell mellan User och Role

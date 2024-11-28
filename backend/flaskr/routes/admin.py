@@ -3,7 +3,6 @@ from extensions import db
 from models.auth_model import User, Role, UserRole
 from routes.auth import token_required
 
-# Skapa en Blueprint för admin-funktionalitet
 admin_bp = Blueprint('admin', __name__)
 
 
@@ -23,14 +22,15 @@ def get_users(current_user):
             .filter(UserRole.user_id == user.user_id)
             .all()
         )
-        # Omvandla roller till en lista med rollnamn
+
         role_names = [role[0] for role in roles]
         users_list.append({
             "id": user.user_id,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "roles": role_names
+            "roles": role_names,
+            "last_logged_in": user.last_logged_in
         })
 
     return jsonify(users_list), 200
@@ -43,25 +43,20 @@ def make_user_admin(current_user):
     if not is_user_admin(current_user.user_id):
         return jsonify({"error": "Access denied!"}), 403
 
-    # Hämta data från request
     data = request.get_json()
     user_id = data.get('id')
 
-    # Kontrollera att user_id skickades
     if not user_id:
         return jsonify({"error": "User ID is required."}), 400
 
-    # Hämta användaren som ska göras till admin
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found!"}), 404
 
-    # Hämta admin-roll från databasen
     admin_role = Role.query.filter_by(name='admin').first()
     if not admin_role:
         return jsonify({"error": "Admin role not found in the database."}), 500
 
-    # Kolla om användaren redan har admin-roll
     user_roles = (
         db.session.query(Role.name)
         .join(UserRole, Role.role_id == UserRole.role_id)
@@ -72,7 +67,6 @@ def make_user_admin(current_user):
     if 'admin' in user_roles:
         return jsonify({"error": f"User {user.email} is already an admin."}), 400
 
-    # Lägg till admin-roll till användaren
     new_user_role = UserRole(user_id=user_id, role_id=admin_role.role_id)
     db.session.add(new_user_role)
     db.session.commit()
@@ -80,28 +74,15 @@ def make_user_admin(current_user):
     return jsonify({"message": f"User {user.email} has been granted admin privileges."}), 200
 
 
-
 @admin_bp.route('/api/admin/unaccepted-users', methods=['GET'])
 @token_required
 def get_unaccepted_users(current_user):
-    # Hämta roller för den inloggade användaren
-    user_roles = (
-        db.session.query(Role.name)
-        .join(UserRole, Role.role_id == UserRole.role_id)
-        .filter(UserRole.user_id == current_user.user_id)
-        .all()
-    )
-    # Konvertera resultatet till en lista av rollnamn
-    user_roles = [role[0] for role in user_roles]
 
-    # Kontrollera om användaren är admin
-    if 'admin' not in user_roles:
+    if not is_user_admin(current_user.user_id):
         return jsonify({"error": "Access denied!"}), 403
 
-    # Hämta alla användare som inte är accepterade
     unaccepted_users = User.query.filter_by(is_accepted=False).all()
 
-    # Skapa en lista med användardata
     user_data = [
         {
             "user_id": user.user_id,
@@ -118,61 +99,42 @@ def get_unaccepted_users(current_user):
 @admin_bp.route('/api/admin/accept-user', methods=['PUT'])
 @token_required
 def accept_user(current_user):
-    # Hämta användarens roller från databasen
-    user_roles = (
-        db.session.query(Role.name)
-        .join(UserRole, Role.role_id == UserRole.role_id)
-        .filter(UserRole.user_id == current_user.user_id)
-        .all()
-    )
-    # Omvandla resultatet till en lista med rollnamn
-    user_roles = [role[0] for role in user_roles]
 
-    # Kontrollera att användaren har admin-roll
-    if 'admin' not in user_roles:
+    if not is_user_admin(current_user.user_id):
         return jsonify({"error": "Access denied!"}), 403
 
-    # Hämta data från request
     data = request.get_json()
     user_id = data.get('user_id')
 
-    # Hämta användaren som ska accepteras
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found!"}), 404
 
-    # Uppdatera is_accepted
     user.is_accepted = True
     db.session.commit()
 
     return jsonify({"message": f"User {user.email} has been accepted."}), 200
 
+
 @admin_bp.route('/api/admin/delete-user/<int:user_id>', methods=['DELETE'])
 @token_required
 def delete_user(current_user, user_id):
-    # Kontrollera att användaren är admin
-    user_roles = (
-        db.session.query(Role.name)
-        .join(UserRole, Role.role_id == UserRole.role_id)
-        .filter(UserRole.user_id == current_user.user_id)
-        .all()
-    )
-    user_roles = [role[0] for role in user_roles]
 
-    if 'admin' not in user_roles:
+    if not is_user_admin(current_user.user_id):
         return jsonify({"error": "Access denied!"}), 403
 
-    # Hämta användaren som ska tas bort
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found!"}), 404
 
-    # Ta bort användaren
     db.session.delete(user)
     db.session.commit()
 
     return jsonify({"message": f"User {user.email} has been deleted."}), 200
 
+
+
+# Helper function for authentication
 def is_user_admin(user_id):
     user_roles = (
         db.session.query(Role.name)

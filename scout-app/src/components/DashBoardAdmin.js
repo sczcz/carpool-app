@@ -233,6 +233,9 @@ const DashBoardAdmin = () => {
                   <Text fontSize="sm" color="gray.500">
                     E-post: {user.email}
                   </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    Senast inloggad: {user.last_logged_in}
+                  </Text>
                 </CardBody>
                 <CardFooter>
                   <HStack

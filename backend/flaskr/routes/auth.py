@@ -101,6 +101,9 @@ def login():
     # Skriv ut token för felsökning
     print(f"Generated JWT token for user {user.email}: {token}", flush=True)
 
+    user.last_logged_in = datetime.datetime.utcnow()
+    db.session.commit()
+
     # Skicka JWT-tokenen som en HttpOnly-cookie
     response = make_response(jsonify({"message": "Login successful!"}))
     response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax')  # för lokal utveckling (ändra vid produktion)
