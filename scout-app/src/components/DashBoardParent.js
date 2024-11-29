@@ -32,6 +32,7 @@ import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
 import CarpoolDetails from './CarpoolDetails';
 import AddChildModal from './AddChildModal';
+import { fetchActivitiesByRole, fetchAllVisibleActivities } from '../utils/activities';
 
 
 const DashBoardParent = ({ token }) => {
@@ -56,6 +57,7 @@ const DashBoardParent = ({ token }) => {
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
+  const [filterByRole, setFilterByRole] = useState(true);
 
   const roleColors = {
     tumlare: '#41a62a',
@@ -102,7 +104,7 @@ const DashBoardParent = ({ token }) => {
     setMyActivities(updatedMyActivities);
   }, [activities, userId]);
   
-  
+
   useEffect(() => {
     if (!loading && !userId) {
       window.location.href = '/';
@@ -118,48 +120,31 @@ const DashBoardParent = ({ token }) => {
   useEffect(() => {
     setMyActivities(activities.filter(activity => isInMyActivities(activity)));
   }, [activities]);
-/*
-  useEffect(() => {
-    const filteredMyActivities = activities.filter((activity) =>
-      Array.isArray(activity.carpools) &&
-      activity.carpools.some((carpool) => {
-        const isDriver = carpool.driver_id === userId;
-        const hasSelfAsPassenger =
-          Array.isArray(carpool.passengers) &&
-          carpool.passengers.some((passenger) => passenger.user_id === userId);
-        const hasChildAsPassenger =
-          Array.isArray(carpool.passengers) &&
-          carpool.passengers.some((passenger) =>
-            Array.isArray(passenger.parents) &&
-            passenger.parents.some((parent) => parent.parent_id === userId)
-          );
-        return isDriver || hasSelfAsPassenger || hasChildAsPassenger; // Lägg till alla kriterier
-      })
-    );
-  
-    setMyActivities(filteredMyActivities);
-  }, [activities, userId]);
-
-  */
-  
-  
-  
   
   const fetchActivities = async () => {
     setActivityLoading(true);
     try {
-      const response = await fetch('/api/protected/activity/by_role', { credentials: 'include' });
+      const apiEndpoint = filterByRole
+        ? '/api/protected/activity/by_role' // Rollbaserade aktiviteter
+        : '/api/protected/activity/no_role'; // Alla synliga aktiviteter
+  
+      const response = await fetch(apiEndpoint, { credentials: 'include' });
       const data = await response.json();
-      
+  
       const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
   
       const activitiesWithCarpools = await Promise.all(
         sortedActivities.map(async (activity) => {
-          const carpoolResponse = await fetch(`/api/carpool/list?activity_id=${activity.activity_id}`, {
-            credentials: 'include',
-          });
-          const carpoolData = await carpoolResponse.json();
-          return { ...activity, carpools: carpoolData.carpools || [] };
+          try {
+            const carpoolResponse = await fetch(`/api/carpool/list?activity_id=${activity.activity_id}`, {
+              credentials: 'include',
+            });
+            const carpoolData = await carpoolResponse.json();
+            return { ...activity, carpools: carpoolData.carpools || [] };
+          } catch (error) {
+            console.error(`Error fetching carpools for activity ${activity.activity_id}:`, error);
+            return { ...activity, carpools: [] };
+          }
         })
       );
   
@@ -171,6 +156,11 @@ const DashBoardParent = ({ token }) => {
       setActivityLoading(false);
     }
   };
+  
+  useEffect(() => {
+    fetchActivities();
+  }, [filterByRole]);
+  
   
 
   const toggleUpcomingCarpool = (index) => {
@@ -544,6 +534,17 @@ const handleLoadMore = () => {
               Hej {fullName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
             </Text>
           </Box>
+
+          <Box mb={4}>
+            <Button
+              colorScheme={filterByRole ? 'gray' : 'gray'}
+              onClick={() => setFilterByRole(!filterByRole)} // Endast uppdatera state här
+            >
+              {filterByRole ? 'Visa alla aktiviteter' : 'Visa endast aktiviteter baserat på dina barns roller'}
+            </Button>
+          </Box>
+
+
 
           <Divider mb={6} />
 

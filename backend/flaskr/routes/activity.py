@@ -118,6 +118,36 @@ def get_activities_by_role(current_user):
     return make_response(jsonify({"events": events_list}), 200)
 
 
+# Funktion för att hämta alla synliga aktiviteter
+@activity_bp.route('/api/protected/activity/no_role', methods=['GET'])
+@token_required
+def get_visible_activities(current_user):
+    now = datetime.datetime.now()
+
+    # Hämta alla aktiviteter som är synliga och inte passerade
+    activities = Activity.query.filter(
+        Activity.start_date >= now,
+        Activity.is_visible == True  # Endast synliga aktiviteter
+    ).all()
+
+    # Skapa en lista av aktiviteter
+    events_list = [{
+        'activity_id': activity.activity_id,
+        'summary': activity.name,
+        'dtstart': str(activity.start_date),
+        'dtend': str(activity.end_date),
+        'location': activity.address,
+        'description': activity.description,
+        'scout_level': list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
+    } for activity in activities]
+
+    # Hämta nya händelser från den externa kalendern om det behövs
+    new_events = fetch_calendar_events()
+    events_list.extend(new_events)
+
+    return make_response(jsonify({"events": events_list}), 200)
+
+
 
 @activity_bp.route('/api/protected/activity/all', methods=['GET'])
 @token_required
