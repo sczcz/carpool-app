@@ -210,7 +210,7 @@ const DashBoardParent = ({ token }) => {
       });
 
       const data = await response.json();
-      return response.ok && data.all_joined;
+      return response.ok && data.all_children_joined && data.user_already_joined;
     } catch (error) {
       console.error('Error:', error);
       return false;

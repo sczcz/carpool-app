@@ -234,13 +234,20 @@ def all_children_joined(current_user):
                                     .all()
 
     # Retrieve all passengers in the carpool
-    passenger_child_ids = [p.child_id for p in Passenger.query.filter_by(carpool_id=carpool_id).all()]
+    passengers = Passenger.query.filter_by(carpool_id=carpool_id).all()
+    passenger_child_ids = [p.child_id for p in passengers]
+    passenger_user_ids = [p.user_id for p in passengers]
 
     # Check if every child with this role is in the carpool
-    all_joined = all(child.child_id in passenger_child_ids for child in children_with_role)
+    all_children_joined = all(child.child_id in passenger_child_ids for child in children_with_role)
 
-    return jsonify({"all_joined": all_joined}), 200
+    # Check if the user is already a passenger
+    user_already_joined = current_user.user_id in passenger_user_ids
 
+    return jsonify({
+        "all_children_joined": all_children_joined,
+        "user_already_joined": user_already_joined
+    }), 200
 
 
 @carpool_bp.route('/api/carpool/<int:carpool_id>/delete', methods=['DELETE'])
