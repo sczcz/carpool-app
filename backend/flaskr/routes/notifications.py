@@ -68,6 +68,8 @@ def mark_notifications_as_read(current_user):
                 notification.is_read = True
             db.session.commit()
 
+            delete_read_notifications(current_user.user_id, carpool_id)
+
             return jsonify({"message": f"All notifications for carpool {carpool_id} marked as read"}), 200
 
         # Logga om inga notifikationer hittades
@@ -76,5 +78,25 @@ def mark_notifications_as_read(current_user):
     except Exception as e:
         print(f"Error processing request: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+    
+    
+def delete_read_notifications(user_id, carpool_id=None):
+    #Local helper function
+    try:
+        query = Notification.query.filter_by(user_id=user_id, is_read=True)
+        if carpool_id:
+            query = query.filter_by(carpool_id=carpool_id)
+
+        # Hämta och radera alla matchande notifikationer
+        notifications_to_delete = query.all()
+        if notifications_to_delete:
+            for notification in notifications_to_delete:
+                db.session.delete(notification)
+            db.session.commit()
+
+        print(f"Deleted {len(notifications_to_delete)} read notifications for user {user_id} and carpool {carpool_id}")
+    except Exception as e:
+        print(f"Error deleting read notifications: {str(e)}")
+
 
 

@@ -102,7 +102,23 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
                     )
                     notified_users.add(parent_link.user_id)
 
-    print(f"Notified users for carpool {carpool_id}: {notified_users}")
+        if passenger.user_id and passenger.user_id != sender_id:
+            if passenger.user_id not in active_users[carpool_id] and passenger.user_id not in notified_users:
+                notification = create_notification(
+                    user_id=passenger.user_id, carpool_id=carpool_id, message=message, message_id=message_id
+                )
+                socketio.emit(
+                    'notification',
+                    {
+                        'id': notification.id,
+                        'message': message,
+                        'carpool_details': carpool_details,
+                        'user_id': passenger.user_id
+                    },
+                    room=f'user_{passenger.user_id}'
+                )
+                notified_users.add(passenger.user_id)
+
 
 
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['GET'])
