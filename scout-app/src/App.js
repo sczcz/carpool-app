@@ -4,12 +4,13 @@ import { UserProvider, useUser } from './utils/UserContext';
 import Navbar from './components/Navbar';
 import FetchUsers from './components/FetchUsers';
 import TestSession from './components/TestSession';
-import Home from './components/Home'; // Import Home
+import Home from './components/Home';
 import DashBoardAdmin from './components/DashBoardAdmin';
 import DashBoardLeader from './components/DashBoardLeader';
-import DashBoardParent from './components/DashBoardParent'; // Import your dashboard
-import Profile from './components/Profile'; // Import your profile page
-import Footer from './components/Footer'; // Import the Footer component
+import DashBoardParent from './components/DashBoardParent'; 
+import Profile from './components/Profile'; 
+import Footer from './components/Footer';
+import ResetPassword from './components/ResetPassword';
 import { Box } from '@chakra-ui/react';
 
 function App() {
@@ -46,6 +47,7 @@ const AppContent = () => {
             <Route path="/FetchUsers" element={<FetchUsers />} />
             <Route path="/TestSession" element={<TestSession />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
         </Box>
         <Footer />
