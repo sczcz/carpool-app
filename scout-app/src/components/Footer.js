@@ -39,9 +39,8 @@ export default function Footer() {
         
         <Stack direction="row" spacing={8} justifyContent="center">
           <Link href="/">Hem</Link>
-          <Link href="/about">Om oss</Link>
-          <Link href="/services">Services</Link>
-          <Link href="/contact">Kontakt</Link>
+          <Link href="https://jonstorp.scout.se/" isExternal>Jonstorps Kustscoutkår</Link> {/* Updated link */}
+          <Link href="https://www.scouterna.se/" isExternal>Scouterna</Link> {/* Updated link */}
         </Stack>
       </Container>
     </Box>
