@@ -200,7 +200,7 @@ const Dashboard = ({ token }) => {
   return (
     <Flex direction="column" align="center" justify="center" p={8}>
       <Heading as="h1" size="xl" mb={8} color="brand.500">
-        Dashboard för ledare
+        Ledare
       </Heading>
   
       <Grid
@@ -209,7 +209,7 @@ const Dashboard = ({ token }) => {
         width="100%"
         maxW="1200px"
       > 
-        
+
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
           <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
             <Heading as="h3" size="lg" mb={4} color="brand.600">
