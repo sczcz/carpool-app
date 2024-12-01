@@ -208,37 +208,8 @@ const Dashboard = ({ token }) => {
         gap={6}
         width="100%"
         maxW="1200px"
-      >
-        <GridItem w="100%">
-          <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
-            <Heading as="h3" size="lg" mb={4} color="brand.600">
-              Användare
-            </Heading>
-            <Text fontSize="xl" color="brand.500">Totalt: 123</Text>
-            <Text fontSize="md" color="brand.400">Aktiva användare: 89</Text>
-          </Box>
-        </GridItem>
-  
-        <GridItem w="100%">
-          <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
-            <Heading as="h3" size="lg" mb={4} color="brand.600">
-              Notifikationer
-            </Heading>
-            <Text fontSize="xl" color="brand.500">Nya notifikationer: 5</Text>
-            <Text fontSize="md" color="brand.400">Olästa: 3</Text>
-          </Box>
-        </GridItem>
-  
-        <GridItem w="100%">
-          <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
-            <Heading as="h3" size="lg" mb={4} color="brand.600">
-              Transporter
-            </Heading>
-            <Text fontSize="xl" color="brand.500">Samåkningar: 12</Text>
-            <Text fontSize="md" color="brand.400">Kommande transporter: 4</Text>
-          </Box>
-        </GridItem>
-  
+      > 
+        
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
           <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
             <Heading as="h3" size="lg" mb={4} color="brand.600">
