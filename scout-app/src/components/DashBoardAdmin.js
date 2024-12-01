@@ -274,7 +274,7 @@ const DashBoardAdmin = () => {
       <Box>
         <HStack justifyContent="space-between" mb={4} flexWrap="wrap">
           <Heading as="h2" size="lg" mb={[2, 0]} textAlign={["center", "left"]}>
-            Aktiva Användare
+            Aktiva användare
           </Heading>
           <Select
             maxW="200px"
