@@ -10,6 +10,8 @@ import DashBoardLeader from './components/DashBoardLeader';
 import DashBoardParent from './components/DashBoardParent'; // Import your dashboard
 import Profile from './components/Profile'; // Import your profile page
 import Footer from './components/Footer'; // Import the Footer component
+import Error404 from './components/Error404'; // Import the 404 error page
+import Error500 from './components/Error500'; // Import the 500 error page
 import { Box } from '@chakra-ui/react';
 
 function App() {
@@ -32,6 +34,7 @@ const AppContent = () => {
   if (!isInitialized || loading) {
     return <div>Laddar...</div>;
   }
+  
 
   return (
     <Router>
@@ -39,6 +42,7 @@ const AppContent = () => {
         <Navbar />
         <Box flex="1" as="main">
           <Routes>
+            {/* Main Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/dashboard-parent" element={<DashBoardParent />} />
             <Route path="/dashboard-leader" element={<DashBoardLeader />} />
@@ -46,6 +50,10 @@ const AppContent = () => {
             <Route path="/FetchUsers" element={<FetchUsers />} />
             <Route path="/TestSession" element={<TestSession />} />
             <Route path="/profile" element={<Profile />} />
+
+            {/* Error Pages */}
+            <Route path="/500" element={<Error500 />} />
+            <Route path="*" element={<Error404 />} /> {/* Fångar upp alla 404 */}
           </Routes>
         </Box>
         <Footer />
