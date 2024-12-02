@@ -117,14 +117,22 @@ const Login = ({ isOpen, onClose }) => {
                     Logga in
                   </Button>
                   {error && <Text color="red.500">{error}</Text>}
-                  <Text
-                    as="span"
-                    color="blue.500"
-                    cursor="pointer"
-                    onClick={() => setForgotPassword(true)}
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    textAlign="center"
+                    mt={4}
                   >
-                    Glömt lösenord? Klicka här
-                  </Text>
+                    <Text
+                      as="span"
+                      color="blue.500"
+                      cursor="pointer"
+                      onClick={() => setForgotPassword(true)}
+                    >
+                      Glömt lösenord? Klicka här
+                    </Text>
+                  </Box>
                 </VStack>
               </form>
             ) : (
@@ -141,14 +149,22 @@ const Login = ({ isOpen, onClose }) => {
                 <Button colorScheme="brand" width="full" onClick={handlePasswordReset}>
                   Skicka återställningslänk
                 </Button>
-                <Text
-                  as="span"
-                  color="blue.500"
-                  cursor="pointer"
-                  onClick={() => setForgotPassword(false)}
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  textAlign="center"
+                  mt={4}
                 >
-                  Tillbaka till inloggning
-                </Text>
+                  <Text
+                    as="span"
+                    color="blue.500"
+                    cursor="pointer"
+                    onClick={() => setForgotPassword(false)}
+                  >
+                    Tillbaka till inloggning
+                  </Text>
+                </Box>
               </VStack>
             )}
           </Box>
