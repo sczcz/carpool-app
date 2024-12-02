@@ -12,6 +12,7 @@ import Profile from './components/Profile'; // Import your profile page
 import Footer from './components/Footer'; // Import the Footer component
 import Error404 from './components/Error404'; // Import the 404 error page
 import Error500 from './components/Error500'; // Import the 500 error page
+import Information from './components/Information'; // Import the GDPR/Cookie information component
 import { Box } from '@chakra-ui/react';
 
 function App() {
@@ -34,7 +35,6 @@ const AppContent = () => {
   if (!isInitialized || loading) {
     return <div>Laddar...</div>;
   }
-  
 
   return (
     <Router>
@@ -50,10 +50,11 @@ const AppContent = () => {
             <Route path="/FetchUsers" element={<FetchUsers />} />
             <Route path="/TestSession" element={<TestSession />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/information" element={<Information />} /> {/* GDPR/Cookie page */}
 
             {/* Error Pages */}
             <Route path="/500" element={<Error500 />} />
-            <Route path="*" element={<Error404 />} /> {/* Fångar upp alla 404 */}
+            <Route path="*" element={<Error404 />} /> {/* Catch-all for 404 */}
           </Routes>
         </Box>
         <Footer />
