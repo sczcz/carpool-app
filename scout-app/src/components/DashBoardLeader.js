@@ -136,7 +136,7 @@ const Dashboard = ({ token }) => {
       );
 
       toast({
-        title: `Aktiviteten har nu blivit ${isVisible ? 'synlig' : 'dold'}.`,
+        title: `Aktiviteten har nu blivit ${!isVisible ? 'synlig' : 'dold'}.`,
         status: 'success',
         duration: 3000,
         isClosable: true,
