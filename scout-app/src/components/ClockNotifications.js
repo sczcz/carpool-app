@@ -62,11 +62,18 @@ const ClockNotifications = ({ isScrolled }) => {
       setUnreadCount((prevCount) => prevCount + 1);
     };
 
-    socket.on('notification', handleNotification);
-
-    return () => {
-      socket.off('notification', handleNotification);
+    // Uppdatera notiser vid ändringar från backend
+    const updateNotifications = () => {
+      loadNotifications();
     };
+
+    socket.on('notification', handleNotification);
+    socket.on('update_notifications', updateNotifications);
+
+  return () => {
+    socket.off('notification', handleNotification);
+    socket.off('update_notifications', updateNotifications);
+  };
   }, [userId]);
 
   const markNotificationsForCarpoolAsRead = async (carpoolId) => {

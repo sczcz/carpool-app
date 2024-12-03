@@ -43,6 +43,8 @@ def get_notifications(current_user):
 
 
 
+from flask_socketio import emit
+
 # Mark notifications for a carpool as read
 @notifications_bp.route('/api/notifications/mark-read', methods=['POST'])
 @token_required
@@ -70,6 +72,9 @@ def mark_notifications_as_read(current_user):
 
             delete_read_notifications(current_user.user_id, carpool_id)
 
+            # Skicka socket-event till frontend för att uppdatera notiser
+            emit('update_notifications', {'message': 'Notifications updated'}, room=f"user_{current_user.user_id}", namespace='/')
+
             return jsonify({"message": f"All notifications for carpool {carpool_id} marked as read"}), 200
 
         # Logga om inga notifikationer hittades
@@ -78,6 +83,7 @@ def mark_notifications_as_read(current_user):
     except Exception as e:
         print(f"Error processing request: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
     
     
 def delete_read_notifications(user_id, carpool_id=None):
