@@ -11,14 +11,26 @@ import {
 import { format, isSameDay } from 'date-fns';
 import socket from '../utils/socket';
 
-
 function CarpoolChat({ carpoolId, userName, userId }) {
-  const [messages, setMessages] = useState([]);
+  const [allMessages, setAllMessages] = useState([]); // Alla meddelanden
+  const [visibleMessages, setVisibleMessages] = useState([]); // Synliga meddelanden
   const [messageContent, setMessageContent] = useState('');
-  const messagesEndRef = useRef(null);
+  const [messagesToShow, setMessagesToShow] = useState(10); // Antal meddelanden att visa initialt
+  const [hasMoreMessages, setHasMoreMessages] = useState(true); // Om det finns fler att ladda
+  const messagesContainerRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  const maintainScrollPosition = (prevScrollHeight) => {
+    if (messagesContainerRef.current) {
+      const currentScrollHeight = messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollTop + (currentScrollHeight - prevScrollHeight);
+    }
   };
 
   useEffect(() => {
@@ -35,7 +47,11 @@ function CarpoolChat({ carpoolId, userName, userId }) {
         });
         if (response.ok) {
           const data = await response.json();
-          setMessages(data);
+          const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // Äldsta först
+          setAllMessages(sortedData);
+          setVisibleMessages(sortedData.slice(-messagesToShow)); // Visa senaste
+          setHasMoreMessages(sortedData.length > messagesToShow);
+          scrollToBottom(); // Scrolla till botten vid inladdning
         } else {
           console.error('Misslyckades med att hämta meddelanden');
         }
@@ -43,12 +59,15 @@ function CarpoolChat({ carpoolId, userName, userId }) {
         console.error('Error vid hämtning av meddelanden:', error);
       }
     };
+
     fetchMessages();
 
     socket.emit('join_carpool', { carpool_id: parseInt(carpoolId), user_id: userId });
     socket.on('new_message', (data) => {
       if (data.carpool_id === parseInt(carpoolId)) {
-        setMessages((prevMessages) => [...prevMessages, data.message]);
+        setAllMessages((prevMessages) => [...prevMessages, data.message]);
+        setVisibleMessages((prevVisible) => [...prevVisible, data.message]);
+        setTimeout(scrollToBottom, 0); // Scrolla till botten vid nytt meddelande
       }
     });
 
@@ -58,13 +77,22 @@ function CarpoolChat({ carpoolId, userName, userId }) {
     };
   }, [carpoolId, userId]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const handleScroll = () => {
+    if (messagesContainerRef.current.scrollTop === 0 && hasMoreMessages) {
+      const prevScrollHeight = messagesContainerRef.current.scrollHeight; // Behåll scrollhöjden
+      const newMessagesToShow = messagesToShow + 10;
+      const newVisibleMessages = allMessages.slice(-newMessagesToShow);
+
+      setMessagesToShow(newMessagesToShow);
+      setVisibleMessages(newVisibleMessages);
+      setHasMoreMessages(allMessages.length > newMessagesToShow);
+      setTimeout(() => maintainScrollPosition(prevScrollHeight), 0); // Behåll positionen efter uppdatering
+    }
+  };
 
   const sendMessage = () => {
     if (userId && messageContent.trim()) {
-      socket.emit("send_message", {
+      socket.emit('send_message', {
         carpool_id: parseInt(carpoolId),
         content: messageContent,
         sender_id: userId,
@@ -77,6 +105,7 @@ function CarpoolChat({ carpoolId, userName, userId }) {
   return (
     <Flex direction="column" maxW="800px" h="600px" bg="gray.100" p={4} borderRadius="md" boxShadow="lg">
       <VStack
+        ref={messagesContainerRef}
         spacing={4}
         align="stretch"
         flex={1}
@@ -84,17 +113,19 @@ function CarpoolChat({ carpoolId, userName, userId }) {
         p={4}
         bg="white"
         borderRadius="md"
+        onScroll={handleScroll}
         sx={{
           '&::-webkit-scrollbar': { display: 'none' },
           '-ms-overflow-style': 'none',
           'scrollbar-width': 'none',
         }}
       >
-        {messages.length === 0 ? (
+        {visibleMessages.length === 0 ? (
           <Text>Inga meddelanden ännu</Text>
         ) : (
-          messages.map((msg, index) => {
-            const showDateSeparator = index === 0 || !isSameDay(new Date(msg.timestamp), new Date(messages[index - 1].timestamp));
+          visibleMessages.map((msg, index) => {
+            const showDateSeparator =
+              index === 0 || !isSameDay(new Date(msg.timestamp), new Date(visibleMessages[index - 1]?.timestamp));
             return (
               <div key={`${msg.id}-${msg.timestamp}`}>
                 {showDateSeparator && (
@@ -122,7 +153,6 @@ function CarpoolChat({ carpoolId, userName, userId }) {
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </VStack>
       <HStack mt={4} p={2}>
         <Input
