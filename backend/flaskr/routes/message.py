@@ -9,9 +9,62 @@ from routes.carpool import Carpool, Passenger
 from datetime import datetime
 from dateutil import tz
 from models.activity_model import Activity
+from flask_mail import Message
+from extensions import mail
 
 message_bp = Blueprint('message_bp', __name__)
 active_users = {}
+message_counts = {}
+
+def send_carpool_notification_email(carpool_id):
+    print(f"send_carpool_notification_email called for carpool_id: {carpool_id}")
+    
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        print(f"Carpool {carpool_id} not found.")
+        return
+
+    # Hämta tiden för det första av de senaste 10 meddelandena
+    first_message = (
+        db.session.query(CarpoolMessage)
+        .filter_by(carpool_id=carpool_id)
+        .order_by(CarpoolMessage.timestamp.desc())
+        .offset(9)
+        .first()
+    )
+    if not first_message:
+        print("Not enough messages to trigger notification.")
+        return
+
+    first_message_time = first_message.timestamp
+    recipients = []
+
+    # Loopa genom passagerarna och hitta deras föräldrar
+    for passenger in carpool.passengers:
+        parent_links = ParentChildLink.query.filter_by(child_id=passenger.child_id).all()
+        for link in parent_links:
+            parent = User.query.get(link.user_id)
+            if parent and parent.email:
+                # Kontrollera om föräldern inte varit inloggad sedan första meddelandet
+                if not parent.last_logged_in or parent.last_logged_in < first_message_time:
+                    print(f"Adding parent recipient: {parent.email}")
+                    recipients.append(parent.email)
+
+    if not recipients:
+        print(f"No recipients found for carpool {carpool_id} who match the criteria.")
+        return
+
+    # Konstruera och skicka mailet
+    try:
+        with mail.connect() as conn:
+            subject = f"Ny aktivitet i carpool {carpool_id}"
+            body = f"Din carpool-chat har fått 10 nya meddelanden. Logga in för att läsa dem!"
+            msg = Message(subject=subject, recipients=recipients, body=body, sender="noreply@carpoolapp.com")
+            conn.send(msg)
+        print(f"Email sent to recipients: {recipients}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
 
 def create_notification(user_id, carpool_id, message, message_id=None):
     """Creates a notification for a user about a carpool message."""
@@ -236,6 +289,16 @@ def handle_send_message(data):
     
     db.session.add(message)
     db.session.commit()
+
+            # Increment message count for this specific carpool
+    if carpool_id not in message_counts:
+        message_counts[carpool_id] = 0
+    message_counts[carpool_id] += 1
+    # Check if this carpool chat has reached 10 new messages
+    if message_counts[carpool_id] == 10:
+        print(f"10 messages reached for carpool {carpool_id}. Sending notification email.")
+        send_carpool_notification_email(carpool_id)
+        message_counts[carpool_id] = 0  # Reset the counter for this carpool
 
     # Skicka meddelandet till alla anslutna klienter i rummet
     emit('new_message', {

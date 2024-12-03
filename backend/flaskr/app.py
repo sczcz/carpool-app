@@ -1,18 +1,23 @@
 from flask import Flask, render_template, jsonify
 from flask_cors import CORS
+from flask_mail import Mail
+from dotenv import load_dotenv
 from routes.auth import auth_bp
 from routes.user_handler import user_handler
 import os
-from extensions import db, socketio
+from extensions import db, socketio, init_mail
 from models.auth_model import User
 from routes.activity import activity_bp
 from routes.carpool import carpool_bp
 from routes.message import message_bp
 from routes.admin import admin_bp
 from routes.notifications import notifications_bp
+from routes.mail import mail_bp
 from test_data import add_test_data
 from seed_roles import seed_roles
 from seed_admin import seed_admin
+
+load_dotenv()
 
 
 app = Flask(__name__)
@@ -24,6 +29,8 @@ CORS(app, supports_credentials=True, resources={r"/api/*": {
     "methods": ["GET", "POST", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
 }})
+
+init_mail(app)
 
 # Database setup
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -58,6 +65,7 @@ app.register_blueprint(carpool_bp)
 app.register_blueprint(message_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(mail_bp)
 
 # Route for rendering index.html
 @app.route('/')
