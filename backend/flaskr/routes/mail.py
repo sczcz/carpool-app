@@ -29,7 +29,7 @@ def reset_password():
 
     # Send email
     msg = Message(
-        subject='Password Reset Request',
+        subject='Återställning av lösenord',
         sender=current_app.config['MAIL_USERNAME'],
         recipients=[email]
     )
@@ -44,6 +44,14 @@ def reset_password():
     Tack,
     Alltid Redo-supporten
     """
+    msg.html = f"""
+    <p>Hej {user.first_name},</p>
+    <p>Följ länken nedan för att återställa ditt lösenord:</p>
+    <p><a href="{reset_link}" style="color:blue;">Återställ lösenord</a></p>
+    <p>Om du inte efterfrågat en återställning av lösenord kan du ignorera detta.</p>
+    <p>Tack,<br>Alltid Redo-supporten</p>
+    """
+
     try:
         mail.send(msg)
         return jsonify({'message': 'Password reset email sent successfully'}), 200
