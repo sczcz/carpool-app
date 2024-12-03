@@ -298,7 +298,7 @@ const Profile = () => {
   
     if (childToRemove && childToRemove.childId) {
       // Confirm before deleting
-      if (window.confirm(`Are you sure you want to delete ${childToRemove.firstName} ${childToRemove.lastName}?`)) {
+      if (window.confirm(`Är du säker på att du vill ta bort ${childToRemove.firstName} ${childToRemove.lastName}?`)) {
         // Call the delete API
         await deleteChild(childToRemove.childId);
   
@@ -306,7 +306,7 @@ const Profile = () => {
         setChildren(children.filter((_, i) => i !== index));
       }
     } else {
-      alert("Failed to identify child for deletion.");
+      alert("Det gick inte att identifiera barnet för borttagning.");
     }
   };
   
@@ -324,14 +324,14 @@ const Profile = () => {
   
       if (response.ok) {
         const data = await response.json();
-        alert(`Success: ${data.message}`);
+        alert(`Lyckades: ${data.message}`);
       } else {
         const error = await response.json();
-        alert(`Error: ${error.message || 'Failed to delete child'}`);
+        alert(`Error: ${error.message || 'Det gick inte att ta bort barnet'}`);
       }
     } catch (error) {
       console.error('Error deleting child:', error);
-      alert('An error occurred while trying to delete the child.');
+      alert('Ett fel inträffade vid försök att ta bort barnet.');
     }
   };
   
@@ -346,20 +346,20 @@ const Profile = () => {
   };
 
   const handleRemoveCar = async (carId) => {
-    if (window.confirm('Are you sure you want to delete this car?')) {
+    if (window.confirm('Är du säker på att du vill ta bort den här bilen?')) {
       try {
         const response = await fetch(`/api/protected/delete-car/${carId}`, {
           method: 'DELETE',
           credentials: 'include',
         });
         if (response.ok) {
-          alert('Car deleted successfully!');
+          alert('Bilen har tagits bort!');
           fetchCars(); // Refresh car list after deletion
         } else {
-          console.error('Failed to delete car');
+          console.error('Misslyckades med att ta bort bilen');
         }
       } catch (error) {
-        console.error('Error deleting car:', error);
+        console.error('Fel vid borttagning av bil:', error);
       }
     }
   };
@@ -421,13 +421,13 @@ const Profile = () => {
         alignSelf="center" // Align buttons at the top of the user info
       >
         <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
-          Lägg till Barn
+          Lägg till barn
         </Button>
         <Button colorScheme="brand" onClick={() => setNewInfoOpen(true)}>
           Redigera profil
         </Button>
         <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
-          Lägg till Bil
+          Lägg till bil
         </Button>
       </HStack>
     </Flex>

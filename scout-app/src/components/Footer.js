@@ -7,7 +7,7 @@ import {
   useColorModeValue,
   Image,
   Link,
-} from '@chakra-ui/react'
+} from '@chakra-ui/react';
 import LilyBlueIcon from '../assets/lily-blue.svg'; // Import your new SVG
 
 export default function Footer() {
@@ -39,11 +39,11 @@ export default function Footer() {
         
         <Stack direction="row" spacing={8} justifyContent="center">
           <Link href="/">Hem</Link>
-          <Link href="/about">Om oss</Link>
-          <Link href="/services">Services</Link>
-          <Link href="/contact">Kontakt</Link>
+          <Link href="https://jonstorp.scout.se/" isExternal>Jonstorps Kustscoutkår</Link> {/* Updated link */}
+          <Link href="https://www.scouterna.se/" isExternal>Scouterna</Link> {/* Updated link */}
+          <Link href="/information">Integritetspolicy</Link> {/* Link to GDPR page */}
         </Stack>
       </Container>
     </Box>
-  )
+  );
 }

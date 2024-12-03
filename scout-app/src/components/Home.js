@@ -71,7 +71,7 @@ const Home = () => {
                 _hover={{ bg: 'brand.600' }}
                 onClick={onLoginOpen}
               >
-                Login
+                Logga in
               </Button>
               <Button
                 colorScheme="gray"

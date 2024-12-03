@@ -11,6 +11,9 @@ import DashBoardParent from './components/DashBoardParent';
 import Profile from './components/Profile'; 
 import Footer from './components/Footer';
 import ResetPassword from './components/ResetPassword';
+import Error404 from './components/Error404';
+import Error500 from './components/Error500';
+import Information from './components/Information';
 import { Box } from '@chakra-ui/react';
 
 function App() {
@@ -40,6 +43,7 @@ const AppContent = () => {
         <Navbar />
         <Box flex="1" as="main">
           <Routes>
+            {/* Main Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/dashboard-parent" element={<DashBoardParent />} />
             <Route path="/dashboard-leader" element={<DashBoardLeader />} />
@@ -48,6 +52,9 @@ const AppContent = () => {
             <Route path="/TestSession" element={<TestSession />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/information" element={<Information />} />
+            <Route path="/500" element={<Error500 />} />
+            <Route path="*" element={<Error404 />} />
           </Routes>
         </Box>
         <Footer />
