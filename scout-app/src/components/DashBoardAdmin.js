@@ -228,7 +228,7 @@ const DashBoardAdmin = () => {
       </Text>
       
       <Text mb={2}>
-        Du har även möjlighet att befordra användare till adminstatus eller ta bort dem från plattformen.
+        Du har även möjlighet att befordra Ledare till adminstatus eller ta bort dem från plattformen.
       </Text>
       
       <Text>

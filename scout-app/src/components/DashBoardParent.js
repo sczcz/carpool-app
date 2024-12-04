@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { InfoIcon } from '@chakra-ui/icons';
-import { FaTrash, FaCarSide, FaArrowRight, FaArrowLeft, FaArrowsAltH } from 'react-icons/fa';
+import { FaTrash, FaCarSide} from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -607,8 +607,8 @@ const handleLoadMore = () => {
                     <Box mt={2} maxHeight="250px" overflowY="auto">
                       <VStack spacing={4}>
                         <Button
-                          leftIcon={<FaPlus />}
-                          rightIcon={<FaCarSide/>}
+                          rightIcon={<FaPlus />}
+                          leftIcon={<FaCarSide/>}
                           colorScheme="brand"
                           size="sm"
                         onClick={(e) => {
@@ -831,7 +831,8 @@ const handleLoadMore = () => {
                     <Box mt={2} maxHeight="250px" overflowY="auto">
                       <VStack spacing={4}>
                         <Button
-                          leftIcon={<FaPlus />}
+                         rightIcon={<FaPlus />}
+                         leftIcon={<FaCarSide/>}
                           colorScheme="brand"
                           size="sm"
                         onClick={(e) => {
