@@ -24,55 +24,44 @@ import { useUser } from '../utils/UserContext';
 import CarpoolChat from './CarpoolChat';
 
 const ClockNotifications = ({ isScrolled }) => {
-  const [notifications, setNotifications] = useState([]); // Alla notiser
-  const [unreadCount, setUnreadCount] = useState(0); // Antal olästa notiser
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0); 
   const { userId, fullName } = useUser();
   const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
-
   const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure();
+
+
+  const loadNotifications = async () => {
+    try {
+      const { notifications: fetchedNotifications, unreadCount: fetchedUnreadCount } =
+        await fetchNotifications();
+
+      setNotifications(fetchedNotifications);
+      setUnreadCount(fetchedUnreadCount);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
-
-    // Anslut till användarens socket-kanal
     socket.emit('join_user', { user_id: userId });
-
-    // Ladda notiser från backend
-    const loadNotifications = async () => {
-      try {
-        const { notifications: fetchedNotifications, unreadCount: fetchedUnreadCount } =
-          await fetchNotifications();
-
-        // Uppdatera state med alla notiser
-        setNotifications(fetchedNotifications);
-    
-        setUnreadCount(fetchedUnreadCount);
-      } catch (error) {
-        console.error('Error loading notifications:', error);
-      }
-    };
-
     loadNotifications();
 
-    // Hantera inkommande realtidsnotiser
     const handleNotification = (notification) => {
 
-      // Lägg till den nya notisen och uppdatera state
       setNotifications((prevNotifications) => [notification, ...prevNotifications]);
       setUnreadCount((prevCount) => prevCount + 1);
     };
 
-    // Uppdatera notiser vid ändringar från backend
     const updateNotifications = () => {
       loadNotifications();
     };
 
     socket.on('notification', handleNotification);
-    socket.on('update_notifications', updateNotifications);
 
   return () => {
     socket.off('notification', handleNotification);
-    socket.off('update_notifications', updateNotifications);
   };
   }, [userId]);
 
@@ -87,44 +76,24 @@ const ClockNotifications = ({ isScrolled }) => {
         body: JSON.stringify({ carpool_id: carpoolId }),
       });
   
-      const result = await response.json();
-  
       if (response.ok) {
-  
-        setNotifications((prevNotifications) =>
-          prevNotifications.map((notification) =>
-            notification.carpool_details?.carpool_id === carpoolId
-              ? { ...notification, is_read: true }
-              : notification
-          )
-        );
-  
-        setUnreadCount((prevCount) =>
-          Math.max(
-            prevCount -
-              notifications.filter(
-                (n) => n.carpool_details?.carpool_id === carpoolId && !n.is_read
-              ).length,
-            0
-          )
-        );
+        await loadNotifications(); // Anropa loadNotifications för att uppdatera state
       } else {
-        console.error('Misslyckades att markera som läst:', result);
+        console.error('Misslyckades att markera som lästa:', await response.json());
       }
     } catch (error) {
-      console.error('Fel vid markering av notiser som lästa:', error);
+      console.error('Fel vid markering av notifikationer som lästa:', error);
     }
   };
   
-
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = async (notification) => {
     const carpoolId = notification.carpool_details?.carpool_id;
     if (carpoolId) {
+      await markNotificationsForCarpoolAsRead(carpoolId);
       setSelectedCarpoolId(carpoolId);
       onChatOpen();
-      markNotificationsForCarpoolAsRead(carpoolId);
     }
-  };
+  };  
 
   // Gruppar notiser för visning
   const groupedNotifications = notifications

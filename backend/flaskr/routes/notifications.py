@@ -43,8 +43,6 @@ def get_notifications(current_user):
     return jsonify({"notifications": notifications_data, "unreadCount": unread_count}), 200
 
 
-
-
 # Mark notifications for a carpool as read
 @notifications_bp.route('/api/notifications/mark-read', methods=['POST'])
 @token_required
@@ -55,33 +53,24 @@ def mark_notifications_as_read(current_user):
         if not carpool_id:
             return jsonify({"error": "No carpool ID provided"}), 400
 
-        # Hitta alla notifikationer för det angivna carpool_id och användaren
         notifications = Notification.query.filter_by(
             carpool_id=carpool_id,
             user_id=current_user.user_id,
-            is_read=False  # Endast olästa notifikationer
+            is_read=False
         ).all()
 
         if notifications:
-            # Markera alla notifikationer som lästa
             for notification in notifications:
                 notification.is_read = True
             db.session.commit()
 
             delete_read_notifications(current_user.user_id, carpool_id)
-
-            # Skicka socket-event till frontend för att uppdatera notiser
-            emit('update_notifications', {'message': 'Notifications updated'}, room=f"user_{current_user.user_id}", namespace='/')
-
             return jsonify({"message": f"All notifications for carpool {carpool_id} marked as read"}), 200
 
-        # Logga om inga notifikationer hittades
-        return jsonify({"message": "No unread notifications found"}), 200
+        return jsonify({"message": "No unread notifications to mark as read"}), 200
     except Exception as e:
-        print(f"Error processing request: {str(e)}")
+        print(f"Internal Server Error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
-    
     
 def delete_read_notifications(user_id, carpool_id=None):
     #Local helper function
