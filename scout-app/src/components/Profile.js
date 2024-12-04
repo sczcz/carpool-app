@@ -692,4 +692,32 @@ const Profile = () => {
             <FormLabel>Stad</FormLabel>
             <Input
               value={city}
-  
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Skriv in stad"
+              isRequired // Accessibility enhancement
+            />
+          </FormControl>
+        </Box>
+      </Flex>
+    </ModalBody>
+    <ModalFooter>
+      <Button colorScheme="brand" onClick={handleSaveNewInfo}>
+        Spara
+      </Button>
+      <Button ml={3} onClick={() => setNewInfoOpen(false)}>
+        Avbryt
+      </Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+      {/* AddCarModal */}
+      <AddCarModal
+        isOpen={isAddCarOpen}
+        onClose={() => setAddCarOpen(false)}
+        onCarAdded={handleCarAdded}
+      />
+    </Box>
+  );
+};
+
+export default Profile;
