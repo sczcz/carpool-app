@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { InfoIcon } from '@chakra-ui/icons';
 import {
   Box,
+  Tag,
+  TagLabel,
   Grid,
   GridItem,
   Text,
@@ -30,6 +32,16 @@ const Dashboard = ({ token }) => {
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
   const [selectedRole, setSelectedRole] = useState('Alla roller'); // Filtrering
   const toast = useToast();
+
+
+  const roleColors = {
+    tumlare: '#41a62a',
+    kutar: '#71c657',     
+    upptäckare: '#00a8e1', 
+    äventyrare: '#e95f13', 
+    utmanare: '#da005e',   
+    rover: '#e2e000',        
+  };
 
   // Hämta aktiviteter från API när komponenten laddas
   useEffect(() => {
@@ -267,7 +279,12 @@ const Dashboard = ({ token }) => {
               <>
               {filteredActivities.slice(0, visibleCount).map((activity) => (
                 <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="sm">
-                  <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary}</Text>
+                  <Flex>
+                    <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary}</Text>
+                    <Tag ml={4} size="lg" color={'white'} backgroundColor={roleColors[activity.scout_level] || 'gray.200'} >
+                      <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
+                      </Tag>
+                  </Flex>
                   <Text fontSize="md" color="brand.500">Plats: {activity.location}</Text>
                   <Text fontSize="md" color="brand.500">Datum: {new Date(activity.dtstart).toLocaleString()}</Text>
                   <Text fontSize="md" color="brand.400">
