@@ -186,7 +186,7 @@ const Navbar = () => {
         fontFamily="playfairFont" 
         as={Link}
         to="/"
-        ml={{base:'7' , md: '2'}}
+        ml={{base:'7' , sm: '2' , md: '2'}}
       >
         Jonstorps Kustscoutkår
       </Text>

@@ -424,7 +424,7 @@ const Profile = () => {
   mt={[4, 4, -2]} // Negative margin to move buttons up
   alignSelf="center" // Align buttons at the top of the user info
   direction={{ base: 'column', lg: 'row' }} 
-  pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
+  pr={{ base: 0, md: 20 , lg: '10' }} // Add padding-right 10 on tablet (md) and larger
 >
   <Button
     rightIcon={<FaPlus />}
