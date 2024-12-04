@@ -60,14 +60,33 @@ function CarpoolChat({ carpoolId, userName, userId }) {
       }
     };
 
+    const markNotificationsAsRead = async () => {
+      try {
+        const response = await fetch('/api/notifications/mark-read', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ carpool_id: carpoolId }), // Skickar carpool ID
+        });
+        if (!response.ok) {
+          console.error('Misslyckades med att markera notifikationer som lästa');
+        }
+      } catch (error) {
+        console.error('Error vid markering av notifikationer som lästa:', error);
+      }
+    };
+
     fetchMessages();
+    markNotificationsAsRead();
 
     socket.emit('join_carpool', { carpool_id: parseInt(carpoolId), user_id: userId });
     socket.on('new_message', (data) => {
       if (data.carpool_id === parseInt(carpoolId)) {
         setAllMessages((prevMessages) => [...prevMessages, data.message]);
         setVisibleMessages((prevVisible) => [...prevVisible, data.message]);
-        setTimeout(scrollToBottom, 0);
+        setTimeout(scrollToBottom, 0); // Scrolla till botten vid nytt meddelande
       }
     });
 
