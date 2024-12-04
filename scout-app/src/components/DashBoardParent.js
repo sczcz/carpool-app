@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FaCarSide, FaArrowRight, FaArrowLeft, FaArrowsAltH } from 'react-icons/fa';
+import { InfoIcon } from '@chakra-ui/icons';
+import { FaTrash, FaCarSide, FaArrowRight, FaArrowLeft, FaArrowsAltH } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -24,6 +25,9 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
+  IconButton, 
+  Popover, 
+  PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
 import { FaUserCircle, FaPlus } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
@@ -530,13 +534,15 @@ const handleLoadMore = () => {
 
           {/* Welcome message */}
           <Box mb={6}>
-            <Text fontSize="lg" color="brand.600">
-              Hej {fullName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
-            </Text>
+          <Text fontSize={{ base: 'md', lg: 'lg' }} color="brand.600">
+            Hej {fullName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
+          </Text>
           </Box>
+
 
           <Box mb={4}>
             <Button
+              fontSize={{ base: 'sm', lg: 'md' }}
               colorScheme={filterByRole ? 'gray' : 'gray'}
               onClick={() => setFilterByRole(!filterByRole)} // Endast uppdatera state här
             >
@@ -555,7 +561,33 @@ const handleLoadMore = () => {
             shadow="md" // Mjuk skugga
             borderWidth="0px" // Ta bort ramen
           >
-              <Heading as="h2" size="md" mb={4} color="gray.600">Mina aktiviteter</Heading>
+              <Box mb={8} display="flex" alignItems="center">
+              <Heading as="h2" size="md" mb={4} color="gray.700" mt={5} fontWeight="bold">
+              Mina aktiviteter              
+              </Heading>
+              <Popover>
+                <PopoverTrigger>
+                  <IconButton 
+                    icon={<InfoIcon />} 
+                    aria-label="More Info" 
+                    variant="unstyled" 
+                    fontSize={{ base: 'l' }} 
+                    _hover={{ color: "gray.700" }}
+                  />
+                </PopoverTrigger>
+                <PopoverContent>
+                  <PopoverArrow />
+                  <PopoverBody>
+                    <Text mb={2}>
+                    Här kan du se dina bokade samåkningar samt de samåkningar som du har skapat. 
+                    </Text>
+                    <Text>
+                    "Mina aktiviteter" visar både resor du ska delta i och de samåkningar där du erbjuder plats för andra.
+                    </Text>
+                  </PopoverBody>
+                </PopoverContent>
+              </Popover>
+            </Box>
               <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                 {activitiesForMyActivities.map((activity, index) => (
                   <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="gray.50">
@@ -629,14 +661,15 @@ const handleLoadMore = () => {
                               <Flex justify="flex-end" gap="2" mt="auto">
                                 {carpool.driver_id === userId && (
                                   <Button
-                                    colorScheme="red"
+                                  colorScheme="red"
+                                  variant="outline" // Use outline variant if you want a border
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDeleteCarpool(carpool.id, activity.activity_id);
                                     }}
                                   >
-                                    Ta bort
+                                  <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
                                   </Button>
                                 )}
 
@@ -712,15 +745,52 @@ const handleLoadMore = () => {
 
           {/* Upcoming activities */}
           <Box mb={8}>
-            <Heading as="h2" size="md" mb={4} color="brand.500" mt={5}>
-              Kommande aktiviteter
-            </Heading>
+            <Box mb={8} display="flex" alignItems="center">
+              <Heading as="h2" size="md" mb={4} color="gray.700" mt={5} fontWeight="bold">
+                Kommande aktiviteter
+              </Heading>
+              <Popover>
+                <PopoverTrigger>
+                <IconButton 
+                    icon={<InfoIcon />} 
+                    aria-label="More Info" 
+                    variant="unstyled" 
+                    fontSize={{ base: 'l' }} 
+                    _hover={{ color: "gray.700" }}
+                  />
+                </PopoverTrigger>
+                <PopoverContent>
+                  <PopoverArrow />
+                  <PopoverBody>
+                    Här kan du se detaljerad information om kommande aktiviteter och hur du kan boka.
+                  </PopoverBody>
+                </PopoverContent>
+              </Popover>
+            </Box>
 
             {/* Display a message if there are no activities */}
             {activities.length === 0 && (
               <VStack spacing={4}>
+                <Box mb={8} display="flex" alignItems="center">
                 <Text fontSize="lg" color="gray.500">Inga aktiviteter hittades. Lägg till barn</Text>
-                <Button colorScheme="blue" onClick={openAddChildModal}>
+                  <Popover>
+                    <PopoverTrigger>
+                    <IconButton 
+                    icon={<InfoIcon />} 
+                    aria-label="More Info" 
+                    variant="unstyled" 
+                    fontSize={{ base: 'l' }} 
+                    _hover={{ color: "gray.700" }}
+                  />
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <PopoverArrow />
+                      <PopoverBody>
+                      För att se dina barns aktiviteter måste du först lägga till dem. För att boka in dig själv, klicka på 'Visa alla aktiviteter'.                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
+                </Box>
+                <Button size="sm" rightIcon={<FaPlus />} colorScheme="brand" onClick={openAddChildModal}>
                   Lägg till barn
                 </Button>
               </VStack>
@@ -815,14 +885,15 @@ const handleLoadMore = () => {
                                 <Flex justify="flex-end" gap="2" mt="auto">
                                   {carpool.driver_id === userId && (
                                     <Button
-                                      colorScheme="red"
+                                    colorScheme="red"
+                                    variant="outline" // Use outline variant if you want a border
                                       size="sm"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleDeleteCarpool(carpool.id, activity.activity_id);
                                       }}
                                     >
-                                      Ta bort
+                                      <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
                                     </Button>
                                   )}
 

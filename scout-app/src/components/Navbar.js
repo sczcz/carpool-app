@@ -157,6 +157,12 @@ const Navbar = () => {
           fontSize: '22px',
           textDecoration: 'none', // Add to ensure no default underline unless desired
         }}
+        onMouseEnter={(e) => {
+          e.target.style.textDecoration = 'underline'; // Underline on hover
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.textDecoration = 'none'; // Remove underline on mouse leave
+        }}
       >
         Scouterna
       </a>
@@ -165,6 +171,7 @@ const Navbar = () => {
 
       {/* Dynamic Logo */}
       <Image
+        display={{ base: 'none', sm: 'flex' }} // Hide on mobile, show on tablet and larger screens
         src={isScrolled ? LilyWhiteIcon : LilyBlueIcon}
         alt="Jonstorps Kustscoutkår Logo"
         boxSize="1.5em"
@@ -179,7 +186,7 @@ const Navbar = () => {
         fontFamily="playfairFont" 
         as={Link}
         to="/"
-        ml="2"
+        ml={{base:'7' , md: '2'}}
       >
         Jonstorps Kustscoutkår
       </Text>

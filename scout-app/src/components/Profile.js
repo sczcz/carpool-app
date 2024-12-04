@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrash } from "react-icons/fa"; 
+import { FaTrash,FaPen, FaPlus } from "react-icons/fa"; 
 import AddChildModal from './AddChildModal';
 import AddCarModal from './AddCarModal';
 import { useUser } from '../utils/UserContext';
@@ -91,6 +91,7 @@ const Profile = () => {
 
   const fuelTypeColors = {
     Gas: 'yellow.400',
+    Diesel: 'red.800',
     Hybrid: 'orange.400',
     Electric: 'teal.400',
   };
@@ -394,6 +395,8 @@ const Profile = () => {
           bg="#043A63" // Background color when no image is provided
           color="white" // Text color for initials
           mr={[6, 6, 0]} // Add margin-right for smaller screens (4) and remove it for larger screens (0)
+          display={{ base: 'none', md: 'flex' }} // Hide on mobile, show on tablet and larger screens
+
         />
         <Stack spacing={1} ml={[0, 0, 4]} textAlign={['center', 'center', 'left']}>
           <Heading as="h2" size="lg" colorScheme="brand">
@@ -415,21 +418,50 @@ const Profile = () => {
       </Flex>
 
       {/* Buttons */}
-      <HStack 
-        spacing={4} 
-        mt={[4, 4, -2]} // Negative margin to move buttons up
-        alignSelf="center" // Align buttons at the top of the user info
-      >
-        <Button colorScheme="brand" onClick={() => setAddChildOpen(true)}>
-          Lägg till barn
-        </Button>
-        <Button colorScheme="brand" onClick={() => setNewInfoOpen(true)}>
-          Redigera profil
-        </Button>
-        <Button colorScheme="brand" onClick={() => setAddCarOpen(true)}>
-          Lägg till bil
-        </Button>
-      </HStack>
+      <Stack
+  fontSize={{ base: 'sm', lg: 'md' }} // Smaller text on mobile, medium on large screens
+  spacing={{ base: 2, lg: 4 }} // Smaller spacing on mobile, larger spacing on desktop
+  mt={[4, 4, -2]} // Negative margin to move buttons up
+  alignSelf="center" // Align buttons at the top of the user info
+  direction={{ base: 'column', lg: 'row' }} 
+  pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
+>
+  <Button
+    rightIcon={<FaPlus />}
+    colorScheme="brand"
+    variant="link" // No background
+    onClick={() => setAddChildOpen(true)}
+    _hover={{ textDecoration: 'underline' }} // Underline on hover
+    color="brand.500" // Set text color to brand.500
+  >
+    Lägg till barn
+  </Button>
+  <Button
+   rightIcon={<FaPen />}
+    colorScheme="brand"
+    variant="link" // No background
+    onClick={() => setNewInfoOpen(true)}
+    _hover={{ textDecoration: 'underline' }} // Underline on hover
+    color="brand.500" // Set text color to brand.500
+  >
+    Redigera profil
+  </Button>
+  <Button
+    rightIcon={<FaPlus />}
+    colorScheme="brand"
+    variant="link" // No background
+    onClick={() => setAddCarOpen(true)}
+    _hover={{ textDecoration: 'underline' }} // Underline on hover
+    color="brand.500" // Set text color to brand.500
+  >
+    Lägg till bil
+  </Button>
+</Stack>
+
+
+
+
+
     </Flex>
 
       {/* Children Section */}
@@ -565,7 +597,7 @@ const Profile = () => {
                     fontSize={{ base: "sm", sm: "md" }}
                     color="black"
                   >
-                    Fuel Type: {car.fuel_type || 'Unknown'}, Consumption: {car.consumption || 'N/A'} l/kWh
+                    Fuel Type: {car.fuel_type || 'Unknown'}
                   </Text>
 
                   {/* Button Section */}
@@ -660,32 +692,4 @@ const Profile = () => {
             <FormLabel>Stad</FormLabel>
             <Input
               value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="Skriv in stad"
-              isRequired // Accessibility enhancement
-            />
-          </FormControl>
-        </Box>
-      </Flex>
-    </ModalBody>
-    <ModalFooter>
-      <Button colorScheme="brand" onClick={handleSaveNewInfo}>
-        Spara
-      </Button>
-      <Button ml={3} onClick={() => setNewInfoOpen(false)}>
-        Avbryt
-      </Button>
-    </ModalFooter>
-  </ModalContent>
-</Modal>
-      {/* AddCarModal */}
-      <AddCarModal
-        isOpen={isAddCarOpen}
-        onClose={() => setAddCarOpen(false)}
-        onCarAdded={handleCarAdded}
-      />
-    </Box>
-  );
-};
-
-export default Profile;
+  

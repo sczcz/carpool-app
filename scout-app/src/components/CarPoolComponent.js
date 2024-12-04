@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { InfoIcon } from '@chakra-ui/icons';
 import {
   Box,
   Heading,
+  Text,
   VStack,
   Grid,
   GridItem,
@@ -15,6 +17,8 @@ import {
   useToast,
   Spinner,
   useBreakpointValue,
+  IconButton,
+  Popover, PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
 import AddCarModal from './AddCarModal'; // Import AddCarModal
 
@@ -169,9 +173,38 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
 
   return (
     <Box p={{ base: 2, md: 5 }}>
-      <Heading as="h3" size="lg" mb={4}>
-        Registrera ny samåkning
-      </Heading>
+      <Box mb={8} display="flex" alignItems="center">
+        <Heading as="h3" size="lg" >
+          Registrera ny samåkning
+        </Heading>
+          <Popover>
+            <PopoverTrigger>
+              <IconButton
+                icon={<InfoIcon />}
+                aria-label="More Info"
+                variant="unstyled"
+                fontSize={{ base: 'lg', md: 'xl', lg: 'xl' }}
+                color="gray.500"
+                ml={2}
+                _hover={{ color: "gray.700", cursor: 'pointer' }} // Apply hover effect
+              />
+            </PopoverTrigger>
+            <PopoverContent>
+              <PopoverArrow />
+              <PopoverBody>
+                <Text mb={2}>
+                Här kan du registrera en samåkning för att hjälpa andra och minska miljöpåverkan. 
+                </Text>
+                <Text mb={2}>
+                När du registrerar en samåkning, kan andra föräldrar se tillgängliga platser i din bil och boka sig för att åka med dig till aktiviteter.                </Text>
+                <Text>
+                Det är ett enkelt sätt att göra aktiviteter mer hållbara och minska trafiken.
+                </Text>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+      </Box>
+
 
       {loading ? (
         <Spinner />
@@ -282,7 +315,7 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
             </GridItem>
           </Grid>
           <Button
-            colorScheme="blue"
+            colorScheme="brand"
             onClick={handleCarRegistration}
             isLoading={loading}
             isDisabled={loading}

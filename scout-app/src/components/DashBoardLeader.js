@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { InfoIcon } from '@chakra-ui/icons';
 import {
   Box,
   Grid,
@@ -11,7 +12,10 @@ import {
   Collapse,
   Spinner,
   useToast,
-  Select
+  Select,
+  IconButton, 
+  Popover, 
+  PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import useRoleProtection from "../utils/useRoleProtection";
@@ -209,12 +213,43 @@ const Dashboard = ({ token }) => {
         width="100%"
         maxW="1200px"
       > 
-
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
-          <Box bg="brand.300" p={6} borderRadius="md" boxShadow="md">
-            <Heading as="h3" size="lg" mb={4} color="brand.600">
+            <Box mb={8} display="flex" alignItems="center">
+            <Heading as="h3" size="lg" color="brand.600">
               Aktiviteter
             </Heading>
+              <Popover>
+                <PopoverTrigger>
+                  <IconButton 
+                    icon={<InfoIcon />} 
+                    aria-label="More Info" 
+                    variant="unstyled" 
+                    fontSize={{ base: 'l' }} 
+                    _hover={{ color: "gray.700" }}
+                  />
+                </PopoverTrigger>
+                <PopoverContent border={'solid'}>
+                  <PopoverArrow />
+                  <PopoverBody>
+                    <Text mb={2}>
+                      Här kan du hantera aktiviteter som du är ansvarig för som ledare. 
+                    </Text>
+                    
+                    <Text mb={2}>
+                      Du kan ändra synligheten för aktiviteter så att de blir synliga eller dolda för användare.
+                    </Text>
+                    
+                    <Text mb={2}>
+                      För varje aktivitet kan du också se detaljerad information om samåkningarna, inklusive tillgängliga platser och passagerare.
+                    </Text>
+                    
+                    <Text>
+                      Dessutom kan du filtrera aktiviteter baserat på de roller du har tilldelats för att enkelt hantera specifika aktiviteter.
+                    </Text>
+                  </PopoverBody>
+                </PopoverContent>
+              </Popover>
+            </Box>
   
             {/* Rollfiltrering */}
             <Select placeholder="Välj roll" onChange={handleRoleChange} mb={6} value={selectedRole}>
@@ -317,12 +352,11 @@ const Dashboard = ({ token }) => {
   
                 {visibleCount < filteredActivities.length && (
                   <Button mt={6} onClick={loadMoreActivities} colorScheme="teal">
-                    Ladda fler
+                     Ladda fler ↓
                   </Button>
                 )}
               </>
             )}
-          </Box>
         </GridItem>
       </Grid>
     </Flex>

@@ -19,12 +19,11 @@ import {
 const AddCarModal = ({ isOpen, onClose, onCarAdded }) => {
   const [regNumber, setRegNumber] = useState('');
   const [fuelType, setFuelType] = useState('Gas');
-  const [consumption, setConsumption] = useState('');
   const [modelName, setModelName] = useState('');
   const toast = useToast();
 
   const handleAddCar = async () => {
-    if (regNumber && fuelType && consumption && modelName) {
+    if (regNumber && fuelType && modelName) {
       try {
         const response = await fetch('/api/protected/add-car', {
           method: 'POST',
@@ -35,7 +34,6 @@ const AddCarModal = ({ isOpen, onClose, onCarAdded }) => {
           body: JSON.stringify({
             reg_number: regNumber,
             fuel_type: fuelType,
-            consumption: consumption,
             model_name: modelName,
           }),
         });
@@ -50,14 +48,13 @@ const AddCarModal = ({ isOpen, onClose, onCarAdded }) => {
             duration: 5000,
             isClosable: true,
           });
-          const newCar = { reg_number: regNumber, model_name: modelName, fuel_type: fuelType, consumption };
+          const newCar = { reg_number: regNumber, model_name: modelName, fuel_type: fuelType };
             onCarAdded(newCar); // Pass new car to parent component
             onClose(); // Close the modal
 
           // Reset form fields
           setRegNumber('');
           setFuelType('Gas');
-          setConsumption('');
           setModelName('');
         } else {
           const error = await response.json();
@@ -119,23 +116,11 @@ const AddCarModal = ({ isOpen, onClose, onCarAdded }) => {
             </Select>
           </FormControl>
           <FormControl mt={4}>
-            <FormLabel>Konsumtion (L eller kWh)</FormLabel>
-            <Input
-              value={consumption}
-              onChange={(e) => setConsumption(e.target.value)}
-              placeholder="Ange bränslekonsumtion"
-              type="number"
-              step="0.1"
-              isRequired
-            />
-          </FormControl>
-          <FormControl mt={4}>
             <FormLabel>Modellnamn</FormLabel>
             <Input
               value={modelName}
               onChange={(e) => setModelName(e.target.value)}
               placeholder="Ange bilmodell"
-              isRequired
             />
           </FormControl>
         </ModalBody>

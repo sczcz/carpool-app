@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { InfoIcon } from '@chakra-ui/icons';
 import {
   Box,
   Heading,
@@ -12,6 +13,9 @@ import {
   CardFooter,
   useBreakpointValue,
   useToast,
+  IconButton, 
+  Popover, 
+  PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from "@chakra-ui/react";
 import { useUser } from "../utils/UserContext";
 import useRoleProtection from "../utils/useRoleProtection";
@@ -194,9 +198,47 @@ const DashBoardAdmin = () => {
   return (
     <Box p={[4, 6]}>
       {/* Page Heading */}
-      <Heading mb={[4, 8]} as="h1" size="xl" textAlign={["center", "left"]}>
-        Admin Dashboard
-      </Heading>
+      <Box mb={8} display="flex" alignItems="center">
+        <Heading  as="h1" size="xl" textAlign={["center", "left"]}>
+          Admin Dashboard
+        </Heading>
+        <Popover>
+  <PopoverTrigger>
+    <IconButton 
+      icon={<InfoIcon />} 
+      aria-label="Mer information" 
+      variant="unstyled" 
+      fontSize={{ base: 'l' }} 
+      _hover={{ color: "gray.700" }}
+    />
+  </PopoverTrigger>
+  <PopoverContent>
+    <PopoverArrow />
+    <PopoverBody>
+      <Text mb={2}>
+        Här kan du som administratör hantera användare och aktiviteter på plattformen.
+      </Text>
+      
+      <Text mb={2}>
+        Du kan godkänna eller ta bort användare som väntar på godkännande.
+      </Text>
+      
+      <Text mb={2}>
+        För varje användare kan du också visa detaljer som deras roller, senaste inloggning och deras kontaktuppgifter.
+      </Text>
+      
+      <Text mb={2}>
+        Du har även möjlighet att befordra användare till adminstatus eller ta bort dem från plattformen.
+      </Text>
+      
+      <Text>
+        På dashboarden kan du även filtrera användare baserat på deras roller för att enkelt hantera dem, samt visa och hantera de aktiviteter som du är ansvarig för.
+      </Text>
+    </PopoverBody>
+  </PopoverContent>
+</Popover>
+
+            </Box>
 
       {/* Pending User Approvals Section */}
       <Box mb={[6, 12]}>

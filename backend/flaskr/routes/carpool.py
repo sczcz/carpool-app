@@ -326,10 +326,9 @@ def add_car(current_user):
 
     reg_number = data.get('reg_number')
     fuel_type = data.get('fuel_type')
-    consumption = data.get('consumption')
     model_name = data.get('model_name')
 
-    if not all([reg_number, fuel_type, consumption, model_name]):
+    if not all([reg_number, fuel_type, model_name]):
         return jsonify({"error": "All fields are required!"}), 400
 
     # Create a new car
@@ -337,7 +336,6 @@ def add_car(current_user):
         owner_id=current_user.user_id,
         reg_number=reg_number,
         fuel_type=fuel_type,
-        consumption=consumption,
         model_name=model_name
     )
 
@@ -363,7 +361,6 @@ def get_user_cars(current_user):
             "car_id": car.car_id,
             "reg_number": car.reg_number,
             "fuel_type": car.fuel_type,
-            "consumption": car.consumption,
             "model_name": car.model_name,
         }
         for car in user_cars
