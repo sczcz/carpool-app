@@ -15,6 +15,7 @@ import {
   Text,
   useBreakpointValue,
   VStack,
+  useToast,
 } from '@chakra-ui/react';
 
 const apiURL = '/api/login';
@@ -26,6 +27,7 @@ const Login = ({ isOpen, onClose }) => {
   const [error, setError] = useState('');
   const [forgotPassword, setForgotPassword] = useState(false); 
   const [resetEmail, setResetEmail] = useState(''); 
+  const toast = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -74,7 +76,12 @@ const Login = ({ isOpen, onClose }) => {
       }
 
       setError('');
-      alert('Ett mail med återställningsinstruktioner har skickats!');
+      toast({
+        title: 'Ett mail med återställningsinstruktioner har skickats!',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
       setForgotPassword(false); // Återställ till login-läge
     } catch (err) {
       console.error('Fel vid återställning av lösenord:', err);
