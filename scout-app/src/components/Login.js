@@ -60,34 +60,43 @@ const Login = ({ isOpen, onClose }) => {
   };
 
   const handlePasswordReset = async () => {
-    try {
-      const resetResponse = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    toast.promise(
+      new Promise(async (resolve, reject) => {
+        try {
+          const resetResponse = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: resetEmail }),
+          });
+  
+          if (!resetResponse.ok) {
+            const errorData = await resetResponse.json();
+            reject(errorData.error || 'Fel vid återställning av lösenord.');
+            return;
+          }
+  
+          resolve('Ett mail med återställningsinstruktioner har skickats!');
+          setForgotPassword(false); // Återställ till login-läge
+        } catch (err) {
+          reject('Ett oväntat fel inträffade, försök igen.');
+        }
+      }),
+      {
+        success: {
+          title: "Lyckades",
+          description: "Ett mail med återställningsinstruktioner har skickats!",
         },
-        body: JSON.stringify({ email: resetEmail }),
-      });
-
-      if (!resetResponse.ok) {
-        const errorData = await resetResponse.json();
-        setError(errorData.error || 'Fel vid återställning av lösenord.');
-        return;
+        error: {
+          title: "Återställning misslyckades",
+          description: "Något gick fel",
+        },
+        loading: { title: "Bearbetar begäran...", description: "Var god vänta" },
       }
-
-      setError('');
-      toast({
-        title: 'Ett mail med återställningsinstruktioner har skickats!',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-      setForgotPassword(false); // Återställ till login-läge
-    } catch (err) {
-      console.error('Fel vid återställning av lösenord:', err);
-      setError('Ett oväntat fel inträffade, försök igen.');
-    }
+    );
   };
+  
 
   const modalSize = useBreakpointValue({ base: 'full', sm: 'md' });
 
