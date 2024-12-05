@@ -20,7 +20,7 @@ import {
   MenuList,
   MenuItem,
   Avatar,
-  Spacer,
+
 } from '@chakra-ui/react';
 import { HamburgerIcon } from '@chakra-ui/icons';
 import Login from './Login';  // Import the Login component
@@ -31,7 +31,7 @@ import ClockNotifications from './ClockNotifications'; // Importera ClockNotific
 import { useUser } from '../utils/UserContext';
 
 const Navbar = () => {
-  const { roles, isInitialized, clearUserData } = useUser(); // Hämta roll och inloggningsstatus
+  const { roles, isInitialized, clearUserData, userId } = useUser(); // Hämta roll och inloggningsstatus
   const { isOpen, onOpen, onClose } = useDisclosure();  // Hook to control the drawer
   const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure(); // Hook for login modal
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
@@ -192,10 +192,10 @@ const Navbar = () => {
       </Text>
     </Flex>
 
-      {/* Buttons and Profile Menu */}
-      <Flex alignItems="center" justifyContent="space-between">
+    {/* Buttons and Profile Menu */}
+    <Flex alignItems="center" justifyContent="space-between">
         {/* Navigation Links */}
-        <Flex gap={4} display={{ base: 'none', lg: 'flex' }}>
+      <Flex gap={4} display={{ base: 'none', lg: 'flex' }}>
         {links.map(({ to, label }) => (
           <Button
             key={to}
@@ -218,33 +218,25 @@ const Navbar = () => {
         ))}
       </Flex>
 
-        {/* Klocka och notiser*/}
-      
-      <ClockNotifications isScrolled={isScrolled} />
-          
+        {/* Klocka och notiser */}
+        {userId ? <ClockNotifications isScrolled={isScrolled} /> : null}
 
         {/* Profilmeny */}
-        <Menu>
-          <MenuButton as={Button} variant="link" colorScheme="brand">
-            <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" />
-          </MenuButton>
-          <MenuList>
-            <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem> 
-            <MenuItem color="brand.500" onClick={onLoginOpen}>
-              Logga in
-            </MenuItem>
-            <MenuItem color="brand.500" onClick={onRegisterOpen}>
-              Registrera
-            </MenuItem>
-            <MenuItem color="brand.500" onClick={handleLogout}>
-              Logga ut
-            </MenuItem>          
-          </MenuList>
-        </Menu>
+        {userId ? (
+          <Menu>
+            <MenuButton as={Button} variant="link" colorScheme="brand">
+              <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" />
+            </MenuButton>
+            <MenuList>
+              <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem>
+              <MenuItem color="brand.500" onClick={handleLogout}>
+                Logga ut
+              </MenuItem>          
+            </MenuList>
+          </Menu>
+        ) : null}
       </Flex>
     </Flex>
-
-
 
       {/* Drawer for Mobile and Tablet */}
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
