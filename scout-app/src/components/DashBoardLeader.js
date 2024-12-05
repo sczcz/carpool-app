@@ -278,9 +278,9 @@ const Dashboard = ({ token }) => {
             ) : (
               <>
               {filteredActivities.slice(0, visibleCount).map((activity) => (
-                <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="sm">
+                <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="lg">
                   <Flex>
-                    <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary}</Text>
+                    <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary.split('//')[0].trim()}</Text>
                     <Tag ml={4} size="lg" color={'white'} backgroundColor={roleColors[activity.scout_level] || 'gray.200'} >
                       <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
                       </Tag>

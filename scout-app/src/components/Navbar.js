@@ -20,7 +20,7 @@ import {
   MenuList,
   MenuItem,
   Avatar,
-
+  Spacer,
 } from '@chakra-ui/react';
 import { HamburgerIcon } from '@chakra-ui/icons';
 import Login from './Login';  // Import the Login component
@@ -140,57 +140,62 @@ const Navbar = () => {
         borderRadius="md"
       />
 
-    <Flex alignItems="center" flexGrow={1} justifyContent={{ base: 'center', md: 'center', lg: 'flex-start' }}>
-      {/* Scouterna Link */}
-      <Flex
-        gap={4} // Consistent spacing between Scouterna and other elements
-        display={{  base: 'none', lg: 'flex' }} // Hidden on mobile and tablet
+    <Flex
+        alignItems="center"
+        justifyContent="center" // Centrera innehållet horisontellt
+        width="100%" // Gör så att Flex fyller hela navbarens bredd
       >
-      <a
-        href="https://www.scouterna.se"
-        target="_blank"
-        rel="noopener noreferrer"
-        color={isScrolled ? 'white' : 'brand.500'}
-        style={{
-          fontWeight: 'bold',
-          fontFamily: "'Playfair Display', serif",
-          fontSize: '22px',
-          textDecoration: 'none', // Add to ensure no default underline unless desired
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.textDecoration = 'underline'; // Underline on hover
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.textDecoration = 'none'; // Remove underline on mouse leave
-        }}
-      >
-        Scouterna
-      </a>
+        {/* Scouterna Link */}
+        <Flex
+          gap={4} // Konsistent mellanrum mellan element
+          display={{ base: 'none', lg: 'flex' }} // Dölj på mobiler och tablets
+          alignItems="center"
+        >
+          <a
+            href="https://www.scouterna.se"
+            target="_blank"
+            rel="noopener noreferrer"
+            color= {isScrolled ? 'white' : 'brand.500'}
+            style={{
+              fontWeight: 'bold',
+              fontFamily: "'Playfair Display', serif",
+              fontSize: '22px',
+              textDecoration: 'none', // Ta bort understrykning
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.textDecoration = 'underline'; // Understryk vid hover
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.textDecoration = 'none'; // Ta bort understrykning
+            }}
+          >
+            Scouterna
+          </a>
+        </Flex>
 
+        {/* Dynamic Logo */}
+        <Image
+          display={{ base: 'none', sm: 'flex' }} // Dölj på mobiler
+          src={isScrolled ? LilyWhiteIcon : LilyBlueIcon}
+          alt="Jonstorps Kustscoutkår Logo"
+          boxSize="1.5em"
+          ml={2} // Minimal marginal efter loggan
+        />
+
+        {/* Title */}
+        <Text
+          fontSize={{ base: 'xl', sm: '2xl', md: '3xl', lg: '3xl' }}
+          fontWeight="extrabold"
+          color={isScrolled ? 'white' : 'brand.500'}
+          fontFamily="playfairFont"
+          as={Link}
+          to="/"
+          ml={{ base: '7', sm: '2', md: '2' }}
+        >
+          Jonstorps Kustscoutkår
+        </Text>
       </Flex>
 
-      {/* Dynamic Logo */}
-      <Image
-        display={{ base: 'none', sm: 'flex' }} // Hide on mobile, show on tablet and larger screens
-        src={isScrolled ? LilyWhiteIcon : LilyBlueIcon}
-        alt="Jonstorps Kustscoutkår Logo"
-        boxSize="1.5em"
-        ml={2} // Minimal margin after the logo
-      />
-
-      {/* Title */}
-      <Text
-        fontSize={{ base: 'xl', sm: '2xl', md: '3xl', lg: '3xl', }}
-        fontWeight="extrabold"
-        color={isScrolled ? 'white' : 'brand.500'}
-        fontFamily="playfairFont" 
-        as={Link}
-        to="/"
-        ml={{base:'7' , sm: '2' , md: '2'}}
-      >
-        Jonstorps Kustscoutkår
-      </Text>
-    </Flex>
 
     {/* Buttons and Profile Menu */}
     <Flex alignItems="center" justifyContent="space-between">
