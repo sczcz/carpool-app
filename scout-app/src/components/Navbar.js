@@ -142,7 +142,7 @@ const Navbar = () => {
 
     <Flex
         alignItems="center"
-        justifyContent="center" // Centrera innehållet horisontellt
+        justifyContent={userId ? { base: 'center', md: 'center', lg: 'flex-start' } : 'center'}
         width="100%" // Gör så att Flex fyller hela navbarens bredd
       >
         {/* Scouterna Link */}
