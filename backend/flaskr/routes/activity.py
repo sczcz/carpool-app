@@ -6,6 +6,7 @@ from routes.auth import token_required
 import sys
 from models.auth_model import Child, Role, ParentChildLink
 from models.activity_model import Activity
+from models.carpool_model import Passenger, Carpool
 import datetime
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -78,7 +79,6 @@ def fetch_calendar_events():
     return events_list
 
 
-# Funktion för att hämta aktiviteter baserat på roll
 @activity_bp.route('/api/protected/activity/by_role', methods=['GET'])
 @token_required
 def get_activities_by_role(current_user):
@@ -86,7 +86,7 @@ def get_activities_by_role(current_user):
     children = db.session.query(Child).join(ParentChildLink).filter(
         ParentChildLink.user_id == current_user.user_id
     ).all()
-    
+
     # Hämta rollnamn baserat på barnens `role_id`
     children_roles = [Role.query.filter_by(role_id=child.role_id).first().name.lower() for child in children]
 
@@ -94,11 +94,33 @@ def get_activities_by_role(current_user):
     role_ids = [role_mapping[role] for role in children_roles if role in role_mapping]
 
     now = datetime.datetime.now()
-    activities = Activity.query.filter(
+
+    # Hämta aktiviteter baserat på roller
+    activities_by_role = Activity.query.filter(
         Activity.role_id.in_(role_ids),
         Activity.start_date >= now,
-        Activity.is_visible == True  # Filter only visible activities
+        Activity.is_visible == True
     ).all()
+
+    # Hämta aktiviteter där användaren är registrerad som förare
+    driver_activities = Activity.query.join(Carpool).filter(
+        Carpool.driver_id == current_user.user_id,
+        Activity.start_date >= now,
+        Activity.is_visible == True
+    ).all()
+
+    # Hämta aktiviteter där användaren är passagerare (eller där barn är passagerare)
+    passenger_activities = Activity.query.join(Carpool).join(Passenger).filter(
+        db.or_(
+            Passenger.user_id == current_user.user_id,
+            Passenger.child_id.in_([child.child_id for child in children])
+        ),
+        Activity.start_date >= now,
+        Activity.is_visible == True
+    ).all()
+
+    # Kombinera alla unika aktiviteter
+    all_activities = list({activity.activity_id: activity for activity in (activities_by_role + driver_activities + passenger_activities)}.values())
 
     # Skapa en lista av aktiviteter
     events_list = [{
@@ -109,13 +131,14 @@ def get_activities_by_role(current_user):
         'location': activity.address,
         'description': activity.description,
         'scout_level': list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
-    } for activity in activities]
+    } for activity in all_activities]
 
     # Hämta nya händelser från den externa kalendern om det behövs
     new_events = fetch_calendar_events()
     events_list.extend(new_events)
 
     return make_response(jsonify({"events": events_list}), 200)
+
 
 
 # Funktion för att hämta alla synliga aktiviteter
