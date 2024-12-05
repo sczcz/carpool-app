@@ -2,8 +2,6 @@ import { React, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider, useUser } from './utils/UserContext';
 import Navbar from './components/Navbar';
-import FetchUsers from './components/FetchUsers';
-import TestSession from './components/TestSession';
 import Home from './components/Home';
 import DashBoardAdmin from './components/DashBoardAdmin';
 import DashBoardLeader from './components/DashBoardLeader';
@@ -48,8 +46,6 @@ const AppContent = () => {
             <Route path="/dashboard-parent" element={<DashBoardParent />} />
             <Route path="/dashboard-leader" element={<DashBoardLeader />} />
             <Route path="/dashboard-admin" element={<DashBoardAdmin />} />
-            <Route path="/FetchUsers" element={<FetchUsers />} />
-            <Route path="/TestSession" element={<TestSession />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/information" element={<Information />} />

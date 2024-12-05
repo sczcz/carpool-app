@@ -229,8 +229,7 @@ const Navbar = () => {
             <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" />
           </MenuButton>
           <MenuList>
-            <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem>
-            <MenuItem as={Link} to="/TestSession" color="brand.500">Test Session</MenuItem>  
+            <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem> 
             <MenuItem color="brand.500" onClick={onLoginOpen}>
               Logga in
             </MenuItem>
