@@ -3,6 +3,7 @@ from extensions import db
 from models.notifications_model import Notification
 from routes.auth import token_required
 from models.carpool_model import Carpool
+from flask_socketio import emit
 
 notifications_bp = Blueprint('notifications_bp', __name__)
 
@@ -43,13 +44,12 @@ def get_notifications(current_user):
 
 
 
+
 # Mark notifications for a carpool as read
 @notifications_bp.route('/api/notifications/mark-read', methods=['POST'])
 @token_required
 def mark_notifications_as_read(current_user):
     try:
-        # Logga inkommande data
-        print(f"Current user: {current_user.user_id}, Received JSON body: {request.json}")
         carpool_id = request.json.get('carpool_id')
 
         if not carpool_id:
@@ -70,14 +70,17 @@ def mark_notifications_as_read(current_user):
 
             delete_read_notifications(current_user.user_id, carpool_id)
 
+            # Skicka socket-event till frontend för att uppdatera notiser
+            emit('update_notifications', {'message': 'Notifications updated'}, room=f"user_{current_user.user_id}", namespace='/')
+
             return jsonify({"message": f"All notifications for carpool {carpool_id} marked as read"}), 200
 
         # Logga om inga notifikationer hittades
-        print(f"No unread notifications found for carpool {carpool_id} and user {current_user.user_id}")
-        return jsonify({"error": "No unread notifications found"}), 404
+        return jsonify({"message": "No unread notifications found"}), 200
     except Exception as e:
         print(f"Error processing request: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
     
     
 def delete_read_notifications(user_id, carpool_id=None):
