@@ -1,5 +1,6 @@
 import React, { useEffect, useState, navigate } from 'react';
 import { FaArrowRight } from 'react-icons/fa';
+import { useMediaQuery } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import {
   Image,
@@ -37,6 +38,9 @@ const Navbar = () => {
   const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
   const [isScrolled, setIsScrolled] = useState(false);  // State to manage scroll status
   const links = [];
+  const isMobile = useMediaQuery("(max-width: 767px)");
+
+
 
   const addLink = (to, label) => {
     if (!links.some(link => link.to === to)) {
@@ -49,13 +53,18 @@ const Navbar = () => {
       addLink('/dashboard-admin', 'Admin');
       addLink('/dashboard-leader', 'Ledare');
       addLink('/dashboard-parent', 'Vårdnadshavare');
+      addLink('/profile', 'profil')
+
     }
     if (roles.includes('ledare')) {
       addLink('/dashboard-leader', 'Ledare');
       addLink('/dashboard-parent', 'Vårdnadshavare');
+      addLink('/profile', 'profil')
+
     }
     if (roles.includes('vårdnadshavare')) {
       addLink('/dashboard-parent', 'Vårdnadshavare');
+      addLink('/profile', 'profil')
     }
   }
 
@@ -115,7 +124,7 @@ const Navbar = () => {
     <Flex
       alignItems="center"
       justifyContent={{ base: 'center', md: 'center', lg: 'space-between' }}
-      maxW="980px"
+      maxW="1200px"
       mx="auto"
       width="100%"
     >
@@ -145,33 +154,6 @@ const Navbar = () => {
         justifyContent={userId ? { base: 'center', md: 'center', lg: 'flex-start' } : 'center'}
         width="100%" // Gör så att Flex fyller hela navbarens bredd
       >
-        {/* Scouterna Link */}
-        <Flex
-          gap={4} // Konsistent mellanrum mellan element
-          display={{ base: 'none', lg: 'flex' }} // Dölj på mobiler och tablets
-          alignItems="center"
-        >
-          <a
-            href="https://www.scouterna.se"
-            target="_blank"
-            rel="noopener noreferrer"
-            color= {isScrolled ? 'white' : 'brand.500'}
-            style={{
-              fontWeight: 'bold',
-              fontFamily: "'Playfair Display', serif",
-              fontSize: '22px',
-              textDecoration: 'none', // Ta bort understrykning
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.textDecoration = 'underline'; // Understryk vid hover
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.textDecoration = 'none'; // Ta bort understrykning
-            }}
-          >
-            Scouterna
-          </a>
-        </Flex>
 
         {/* Dynamic Logo */}
         <Image
@@ -225,21 +207,6 @@ const Navbar = () => {
 
         {/* Klocka och notiser */}
         {userId ? <ClockNotifications isScrolled={isScrolled} /> : null}
-
-        {/* Profilmeny */}
-        {userId ? (
-          <Menu>
-            <MenuButton as={Button} variant="link" colorScheme="brand">
-              <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" />
-            </MenuButton>
-            <MenuList>
-              <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem>
-              <MenuItem color="brand.500" onClick={handleLogout}>
-                Logga ut
-              </MenuItem>          
-            </MenuList>
-          </Menu>
-        ) : null}
       </Flex>
     </Flex>
 
@@ -310,6 +277,17 @@ const Navbar = () => {
 
                 </Button>
               ))}
+              {/* Profile Links moved to the Hamburger Menu */}
+              {userId ? (
+                <>
+                  <Button as={Link} to="/profile" variant="ghost" onClick={onClose}>
+                    Profil
+                  </Button>
+                  <Button variant="ghost" onClick={() => { handleLogout(); onClose(); }}>
+                    Logga ut
+                  </Button>
+                </>
+              ) : null}
             </Flex>
           </DrawerBody>
         </DrawerContent>
