@@ -29,7 +29,7 @@ const Register = ({ isOpen, onClose }) => {
     const [phone, setPhone] = useState('');
     const [role, setRole] = useState('Vårdnadshavare');
     const [error, setError] = useState('');
-    const [adress, setAdress] = useState('');
+    const [address, setAddress] = useState('');
     const [postcode, setPostcode] = useState('');
     const [city, setCity] = useState('');
 
@@ -41,7 +41,7 @@ const Register = ({ isOpen, onClose }) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ first_name, last_name, email, password, phone, role, adress, city, postcode }),
+            body: JSON.stringify({ first_name, last_name, email, password, phone, role, address, city, postcode }),
         })
             .then((response) => response.json())
             .then((data) => {
@@ -55,7 +55,7 @@ const Register = ({ isOpen, onClose }) => {
                     setPassword('');
                     setPhone('');
                     setRole('Vårdnadshavare');
-                    setAdress('');
+                    setAddress('');
                     setCity('');
                     setPostcode('');
                     setError('');
@@ -137,11 +137,11 @@ const Register = ({ isOpen, onClose }) => {
                                         />
                                     </FormControl>
                                     <FormControl isRequired>
-                                        <FormLabel>Adress:</FormLabel>
+                                        <FormLabel>Address:</FormLabel>
                                         <Input
                                             type="text"
-                                            value={adress}
-                                            onChange={(e) => setAdress(e.target.value)}
+                                            value={address}
+                                            onChange={(e) => setAddress(e.target.value)}
                                             required
                                             bg="white"
                                         />
