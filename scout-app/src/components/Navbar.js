@@ -137,7 +137,7 @@ const Navbar = () => {
         onClick={onOpen}
         boxSize="40px"
         fontSize="28px"
-        display={{ base: 'flex', md: 'flex', lg: 'none' }}
+        display={roles.includes('vårdnadshavare') ? 'flex' : { base: 'flex', md: 'flex', lg: 'none' }}
         _hover={{
           backgroundColor: isScrolled ? 'whiteAlpha.300' : 'blackAlpha.200',
           color: isScrolled ? 'white' : 'brand.700',
@@ -151,7 +151,7 @@ const Navbar = () => {
 
     <Flex
         alignItems="center"
-        justifyContent={userId ? { base: 'center', md: 'center', lg: 'flex-start' } : 'center'}
+        justifyContent={roles.includes('vårdnadshavare') ? 'center' : { base: 'center', md: 'center', lg: 'flex-start' }}
         width="100%" // Gör så att Flex fyller hela navbarens bredd
       >
 
@@ -182,7 +182,7 @@ const Navbar = () => {
     {/* Buttons and Profile Menu */}
     <Flex alignItems="center" justifyContent="space-between">
         {/* Navigation Links */}
-      <Flex gap={4} display={{ base: 'none', lg: 'flex' }}>
+      <Flex gap={4} display={roles.includes('vårdnadshavare') ? 'none' : { base: 'none', lg: 'flex' }}>
         {links.map(({ to, label }) => (
           <Button
             key={to}
@@ -297,4 +297,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
