@@ -404,7 +404,7 @@ const Profile = () => {
     p={5}
     borderRadius="lg"
     boxShadow="lg"
-    maxW="1000px"
+    maxW="1200px"
     mx="auto"
     mb={50}
     mt={50}
