@@ -280,9 +280,6 @@ const Navbar = () => {
               {/* Profile Links moved to the Hamburger Menu */}
               {userId ? (
                 <>
-                  <Button as={Link} to="/profile" variant="ghost" onClick={onClose}>
-                    Profil
-                  </Button>
                   <Button variant="ghost" onClick={() => { handleLogout(); onClose(); }}>
                     Logga ut
                   </Button>

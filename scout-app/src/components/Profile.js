@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, navigate } from 'react';
 import { FaTrash,FaPen, FaPlus } from "react-icons/fa"; 
 import AddChildModal from './AddChildModal';
 import AddCarModal from './AddCarModal';
@@ -7,6 +7,7 @@ import {
   Box,
   Heading,
   Icon,
+  useDisclosure,
   Text,
   Button,
   FormControl,
@@ -30,6 +31,7 @@ import {
   ModalBody,
   ModalFooter,
   Spacer,
+  Center,
 } from '@chakra-ui/react';
 
 const Profile = () => {
@@ -61,6 +63,7 @@ const Profile = () => {
   const [childRole, setChildRole] = useState('kutar');
   const [childPhone, setChildPhone] = useState('');
   
+  const {onClose } = useDisclosure();  // Hook to control the drawer
 
   // Modal states
   const [isAddChildOpen, setAddChildOpen] = useState(false);
@@ -75,6 +78,10 @@ const Profile = () => {
 
   // Car information (this was missing in your code)
   const [cars, setCars] = useState([]);  // Now defined as state for cars
+
+
+  const { clearUserData } = useUser(); // Hämta roll och inloggningsstatus
+
 
   const handleChildAdded = (newChild) => {
     setChildren((prevChildren) => [...prevChildren, newChild]);
@@ -94,6 +101,23 @@ const Profile = () => {
     Diesel: 'red.800',
     Hybrid: 'orange.400',
     Electric: 'teal.400',
+  };
+
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'  // Include cookies in the request
+      });
+      
+      if (response.ok) {
+        clearUserData(); 
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   const fetchChildren = async () => {
@@ -424,7 +448,7 @@ const Profile = () => {
   mt={[4, 4, -2]} // Negative margin to move buttons up
   alignSelf="center" // Align buttons at the top of the user info
   direction={{ base: 'column', lg: 'row' }} 
-  pr={{ base: 0, md: 20 , lg: '10' }} // Add padding-right 10 on tablet (md) and larger
+  pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
 >
   <Button
     rightIcon={<FaPlus />}
@@ -455,6 +479,15 @@ const Profile = () => {
     color="brand.500" // Set text color to brand.500
   >
     Lägg till bil
+  </Button>
+  <Button 
+    pr={ {base: '6', lg: '0'} }
+    colorScheme='red'
+    _hover={{ textDecoration: 'underline' }} // Underline on hover
+    color='red'
+    variant="ghost" 
+    onClick={() => { handleLogout(); onClose(); }}>                  
+    Logga ut
   </Button>
 </Stack>
 
