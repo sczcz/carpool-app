@@ -234,3 +234,75 @@ def make_activity_visible(current_user, activity_id):
     except Exception as e:
         current_app.logger.error(f"Fel vid aktivering av aktivitet: {e}")
         return make_response(jsonify({"error": "Ett fel uppstod vid aktivering av aktivitet."}), 500)
+
+
+def parse_date(date_string):
+    """Försök att tolka datumet med och utan sekunder."""
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M"):
+        try:
+            return datetime.datetime.strptime(date_string, fmt)  # Observera "datetime.datetime"
+        except ValueError:
+            continue
+    raise ValueError(f"Fel format på datum: {date_string}")
+
+@activity_bp.route('/api/protected/activity/create', methods=['POST'])
+@token_required
+def create_activity(current_user):
+    try:
+        # Hämta data från förfrågan
+        data = request.get_json()
+
+        # Validera obligatoriska fält
+        required_fields = ['name', 'start_date', 'address', 'role_id']
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return make_response(jsonify({"error": f"Saknade fält: {', '.join(missing_fields)}"}), 400)
+
+        # Konvertera start_date och end_date till datetime
+        start_date = parse_date(data['start_date'])
+        end_date = None
+        if 'end_date' in data and data['end_date']:
+            end_date = parse_date(data['end_date'])
+
+        # Kontrollera om role_id är giltig
+        role_id = data['role_id']
+        role = Role.query.get(role_id)
+        if not role:
+            return make_response(jsonify({"error": "Ogiltig roll"}), 400)
+
+        # Skapa ny aktivitet
+        new_activity = Activity(
+            name=data['name'],
+            start_date=start_date,
+            end_date=end_date,
+            role_id=role_id,
+            address=data['address'],
+            description=data.get('description', ''),  # Beskrivning är valfri
+            is_visible=data.get('is_visible', True)  # Standardvärde för synlighet
+        )
+
+        # Lägg till aktiviteten i databasen
+        db.session.add(new_activity)
+        db.session.commit()
+
+        return make_response(jsonify({
+            "message": "Aktivitet skapades framgångsrikt.",
+            "activity": {
+                "activity_id": new_activity.activity_id,
+                "name": new_activity.name,
+                "start_date": new_activity.start_date,
+                "end_date": new_activity.end_date,
+                "role_id": new_activity.role_id,
+                "address": new_activity.address,
+                "description": new_activity.description,
+                "is_visible": new_activity.is_visible
+            }
+        }), 201)
+
+    except ValueError as ve:
+        return make_response(jsonify({"error": str(ve)}), 400)
+    except Exception as e:
+        # Rollback vid fel
+        db.session.rollback()
+        current_app.logger.error(f"Fel vid skapande av aktivitet: {e}")
+        return make_response(jsonify({"error": "Ett fel inträffade vid skapande av aktiviteten."}), 500)

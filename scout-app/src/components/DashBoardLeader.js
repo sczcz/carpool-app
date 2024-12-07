@@ -21,6 +21,7 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import useRoleProtection from "../utils/useRoleProtection";
+import CreateActivityModal from "./CreateActivityModal";
 
 const Dashboard = ({ token }) => {
   useRoleProtection(["admin", "ledare"]);
@@ -32,6 +33,7 @@ const Dashboard = ({ token }) => {
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
   const [selectedRole, setSelectedRole] = useState('Alla roller'); // Filtrering
   const toast = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
   const roleColors = {
@@ -213,12 +215,30 @@ const Dashboard = ({ token }) => {
     );
   }
 
+  const handleActivityCreated = () => {
+    // Uppdatera aktiviteter efter att en ny aktivitet har skapats
+    fetchActivities();
+  };
+
   return (
     <Flex direction="column" align="center" justify="center" p={8}>
       <Heading as="h1" size="xl" mb={8} color="brand.500">
         Ledare
       </Heading>
   
+      <Button
+        colorScheme="blue"
+        mb={6}
+        onClick={() => setIsModalOpen(true)}
+      >
+        Skapa ny aktivitet
+      </Button>
+
+      <CreateActivityModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onActivityCreated={handleActivityCreated}
+      />
       <Grid
         templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
         gap={6}
