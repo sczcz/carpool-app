@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { InfoIcon } from '@chakra-ui/icons';
+import { FaPlus } from "react-icons/fa";
 import {
   Box,
   Tag,
@@ -221,24 +222,14 @@ const Dashboard = ({ token }) => {
   };
 
   return (
-    <Flex direction="column" align="center" justify="center" p={8}>
-      <Heading as="h1" size="xl" mb={8} color="brand.500">
-        Ledare
-      </Heading>
-  
-      <Button
-        colorScheme="blue"
-        mb={6}
-        onClick={() => setIsModalOpen(true)}
-      >
-        Skapa ny aktivitet
-      </Button>
+    <Flex direction="column" align="center" justify="center" p={8} width="100%">
+  {/* Header med "+ Skapa ny aktivitet" */}
+  <Flex justify="space-between" align="center" width="100%" maxW="1200px" mb={8}>
+    <Heading as="h1" size="xl" color="brand.500">
+      Ledare
+    </Heading>
+  </Flex>
 
-      <CreateActivityModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onActivityCreated={handleActivityCreated}
-      />
       <Grid
         templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
         gap={6}
@@ -246,10 +237,12 @@ const Dashboard = ({ token }) => {
         maxW="1200px"
       > 
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
-            <Box mb={8} display="flex" alignItems="center">
-            <Heading as="h3" size="lg" color="brand.600">
-              Aktiviteter
-            </Heading>
+        <Box mb={8} display="flex" alignItems="center" justifyContent="space-between" width="100%">
+            {/* Rubrik och info-ikon */}
+            <Flex align="center">
+              <Heading as="h3" size="lg" color="brand.600">
+                Aktiviteter
+              </Heading>
               <Popover>
                 <PopoverTrigger>
                   <IconButton 
@@ -266,23 +259,36 @@ const Dashboard = ({ token }) => {
                     <Text mb={2}>
                       Här kan du hantera aktiviteter som du är ansvarig för som ledare. 
                     </Text>
-                    
                     <Text mb={2}>
                       Du kan ändra synligheten för aktiviteter så att de blir synliga eller dolda för användare.
                     </Text>
-                    
-                    <Text mb={2}>
-                      För varje aktivitet kan du också se detaljerad information om samåkningarna, inklusive tillgängliga platser och passagerare.
-                    </Text>
-                    
                     <Text>
                       Dessutom kan du filtrera aktiviteter baserat på de roller du har tilldelats för att enkelt hantera specifika aktiviteter.
                     </Text>
                   </PopoverBody>
                 </PopoverContent>
               </Popover>
-            </Box>
-  
+            </Flex>
+
+            {/* Lägg till knappen här */}
+            <Button
+              rightIcon={<FaPlus />}
+              color="brand.500"
+              fontWeight="bold"
+              variant="link"
+              onClick={() => setIsModalOpen(true)}
+              _hover={{ textDecoration: "underline", color: "blue.700" }}
+            >
+              Skapa ny aktivitet
+            </Button>
+          </Box>
+
+           {/* Modal för att skapa en ny aktivitet */}
+            <CreateActivityModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onActivityCreated={handleActivityCreated}
+            />
             {/* Rollfiltrering */}
             <Select placeholder="Välj roll" onChange={handleRoleChange} mb={6} value={selectedRole}>
               <option value="Alla roller">Alla roller</option>
