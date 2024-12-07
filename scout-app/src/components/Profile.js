@@ -1,4 +1,5 @@
-import React, { useState, useEffect, navigate } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaTrash,FaPen, FaPlus } from "react-icons/fa"; 
 import AddChildModal from './AddChildModal';
 import AddCarModal from './AddCarModal';
@@ -35,6 +36,7 @@ import {
 } from '@chakra-ui/react';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const {
     email,
