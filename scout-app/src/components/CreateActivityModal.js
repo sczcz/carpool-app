@@ -116,6 +116,8 @@ const CreateActivityModal = ({ isOpen, onClose, onActivityCreated }) => {
               <option value="6">Äventyrare</option>
               <option value="7">Utmanare</option>
               <option value="8">Rover</option>
+              <option value='2'>Ledare</option>
+              <option value='10'>Vuxenscout</option>
             </Select>
           </FormControl>
 

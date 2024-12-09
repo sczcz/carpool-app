@@ -22,7 +22,8 @@ role_mapping = {
     'upptäckare': 5,
     'äventyrare': 6,
     'utmanare': 7,
-    'rover': 8
+    'rover': 8,
+    'vuxenscout': 10
 }
 
 # Function to fetch calendar events
