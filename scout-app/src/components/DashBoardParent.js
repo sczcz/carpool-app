@@ -31,6 +31,7 @@ import {
 } from '@chakra-ui/react';
 import { FaUserCircle, FaPlus } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
+import { sv } from 'date-fns/locale'
 import { useUser } from '../utils/UserContext';
 import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
@@ -69,7 +70,10 @@ const DashBoardParent = ({ token }) => {
     upptäckare: '#00a8e1', 
     äventyrare: '#e95f13', 
     utmanare: '#da005e',   
-    rover: '#e2e000',        
+    rover: '#e2e000',  
+    vuxenscout: '#40e0d0',
+    ledare: '#7fffd4'
+
   };
 
   const isInMyActivities = (activity) => {
@@ -599,7 +603,7 @@ const handleLoadMore = () => {
                         {openMyCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
                       </Button>
                     </Flex>
-                    <Text fontWeight="bold">{format(parseISO(activity.dtstart), "d MMMM")}</Text>
+                    <Text fontWeight="bold">{format(parseISO(activity.dtstart), "d MMMM", { locale: sv })}</Text>
                     <Text fontSize="sm" color="gray.600">Start: {format(parseISO(activity.dtstart), "HH:mm")}</Text>
                     <Text>{activity.location}</Text>
                     <Text mt={2}>{activity.summary.split('//')[0]}</Text>
@@ -818,10 +822,10 @@ const handleLoadMore = () => {
                     </Button>
                   </Flex>
                   <Text fontWeight="bold">
-                    {format(parseISO(activity.dtstart), "d MMMM")}
+                    {format(parseISO(activity.dtstart), "d MMMM", { locale: sv })}
                   </Text>
                   <Text fontSize="sm" color="gray.600">
-                   Start: {format(parseISO(activity.dtstart), "HH:mm")}
+                    Start: {format(parseISO(activity.dtstart), "HH:mm", { locale: sv })}
                   </Text>
 
                   <Text>{activity.location}</Text>

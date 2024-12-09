@@ -7,6 +7,7 @@ from routes.user_handler import user_handler
 import os
 from extensions import db, socketio, init_mail
 from models.auth_model import User
+from models.activity_model import Activity
 from routes.activity import activity_bp
 from routes.carpool import carpool_bp
 from routes.message import message_bp
@@ -16,6 +17,7 @@ from routes.mail import mail_bp
 from test_data import add_test_data
 from seed_roles import seed_roles
 from seed_admin import seed_admin
+from seed_activities import seed_activities
 
 load_dotenv()
 
@@ -56,6 +58,9 @@ with app.app_context():
     if not User.query.first():
         seed_admin()
         add_test_data()
+    
+    if not Activity.query.first():
+        seed_activities()
 
 # Register blueprints
 app.register_blueprint(auth_bp)

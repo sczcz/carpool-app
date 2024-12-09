@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaTrash,FaPen, FaPlus } from "react-icons/fa"; 
 import AddChildModal from './AddChildModal';
 import AddCarModal from './AddCarModal';
@@ -7,6 +8,7 @@ import {
   Box,
   Heading,
   Icon,
+  useDisclosure,
   Text,
   Button,
   FormControl,
@@ -30,9 +32,11 @@ import {
   ModalBody,
   ModalFooter,
   Spacer,
+  Center,
 } from '@chakra-ui/react';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const {
     email,
@@ -61,6 +65,7 @@ const Profile = () => {
   const [childRole, setChildRole] = useState('kutar');
   const [childPhone, setChildPhone] = useState('');
   
+  const {onClose } = useDisclosure();  // Hook to control the drawer
 
   // Modal states
   const [isAddChildOpen, setAddChildOpen] = useState(false);
@@ -75,6 +80,10 @@ const Profile = () => {
 
   // Car information (this was missing in your code)
   const [cars, setCars] = useState([]);  // Now defined as state for cars
+
+
+  const { clearUserData } = useUser(); // Hämta roll och inloggningsstatus
+
 
   const handleChildAdded = (newChild) => {
     setChildren((prevChildren) => [...prevChildren, newChild]);
@@ -94,6 +103,23 @@ const Profile = () => {
     Diesel: 'red.800',
     Hybrid: 'orange.400',
     Electric: 'teal.400',
+  };
+
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'  // Include cookies in the request
+      });
+      
+      if (response.ok) {
+        clearUserData(); 
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   const fetchChildren = async () => {
@@ -160,9 +186,15 @@ const Profile = () => {
 
   
   // Handle new car addition
-  const handleCarAdded = (newCar) => {
-    setCars((prevCars) => [...prevCars, newCar]);
-  };
+  const handleCarAdded = async (newCar) => {
+    try {
+      setCars((prevCars) => [...prevCars, newCar]);
+  
+      await fetchCars();
+    } catch (error) {
+      console.error("Error updating car list:", error);
+    }
+  };  
 
   const handleSaveNewInfo = async () => {
     try {
@@ -347,23 +379,83 @@ const Profile = () => {
   };
 
   const handleRemoveCar = async (carId) => {
-    if (window.confirm('Är du säker på att du vill ta bort den här bilen?')) {
-      try {
-        const response = await fetch(`/api/protected/delete-car/${carId}`, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          alert('Bilen har tagits bort!');
-          fetchCars(); // Refresh car list after deletion
-        } else {
-          console.error('Misslyckades med att ta bort bilen');
-        }
-      } catch (error) {
-        console.error('Fel vid borttagning av bil:', error);
-      }
-    }
-  };
+    toast({
+      title: "Bekräfta borttagning",
+      description: "Är du säker på att du vill ta bort den här bilen?",
+      status: "warning",
+      position: "top",
+      duration: null,
+      render: ({ onClose }) => (
+        <Box
+          p={4}
+          borderWidth="1px"
+          borderRadius="lg"
+          boxShadow="lg"
+          bg="white"
+          color="black"
+          maxWidth="sm"
+          mx="auto"
+        >
+          <VStack spacing={4}>
+            <Text fontSize="lg" fontWeight="bold" textAlign="center">
+              Är du säker på att du vill ta bort bilen?
+            </Text>
+            <HStack spacing={4} justify="center">
+              <Button
+                size="sm"
+                colorScheme="red"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/api/protected/delete-car/${carId}`, {
+                      method: "DELETE",
+                      credentials: "include",
+                    });
+                    if (response.ok) {
+                      toast({
+                        title: "Borttagning lyckades",
+                        description: "Bilen har tagits bort.",
+                        status: "success",
+                        duration: 5000,
+                        isClosable: true,
+                        position: "top",
+                      });
+                      fetchCars();
+                    } else {
+                      toast({
+                        title: "Fel vid borttagning",
+                        description: "Misslyckades med att ta bort bilen.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                        position: "top",
+                      });
+                    }
+                  } catch (error) {
+                    console.error("Fel vid borttagning av bil:", error);
+                    toast({
+                      title: "Ett fel inträffade",
+                      description: "Det gick inte att ta bort bilen.",
+                      status: "error",
+                      duration: 5000,
+                      isClosable: true,
+                      position: "top",
+                    });
+                  } finally {
+                    onClose();
+                  }
+                }}
+              >
+                Ja, ta bort
+              </Button>
+              <Button size="sm" onClick={onClose}>
+                Avbryt
+              </Button>
+            </HStack>
+          </VStack>
+        </Box>
+      ),
+    });
+  };  
 
   const handleRoleChange = (index, newRole) => {
     setChildren(prevChildren =>
@@ -380,7 +472,7 @@ const Profile = () => {
     p={5}
     borderRadius="lg"
     boxShadow="lg"
-    maxW="1000px"
+    maxW="1200px"
     mx="auto"
     mb={50}
     mt={50}
@@ -424,7 +516,7 @@ const Profile = () => {
   mt={[4, 4, -2]} // Negative margin to move buttons up
   alignSelf="center" // Align buttons at the top of the user info
   direction={{ base: 'column', lg: 'row' }} 
-  pr={{ base: 0, md: 20 , lg: '10' }} // Add padding-right 10 on tablet (md) and larger
+  pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
 >
   <Button
     rightIcon={<FaPlus />}
@@ -455,6 +547,15 @@ const Profile = () => {
     color="brand.500" // Set text color to brand.500
   >
     Lägg till bil
+  </Button>
+  <Button 
+    pr={ {base: '6', lg: '0'} }
+    colorScheme='red'
+    _hover={{ textDecoration: 'underline' }} // Underline on hover
+    color='red'
+    variant="ghost" 
+    onClick={() => { handleLogout(); onClose(); }}>                  
+    Logga ut
   </Button>
 </Stack>
 
