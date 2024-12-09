@@ -25,9 +25,15 @@ def send_carpool_notification_email(carpool_id):
         print(f"Carpool {carpool_id} not found.")
         return
 
-    # Beräkna cutoff-tider
+    #RIKTIGA TIDSVÄRDET NEDAN
+    #two_days_ago = datetime.utcnow() - timedelta(days=2)
+    #one_day_ago = datetime.utcnow() - timedelta(days=1)
+    #RIKTIGA TIDSVÄRDET OVAN
+    
+    #FÖR TESTNING NEDAN
     two_days_ago = datetime.utcnow() - timedelta(minutes=2)
     one_day_ago = datetime.utcnow() - timedelta(minutes=1)
+    #FÖR TESTNING OVAN
 
     recipients = []
 
