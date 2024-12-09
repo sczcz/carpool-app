@@ -186,9 +186,15 @@ const Profile = () => {
 
   
   // Handle new car addition
-  const handleCarAdded = (newCar) => {
-    setCars((prevCars) => [...prevCars, newCar]);
-  };
+  const handleCarAdded = async (newCar) => {
+    try {
+      setCars((prevCars) => [...prevCars, newCar]);
+  
+      await fetchCars();
+    } catch (error) {
+      console.error("Error updating car list:", error);
+    }
+  };  
 
   const handleSaveNewInfo = async () => {
     try {
@@ -373,23 +379,83 @@ const Profile = () => {
   };
 
   const handleRemoveCar = async (carId) => {
-    if (window.confirm('Är du säker på att du vill ta bort den här bilen?')) {
-      try {
-        const response = await fetch(`/api/protected/delete-car/${carId}`, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          alert('Bilen har tagits bort!');
-          fetchCars(); // Refresh car list after deletion
-        } else {
-          console.error('Misslyckades med att ta bort bilen');
-        }
-      } catch (error) {
-        console.error('Fel vid borttagning av bil:', error);
-      }
-    }
-  };
+    toast({
+      title: "Bekräfta borttagning",
+      description: "Är du säker på att du vill ta bort den här bilen?",
+      status: "warning",
+      position: "top",
+      duration: null,
+      render: ({ onClose }) => (
+        <Box
+          p={4}
+          borderWidth="1px"
+          borderRadius="lg"
+          boxShadow="lg"
+          bg="white"
+          color="black"
+          maxWidth="sm"
+          mx="auto"
+        >
+          <VStack spacing={4}>
+            <Text fontSize="lg" fontWeight="bold" textAlign="center">
+              Är du säker på att du vill ta bort bilen?
+            </Text>
+            <HStack spacing={4} justify="center">
+              <Button
+                size="sm"
+                colorScheme="red"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/api/protected/delete-car/${carId}`, {
+                      method: "DELETE",
+                      credentials: "include",
+                    });
+                    if (response.ok) {
+                      toast({
+                        title: "Borttagning lyckades",
+                        description: "Bilen har tagits bort.",
+                        status: "success",
+                        duration: 5000,
+                        isClosable: true,
+                        position: "top",
+                      });
+                      fetchCars();
+                    } else {
+                      toast({
+                        title: "Fel vid borttagning",
+                        description: "Misslyckades med att ta bort bilen.",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                        position: "top",
+                      });
+                    }
+                  } catch (error) {
+                    console.error("Fel vid borttagning av bil:", error);
+                    toast({
+                      title: "Ett fel inträffade",
+                      description: "Det gick inte att ta bort bilen.",
+                      status: "error",
+                      duration: 5000,
+                      isClosable: true,
+                      position: "top",
+                    });
+                  } finally {
+                    onClose();
+                  }
+                }}
+              >
+                Ja, ta bort
+              </Button>
+              <Button size="sm" onClick={onClose}>
+                Avbryt
+              </Button>
+            </HStack>
+          </VStack>
+        </Box>
+      ),
+    });
+  };  
 
   const handleRoleChange = (index, newRole) => {
     setChildren(prevChildren =>
