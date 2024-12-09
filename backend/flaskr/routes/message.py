@@ -15,6 +15,7 @@ from extensions import mail
 message_bp = Blueprint('message_bp', __name__)
 active_users = {}
 message_counts = {}
+email_notifications_sent = {}
 
 def send_carpool_notification_email(carpool_id):
     print(f"send_carpool_notification_email called for carpool_id: {carpool_id}")
@@ -25,13 +26,8 @@ def send_carpool_notification_email(carpool_id):
         return
 
     # Beräkna cutoff-tider
-    two_days_ago = datetime.utcnow() - timedelta(days=2)
-    one_day_ago = datetime.utcnow() - timedelta(days=1)
-
-    # FÖR TESTNING NEDAN!
-    # two_days_ago = datetime.utcnow() - timedelta(minutes=2)
-    # one_day_ago = datetime.utcnow() - timedelta(minutes=1)
-    # FÖR TESTNING OVAN!
+    two_days_ago = datetime.utcnow() - timedelta(minutes=2)
+    one_day_ago = datetime.utcnow() - timedelta(minutes=1)
 
     recipients = []
 
@@ -40,6 +36,11 @@ def send_carpool_notification_email(carpool_id):
         for link in parent_links:
             parent = User.query.get(link.user_id)
             if parent and parent.email:
+                # Kontrollera om vi redan skickat en notis
+                if email_notifications_sent.get(parent.user_id, {}).get(carpool_id, False):
+                    print(f"Email already sent to {parent.email} for carpool {carpool_id}. Skipping.")
+                    continue
+
                 # Kontroll 1: >0 olästa meddelanden och inte inloggad på 2 dygn
                 unread_messages_since_last_login = (
                     db.session.query(CarpoolMessage)
@@ -53,6 +54,7 @@ def send_carpool_notification_email(carpool_id):
                     if unread_messages_since_last_login > 0:
                         print(f"Adding parent recipient (not logged in 2 days): {parent.email}")
                         recipients.append(parent.email)
+                        email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
                         continue
 
                 # Kontroll 2: 5+ olästa meddelanden senaste 1 dygn
@@ -60,7 +62,6 @@ def send_carpool_notification_email(carpool_id):
                     db.session.query(CarpoolMessage)
                     .filter(
                         CarpoolMessage.carpool_id == carpool_id,
-                        CarpoolMessage.timestamp >= parent.last_logged_in if parent.last_logged_in else datetime.min,
                         CarpoolMessage.timestamp >= one_day_ago
                     )
                     .count()
@@ -68,6 +69,7 @@ def send_carpool_notification_email(carpool_id):
                 if unread_messages_last_day >= 5:
                     print(f"Adding parent recipient (5+ unread messages in last day): {parent.email}")
                     recipients.append(parent.email)
+                    email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
 
     if not recipients:
         print(f"No recipients found for carpool {carpool_id} who match the criteria.")
@@ -309,15 +311,7 @@ def handle_send_message(data):
     db.session.add(message)
     db.session.commit()
 
-            # Increment message count for this specific carpool
-    if carpool_id not in message_counts:
-        message_counts[carpool_id] = 0
-    message_counts[carpool_id] += 1
-    # Check if this carpool chat has reached 10 new messages
-    if message_counts[carpool_id] == 10:
-        print(f"10 messages reached for carpool {carpool_id}. Sending notification email.")
-        send_carpool_notification_email(carpool_id)
-        message_counts[carpool_id] = 0  # Reset the counter for this carpool
+    send_carpool_notification_email(carpool_id)
 
     # Skicka meddelandet till alla anslutna klienter i rummet
     emit('new_message', {
@@ -334,6 +328,3 @@ def handle_send_message(data):
     # Skapa och skicka notifikation
     notification_message = f"meddelande i samåkning till {activity_address}"
     notify_users_in_carpool(carpool_id, notification_message, message.sender_id, message.id)
-
-
-
