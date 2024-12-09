@@ -3,6 +3,7 @@ from extensions import db
 from models.notifications_model import Notification
 from routes.auth import token_required
 from models.carpool_model import Carpool
+from routes.message import email_notifications_sent
 from flask_socketio import emit
 
 notifications_bp = Blueprint('notifications_bp', __name__)
@@ -68,6 +69,7 @@ def mark_notifications_as_read(current_user):
                 notification.is_read = True
             db.session.commit()
 
+            reset_email_notification_flag(current_user.user_id, carpool_id)
             delete_read_notifications(current_user.user_id, carpool_id)
 
             # Skicka socket-event till frontend för att uppdatera notiser
@@ -101,5 +103,14 @@ def delete_read_notifications(user_id, carpool_id=None):
     except Exception as e:
         print(f"Error deleting read notifications: {str(e)}")
 
+def reset_email_notification_flag(user_id, carpool_id):
+    """Nollställer email_notifications_sent-flaggan för användaren och samåkningen."""
+    if user_id in email_notifications_sent:
+        if carpool_id in email_notifications_sent[user_id]:
+            del email_notifications_sent[user_id][carpool_id]
+            print(f"Email notification flag reset for user {user_id} and carpool {carpool_id}")
 
+        # Ta bort användaren från email_notifications_sent om alla carpools har tagits bort
+        if not email_notifications_sent[user_id]:
+            del email_notifications_sent[user_id]
 

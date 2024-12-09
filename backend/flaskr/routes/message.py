@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify
 from extensions import db, socketio
 from models.message_model import CarpoolMessage
-from models.auth_model import User, ParentChildLink, Child
+from models.auth_model import User, ParentChildLink
 from models.notifications_model import Notification
 from flask_socketio import join_room, leave_room, emit
 from routes.auth import token_required
-from routes.carpool import Carpool, Passenger
-from datetime import datetime
+from routes.carpool import Carpool
+from datetime import datetime, timedelta
 from dateutil import tz
 from models.activity_model import Activity
 from flask_mail import Message
@@ -15,6 +15,7 @@ from extensions import mail
 message_bp = Blueprint('message_bp', __name__)
 active_users = {}
 message_counts = {}
+email_notifications_sent = {}
 
 def send_carpool_notification_email(carpool_id):
     print(f"send_carpool_notification_email called for carpool_id: {carpool_id}")
@@ -24,41 +25,67 @@ def send_carpool_notification_email(carpool_id):
         print(f"Carpool {carpool_id} not found.")
         return
 
-    # Hämta tiden för det första av de senaste 10 meddelandena
-    first_message = (
-        db.session.query(CarpoolMessage)
-        .filter_by(carpool_id=carpool_id)
-        .order_by(CarpoolMessage.timestamp.desc())
-        .offset(9)
-        .first()
-    )
-    if not first_message:
-        print("Not enough messages to trigger notification.")
-        return
+    #RIKTIGA TIDSVÄRDET NEDAN
+    #two_days_ago = datetime.utcnow() - timedelta(days=2)
+    #one_day_ago = datetime.utcnow() - timedelta(days=1)
+    #RIKTIGA TIDSVÄRDET OVAN
+    
+    #FÖR TESTNING NEDAN
+    two_days_ago = datetime.utcnow() - timedelta(minutes=2)
+    one_day_ago = datetime.utcnow() - timedelta(minutes=1)
+    #FÖR TESTNING OVAN
 
-    first_message_time = first_message.timestamp
     recipients = []
 
-    # Loopa genom passagerarna och hitta deras föräldrar
     for passenger in carpool.passengers:
         parent_links = ParentChildLink.query.filter_by(child_id=passenger.child_id).all()
         for link in parent_links:
             parent = User.query.get(link.user_id)
             if parent and parent.email:
-                # Kontrollera om föräldern inte varit inloggad sedan första meddelandet
-                if not parent.last_logged_in or parent.last_logged_in < first_message_time:
-                    print(f"Adding parent recipient: {parent.email}")
+                # Kontrollera om vi redan skickat en notis
+                if email_notifications_sent.get(parent.user_id, {}).get(carpool_id, False):
+                    print(f"Email already sent to {parent.email} for carpool {carpool_id}. Skipping.")
+                    continue
+
+                # Kontroll 1: >0 olästa meddelanden och inte inloggad på 2 dygn
+                unread_messages_since_last_login = (
+                    db.session.query(CarpoolMessage)
+                    .filter(
+                        CarpoolMessage.carpool_id == carpool_id,
+                        CarpoolMessage.timestamp >= parent.last_logged_in if parent.last_logged_in else datetime.min
+                    )
+                    .count()
+                )
+                if not parent.last_logged_in or parent.last_logged_in < two_days_ago:
+                    if unread_messages_since_last_login > 0:
+                        print(f"Adding parent recipient (not logged in 2 days): {parent.email}")
+                        recipients.append(parent.email)
+                        email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
+                        continue
+
+                # Kontroll 2: 5+ olästa meddelanden senaste 1 dygn
+                unread_messages_last_day = (
+                    db.session.query(CarpoolMessage)
+                    .filter(
+                        CarpoolMessage.carpool_id == carpool_id,
+                        CarpoolMessage.timestamp >= one_day_ago
+                    )
+                    .count()
+                )
+                if unread_messages_last_day >= 5:
+                    print(f"Adding parent recipient (5+ unread messages in last day): {parent.email}")
                     recipients.append(parent.email)
+                    email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
 
     if not recipients:
         print(f"No recipients found for carpool {carpool_id} who match the criteria.")
         return
 
-    # Konstruera och skicka mailet
+    # Skicka email till mottagarna
     try:
         with mail.connect() as conn:
-            subject = f"Ny aktivitet i carpool {carpool_id}"
-            body = f"Din carpool-chat har fått 10 nya meddelanden. Logga in för att läsa dem!"
+            subject = f"Olästa meddelanden i samåkning {carpool_id}"
+            body = f"Din chat har olästa meddelanden. Logga in för att läsa dem!"
             msg = Message(subject=subject, recipients=recipients, body=body, sender="noreply@carpoolapp.com")
             conn.send(msg)
         print(f"Email sent to recipients: {recipients}")
@@ -290,15 +317,7 @@ def handle_send_message(data):
     db.session.add(message)
     db.session.commit()
 
-            # Increment message count for this specific carpool
-    if carpool_id not in message_counts:
-        message_counts[carpool_id] = 0
-    message_counts[carpool_id] += 1
-    # Check if this carpool chat has reached 10 new messages
-    if message_counts[carpool_id] == 10:
-        print(f"10 messages reached for carpool {carpool_id}. Sending notification email.")
-        send_carpool_notification_email(carpool_id)
-        message_counts[carpool_id] = 0  # Reset the counter for this carpool
+    send_carpool_notification_email(carpool_id)
 
     # Skicka meddelandet till alla anslutna klienter i rummet
     emit('new_message', {
@@ -315,6 +334,3 @@ def handle_send_message(data):
     # Skapa och skicka notifikation
     notification_message = f"meddelande i samåkning till {activity_address}"
     notify_users_in_carpool(carpool_id, notification_message, message.sender_id, message.id)
-
-
-
