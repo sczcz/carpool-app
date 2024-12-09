@@ -70,7 +70,10 @@ const DashBoardParent = ({ token }) => {
     upptäckare: '#00a8e1', 
     äventyrare: '#e95f13', 
     utmanare: '#da005e',   
-    rover: '#e2e000',        
+    rover: '#e2e000',  
+    vuxenscout: '#40e0d0',
+    ledare: '#7fffd4'
+
   };
 
   const isInMyActivities = (activity) => {

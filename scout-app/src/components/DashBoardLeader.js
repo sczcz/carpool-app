@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { InfoIcon } from '@chakra-ui/icons';
+import { FaPlus } from "react-icons/fa";
 import {
   Box,
   Tag,
@@ -21,6 +22,7 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import useRoleProtection from "../utils/useRoleProtection";
+import CreateActivityModal from "./CreateActivityModal";
 
 const Dashboard = ({ token }) => {
   useRoleProtection(["admin", "ledare"]);
@@ -32,6 +34,7 @@ const Dashboard = ({ token }) => {
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
   const [selectedRole, setSelectedRole] = useState('Alla roller'); // Filtrering
   const toast = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
   const roleColors = {
@@ -40,7 +43,9 @@ const Dashboard = ({ token }) => {
     upptäckare: '#00a8e1', 
     äventyrare: '#e95f13', 
     utmanare: '#da005e',   
-    rover: '#e2e000',        
+    rover: '#e2e000',
+    vuxenscout: '#40e0d0',
+    ledare: '#7fffd4'        
   };
 
   // Hämta aktiviteter från API när komponenten laddas
@@ -213,12 +218,20 @@ const Dashboard = ({ token }) => {
     );
   }
 
+  const handleActivityCreated = () => {
+    // Uppdatera aktiviteter efter att en ny aktivitet har skapats
+    fetchActivities();
+  };
+
   return (
-    <Flex direction="column" align="center" justify="center" p={8}>
-      <Heading as="h1" size="xl" mb={8} color="brand.500">
-        Ledare
-      </Heading>
-  
+    <Flex direction="column" align="center" justify="center" p={8} width="100%">
+  {/* Header med "+ Skapa ny aktivitet" */}
+  <Flex justify="space-between" align="center" width="100%" maxW="1200px" mb={8}>
+    <Heading as="h1" size="xl" color="brand.500">
+      Ledare
+    </Heading>
+  </Flex>
+
       <Grid
         templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
         gap={6}
@@ -226,10 +239,12 @@ const Dashboard = ({ token }) => {
         maxW="1200px"
       > 
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
-            <Box mb={8} display="flex" alignItems="center">
-            <Heading as="h3" size="lg" color="brand.600">
-              Aktiviteter
-            </Heading>
+        <Box mb={8} display="flex" alignItems="center" justifyContent="space-between" width="100%">
+            {/* Rubrik och info-ikon */}
+            <Flex align="center">
+              <Heading as="h3" size="lg" color="brand.600">
+                Aktiviteter
+              </Heading>
               <Popover>
                 <PopoverTrigger>
                   <IconButton 
@@ -246,23 +261,36 @@ const Dashboard = ({ token }) => {
                     <Text mb={2}>
                       Här kan du hantera aktiviteter som du är ansvarig för som ledare. 
                     </Text>
-                    
                     <Text mb={2}>
                       Du kan ändra synligheten för aktiviteter så att de blir synliga eller dolda för användare.
                     </Text>
-                    
-                    <Text mb={2}>
-                      För varje aktivitet kan du också se detaljerad information om samåkningarna, inklusive tillgängliga platser och passagerare.
-                    </Text>
-                    
                     <Text>
                       Dessutom kan du filtrera aktiviteter baserat på de roller du har tilldelats för att enkelt hantera specifika aktiviteter.
                     </Text>
                   </PopoverBody>
                 </PopoverContent>
               </Popover>
-            </Box>
-  
+            </Flex>
+
+            {/* Lägg till knappen här */}
+            <Button
+              rightIcon={<FaPlus />}
+              color="brand.500"
+              fontWeight="bold"
+              variant="link"
+              onClick={() => setIsModalOpen(true)}
+              _hover={{ textDecoration: "underline", color: "blue.700" }}
+            >
+              Skapa ny aktivitet
+            </Button>
+          </Box>
+
+           {/* Modal för att skapa en ny aktivitet */}
+            <CreateActivityModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onActivityCreated={handleActivityCreated}
+            />
             {/* Rollfiltrering */}
             <Select placeholder="Välj roll" onChange={handleRoleChange} mb={6} value={selectedRole}>
               <option value="Alla roller">Alla roller</option>
