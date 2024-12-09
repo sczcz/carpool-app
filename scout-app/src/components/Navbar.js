@@ -1,5 +1,5 @@
 import React, { useEffect, useState, navigate } from 'react';
-import { FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight, FaSignOutAlt } from 'react-icons/fa';
 import { useMediaQuery } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import {
@@ -16,12 +16,6 @@ import {
   DrawerOverlay,
   DrawerContent,
   CloseButton,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Avatar,
-  Spacer,
 } from '@chakra-ui/react';
 import { HamburgerIcon } from '@chakra-ui/icons';
 import Login from './Login';  // Import the Login component
@@ -53,18 +47,18 @@ const Navbar = () => {
       addLink('/dashboard-admin', 'Admin');
       addLink('/dashboard-leader', 'Ledare');
       addLink('/dashboard-parent', 'Vårdnadshavare');
-      addLink('/profile', 'profil')
+      addLink('/profile', 'Profil')
 
     }
     if (roles.includes('ledare')) {
       addLink('/dashboard-leader', 'Ledare');
       addLink('/dashboard-parent', 'Vårdnadshavare');
-      addLink('/profile', 'profil')
+      addLink('/profile', 'Profil')
 
     }
     if (roles.includes('vårdnadshavare')) {
-      addLink('/dashboard-parent', 'Vårdnadshavare');
-      addLink('/profile', 'profil')
+      addLink('/dashboard-parent', 'Aktiviteter');
+      addLink('/profile', 'Profil')
     }
   }
 
@@ -223,36 +217,36 @@ const Navbar = () => {
             <Flex direction="column" gap={4}>
               {/* Add Scouterna Link to Mobile Drawer */}
               <Button
-              as="scouterna.se"
-              href="https://www.scouterna.se"
-              target="_blank"
-              variant="ghost"
-              cursor="pointer"
-              colorScheme="brand"
-              onClick={onClose}
-              position="relative" // Make it a relative container for the icon
-              width="full" // Ensure the button spans the available space
+                as="a"
+                href="https://www.scouterna.se"
+                target="_blank"
+                variant="ghost"
+                cursor="pointer"
+                colorScheme="brand"
+                onClick={onClose}
+                position="relative"
+                width="full"
+                justifyContent="flex-start" // Ensures left alignment for text and icon
               >
-              {/* Logo and Text */}
-              <Flex align="center" justify="center" width="100%">
-                <Image
-                  src={LilyBlueIcon}
-                  alt="Scouterna Logo"
-                  boxSize="1.5em"
-                  mr="2" // Space between logo and text
-                />
-                Scouterna
-              </Flex>
-
-              {/* Right Icon */}
-              <Box
-                position="absolute" // Position it relative to the button container
-                right="1rem" // Space from the right edge
-                top="50%" // Center vertically
-                transform="translateY(-50%)" // Adjust for perfect vertical centering
-              >
-                <FaArrowRight />
-              </Box>
+                {/* Logo and Text */}
+                <Flex align="center" justify="flex-start" width="100%">
+                  <Image
+                    src={LilyBlueIcon}
+                    alt="Scouterna Logo"
+                    boxSize="1.5em"
+                    mr="2" // Space between logo and text
+                  />
+                  Scouterna
+                </Flex>
+                {/* Right Icon */}
+                <Box
+                  position="absolute"
+                  right="1rem"
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  <FaArrowRight />
+                </Box>
               </Button>
 
               {links.map(({ to, label }) => (
@@ -263,25 +257,39 @@ const Navbar = () => {
                   variant="ghost"
                   colorScheme="brand"
                   onClick={onClose}
+                  justifyContent="flex-start" // Ensures left alignment for text
+                  width="full"
+                  position="relative"
                 >
                   {label}
                   {/* Right Icon */}
                   <Box
-                    position="absolute" // Position it relative to the button container
-                    right="1rem" // Space from the right edge
-                    top="50%" // Center vertically
-                    transform="translateY(-50%)" // Adjust for perfect vertical centering
+                    position="absolute"
+                    right="1rem"
+                    top="50%"
+                    transform="translateY(-50%)"
                   >
                     <FaArrowRight />
                   </Box>
-
                 </Button>
               ))}
+
               {/* Profile Links moved to the Hamburger Menu */}
               {userId ? (
                 <>
-                  <Button variant="ghost" onClick={() => { handleLogout(); onClose(); }}>
-                    Logga ut
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      handleLogout();
+                      onClose();
+                    }}
+                    justifyContent="flex-start" // Ensures left alignment for text
+                    width="full"
+                  >
+                    <Flex align="center" gap={2}>
+                      <FaSignOutAlt />
+                      Logga ut
+                    </Flex>
                   </Button>
                 </>
               ) : null}

@@ -518,6 +518,16 @@ const Profile = () => {
   direction={{ base: 'column', lg: 'row' }} 
   pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
 >
+<Button
+   rightIcon={<FaPen />}
+    colorScheme="brand"
+    variant="link" // No background
+    onClick={() => setNewInfoOpen(true)}
+    _hover={{ textDecoration: 'underline' }} // Underline on hover
+    color="brand.500" // Set text color to brand.500
+  >
+    Redigera profil
+  </Button>
   <Button
     rightIcon={<FaPlus />}
     colorScheme="brand"
@@ -527,16 +537,6 @@ const Profile = () => {
     color="brand.500" // Set text color to brand.500
   >
     Lägg till barn
-  </Button>
-  <Button
-   rightIcon={<FaPen />}
-    colorScheme="brand"
-    variant="link" // No background
-    onClick={() => setNewInfoOpen(true)}
-    _hover={{ textDecoration: 'underline' }} // Underline on hover
-    color="brand.500" // Set text color to brand.500
-  >
-    Redigera profil
   </Button>
   <Button
     rightIcon={<FaPlus />}
