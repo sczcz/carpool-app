@@ -26,6 +26,7 @@ def add_address(current_user):
     phone = data.get('phone')
     first_name = data.get('first_name')
     last_name = data.get('last_name')
+    email = data.get('email')
 
     if not all([address, postcode, city]):
         return jsonify({"error": "Address, postcode, and city are required!"}), 400
@@ -37,6 +38,8 @@ def add_address(current_user):
     current_user.phone = phone
     current_user.first_name = first_name
     current_user.last_name = last_name
+    current_user.email = email
+
 
     db.session.commit()
 
