@@ -36,7 +36,7 @@ export default function Footer() {
             ml={{ base: 0, md: 2 }} // No margin on mobile, margin on desktop
             display={{ base: 'block', md: 'block' }} // Ensure text is shown on all sizes
           >
-            Jonstorps kustscoutkår
+            Jonstorps Kustscoutkår
           </Text>
         </Stack>
         
