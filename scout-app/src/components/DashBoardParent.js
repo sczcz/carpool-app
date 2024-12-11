@@ -37,6 +37,7 @@ import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
 import CarpoolDetails from './CarpoolDetails';
 import AddChildModal from './AddChildModal';
+import SelectParticipantModal from './SelectParticipantModal'
 import { fetchActivitiesByRole, fetchAllVisibleActivities } from '../utils/activities';
 
 
@@ -63,6 +64,8 @@ const DashBoardParent = ({ token }) => {
   const toast = useToast();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
   const [filterByRole, setFilterByRole] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [participants, setParticipants] = useState([]);
 
   const roleColors = {
     tumlare: '#41a62a',
@@ -286,102 +289,73 @@ const DashBoardParent = ({ token }) => {
     }
   };
   
+
   const handleJoinCarpool = async (carpoolId, activityId) => {
     try {
-      const addSelf = window.confirm('Vill du lägga till dig själv som passagerare?');
-      let selectedChildId = null;
+      const response = await fetch(`/api/carpool/select-join?carpool_id=${carpoolId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
   
-      if (!addSelf) {
-        const checkResponse = await fetch(`/api/carpool/check-multiple-children?carpool_id=${carpoolId}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
-  
-        const checkData = await checkResponse.json();
-        setChildrenWithSameRole((prev) => ({
-          ...prev,
-          [carpoolId]: checkData.children,
-        }));
-  
-        if (checkData.multiple) {
-          selectedChildId = prompt(
-            `Välj barnets ID:\n${checkData.children.map((child) => `${child.child_id}: ${child.name}`).join('\n')}`
-          );
-          if (!selectedChildId) return;
-        } else {
-          selectedChildId = checkData.child_id;
-          if (!selectedChildId) {
-            throw new Error('Inga barn hittades för den här rollen.');
-          }
-        }
+      if (!response.ok) {
+        throw new Error('Misslyckades med att hämta deltagare.');
       }
   
-      const response = await fetch(`/api/carpool/add-passenger`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          carpool_id: carpoolId,
-          ...(addSelf ? { add_self: true } : { child_id: selectedChildId }),
-        }),
-      });
-  
-      if (!response.ok) throw new Error('Misslyckades med att gå med i samåkningen');
-  
-      toast({
-        title: 'Samåkning uppdaterad',
-        description: addSelf
-          ? 'Du har gått med i samåkningen!'
-          : 'Barnet har lagts till i samåkningen!',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-  
-      const newPassenger = addSelf
-        ? { user_id: userId, type: 'user', user_name: fullName }
-        : { child_id: selectedChildId, parents: [{ parent_id: userId }] };
-  
-      const updatedActivities = activities.map((activity) => {
-        if (activity.activity_id === activityId) {
-          return {
-            ...activity,
-            carpools: activity.carpools.map((carpool) =>
-              carpool.id === carpoolId
-                ? {
-                    ...carpool,
-                    available_seats: carpool.available_seats - 1,
-                    passengers: [...carpool.passengers, newPassenger],
-                  }
-                : carpool
-            ),
-          };
-        }
-        return activity;
-      });
-  
-      setActivities(updatedActivities);
-  
-      // Uppdatera "Mina aktiviteter"
-      const updatedMyActivities = updatedActivities.filter((activity) =>
-        activity.carpools.some((carpool) =>
-          carpool.driver_id === userId ||
-          carpool.passengers.some((passenger) => passenger.user_id === userId)
-        )
-      );
-  
-      setMyActivities(updatedMyActivities);
+      const participantsData = await response.json();
+      setParticipants(participantsData); // Uppdatera modalens data
+      setSelectedCarpoolId(carpoolId);  // Spara carpool ID:n
+      setSelectedActivityId(activityId); // Spara aktivitet ID:n
+      setIsModalOpen(true); // Öppna modalen
     } catch (error) {
       toast({
         title: 'Fel',
-        description: error.message || 'Ett fel inträffade vid försök att gå med i samåkningen.',
+        description: error.message || 'Ett fel inträffade vid hämtning av deltagare.',
         status: 'error',
         duration: 5000,
         isClosable: true,
       });
     }
   };
+  
+
+  const handleParticipantSelect = async (participant) => {
+    try {
+      const response = await fetch(`/api/carpool/add-passenger`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          carpool_id: selectedCarpoolId,
+          ...(participant.type === 'user'
+            ? { add_self: true }
+            : { child_id: participant.id }),
+        }),
+      });
+  
+      if (!response.ok) throw new Error('Misslyckades med att lägga till deltagare.');
+  
+      toast({
+        title: 'Samåkning uppdaterad',
+        description: `${participant.name} har lagts till i samåkningen!`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+  
+      setIsModalOpen(false); // Stäng modalen
+      fetchCarpoolsForActivity(selectedActivityId); // Uppdatera carpools
+    } catch (error) {
+      toast({
+        title: 'Fel',
+        description: error.message || 'Ett fel inträffade vid försök att lägga till deltagare.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+  
+
   
 
   const handleDeleteCarpool = async (carpoolId, activityId) => {
@@ -1007,6 +981,15 @@ const handleLoadMore = () => {
               </ModalBody>
             </ModalContent>
           </Modal>
+            {/* Select Participant Modal */}
+            <SelectParticipantModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                participants={participants}
+                onSelect={handleParticipantSelect}
+              />
+
+
           {/* Carpool Details Modal */}
           {selectedActivity && selectedCarpool && (
             <CarpoolDetails

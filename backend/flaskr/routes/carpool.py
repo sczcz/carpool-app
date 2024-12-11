@@ -217,29 +217,23 @@ def all_children_joined(current_user):
     if not carpool_id:
         return jsonify({"error": "Carpool ID is required!"}), 400
 
-    # Retrieve carpool and associated activity
+    # Retrieve carpool
     carpool = Carpool.query.get(carpool_id)
     if not carpool:
         return jsonify({"error": "Carpool not found!"}), 404
 
-    activity = Activity.query.get(carpool.activity_id)
-    if not activity or not activity.role_id:
-        return jsonify({"error": "Associated activity or role not found!"}), 404
-
-    role_id = activity.role_id
-
-    # Retrieve all children of the current user with the specified role using ParentChildLink
-    children_with_role = Child.query.join(ParentChildLink, ParentChildLink.child_id == Child.child_id)\
-                                    .filter(ParentChildLink.user_id == current_user.user_id, Child.role_id == role_id)\
-                                    .all()
+    # Retrieve all children of the current user using ParentChildLink
+    children = Child.query.join(ParentChildLink, ParentChildLink.child_id == Child.child_id)\
+                          .filter(ParentChildLink.user_id == current_user.user_id)\
+                          .all()
 
     # Retrieve all passengers in the carpool
     passengers = Passenger.query.filter_by(carpool_id=carpool_id).all()
     passenger_child_ids = [p.child_id for p in passengers]
     passenger_user_ids = [p.user_id for p in passengers]
 
-    # Check if every child with this role is in the carpool
-    all_children_joined = all(child.child_id in passenger_child_ids for child in children_with_role)
+    # Check if every child is in the carpool
+    all_children_joined = all(child.child_id in passenger_child_ids for child in children)
 
     # Check if the user is already a passenger
     user_already_joined = current_user.user_id in passenger_user_ids
@@ -248,6 +242,7 @@ def all_children_joined(current_user):
         "all_children_joined": all_children_joined,
         "user_already_joined": user_already_joined
     }), 200
+
 
 
 @carpool_bp.route('/api/carpool/<int:carpool_id>/delete', methods=['DELETE'])
@@ -445,3 +440,48 @@ def get_driver_info(current_user, carpool_id):
     }
 
     return jsonify({"driver": driver_info}), 200
+
+
+@carpool_bp.route('/api/carpool/select-join', methods=['GET'])
+@token_required
+def get_user_and_all_children(current_user):
+    carpool_id = request.args.get('carpool_id', type=int)
+    if not carpool_id:
+        return jsonify({"error": "Carpool ID is required!"}), 400
+
+    # Hämta carpool
+    carpool = Carpool.query.get(carpool_id)
+    if not carpool:
+        return jsonify({"error": "Carpool not found!"}), 404
+
+    # Hämta alla barn kopplade till föräldern via ParentChildLink
+    children = Child.query.join(ParentChildLink, ParentChildLink.child_id == Child.child_id)\
+                          .filter(ParentChildLink.user_id == current_user.user_id)\
+                          .all()
+
+    # Hämta passagerare i carpoolen
+    passengers = Passenger.query.filter_by(carpool_id=carpool_id).all()
+    passenger_child_ids = [p.child_id for p in passengers]
+    passenger_user_ids = [p.user_id for p in passengers]
+
+    # Bygg lista med föräldern och deras barn
+    participants = [
+        {
+            "id": current_user.user_id,
+            "name": f"{current_user.first_name} {current_user.last_name}",
+            "is_booked": current_user.user_id in passenger_user_ids,
+            "type": "user",
+        }
+    ]
+    participants.extend([
+        {
+            "id": child.child_id,
+            "name": f"{child.first_name} {child.last_name}",
+            "is_booked": child.child_id in passenger_child_ids,
+            "type": "child",
+        }
+        for child in children
+    ])
+
+    return jsonify(participants), 200
+
