@@ -6,6 +6,7 @@ import AddCarModal from './AddCarModal';
 import { useUser } from '../utils/UserContext';
 import {
   Box,
+  Checkbox,
   Heading,
   Icon,
   useDisclosure,
@@ -46,6 +47,7 @@ const Profile = () => {
     postcode: contextPostcode,
     city: contextCity,
     phone: contextPhone,
+    notificationPreferences: contextNotificationPreferences,
     fetchUserData,
     updateUserData,
     isInitialized,
@@ -59,6 +61,7 @@ const Profile = () => {
   const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [notificationPreferences, setNotificationPreferences] = useState({});
   // Children information
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
@@ -184,7 +187,8 @@ const Profile = () => {
     setPostcode(contextPostcode || '');
     setCity(contextCity || '');
     setPhone(contextPhone || '');
-  }, [fullName, contextAddress, contextPostcode, contextCity, contextPhone]);
+    setNotificationPreferences(contextNotificationPreferences || {});
+  }, [fullName, contextAddress, contextPostcode, contextCity, contextPhone, contextNotificationPreferences]);
 
 
   // Handle new car addition
@@ -204,11 +208,29 @@ const Profile = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ address, postcode, city, phone, first_name: firstName, last_name: lastName, email: email }),
+        body: JSON.stringify({ 
+          address, 
+          postcode, 
+          city, 
+          phone, 
+          first_name: firstName, 
+          last_name: lastName, 
+          email: email,
+          notification_preferences: notificationPreferences,
+         }),
       });
 
       if (response.ok) {
-        updateUserData({ address, postcode, city, phone, firstName, lastName, email }); // Uppdatera kontexten
+        updateUserData({ 
+          address, 
+          postcode, 
+          city, 
+          phone, 
+          firstName, 
+          lastName, 
+          email,
+          notificationPreferences, 
+        }); // Uppdatera kontexten
         toast({
           title: 'Profilen har uppdaterats framgångsrikt!',
           status: 'success',
@@ -467,6 +489,13 @@ const Profile = () => {
     );
   };
 
+  const handleNotificationChange = (key, value) => {
+    setNotificationPreferences((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   const roleList = roles.join(', ');
 
   return (
@@ -511,60 +540,55 @@ const Profile = () => {
           </Stack>
         </Flex>
 
-      {/* Buttons */}
-      <Stack
-  fontSize={{ base: 'sm', lg: 'md' }} // Smaller text on mobile, medium on large screens
-  spacing={{ base: 2, lg: 4 }} // Smaller spacing on mobile, larger spacing on desktop
-  mt={[4, 4, -2]} // Negative margin to move buttons up
-  alignSelf="center" // Align buttons at the top of the user info
-  direction={{ base: 'column', lg: 'row' }} 
-  pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
->
-<Button
-   rightIcon={<FaPen />}
-    colorScheme="brand"
-    variant="link" // No background
-    onClick={() => setNewInfoOpen(true)}
-    _hover={{ textDecoration: 'underline' }} // Underline on hover
-    color="brand.500" // Set text color to brand.500
-  >
-    Redigera profil
-  </Button>
-  <Button
-    rightIcon={<FaPlus />}
-    colorScheme="brand"
-    variant="link" // No background
-    onClick={() => setAddChildOpen(true)}
-    _hover={{ textDecoration: 'underline' }} // Underline on hover
-    color="brand.500" // Set text color to brand.500
-  >
-    Lägg till barn
-  </Button>
-  <Button
-    rightIcon={<FaPlus />}
-    colorScheme="brand"
-    variant="link" // No background
-    onClick={() => setAddCarOpen(true)}
-    _hover={{ textDecoration: 'underline' }} // Underline on hover
-    color="brand.500" // Set text color to brand.500
-  >
-    Lägg till bil
-  </Button>
-  <Button 
-    pr={ {base: '6', lg: '0'} }
-    colorScheme='red'
-    _hover={{ textDecoration: 'underline' }} // Underline on hover
-    color='red'
-    variant="ghost" 
-    onClick={() => { handleLogout(); onClose(); }}>                  
-    Logga ut
-  </Button>
-</Stack>
-
-
-
-
-
+        {/* Buttons */}
+        <Stack
+          fontSize={{ base: 'sm', lg: 'md' }} // Smaller text on mobile, medium on large screens
+          spacing={{ base: 2, lg: 4 }} // Smaller spacing on mobile, larger spacing on desktop
+          mt={[4, 4, -2]} // Negative margin to move buttons up
+          alignSelf="center" // Align buttons at the top of the user info
+          direction={{ base: 'column', lg: 'row' }} 
+          pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
+        >
+          <Button
+            rightIcon={<FaPen />}
+              colorScheme="brand"
+              variant="link" // No background
+              onClick={() => setNewInfoOpen(true)}
+              _hover={{ textDecoration: 'underline' }} // Underline on hover
+              color="brand.500" // Set text color to brand.500
+            >
+            Redigera profil
+          </Button>
+          <Button
+            rightIcon={<FaPlus />}
+            colorScheme="brand"
+            variant="link" // No background
+            onClick={() => setAddChildOpen(true)}
+            _hover={{ textDecoration: 'underline' }} // Underline on hover
+            color="brand.500" // Set text color to brand.500
+          >
+            Lägg till barn
+          </Button>
+          <Button
+            rightIcon={<FaPlus />}
+            colorScheme="brand"
+            variant="link" // No background
+            onClick={() => setAddCarOpen(true)}
+            _hover={{ textDecoration: 'underline' }} // Underline on hover
+            color="brand.500" // Set text color to brand.500
+          >
+            Lägg till bil
+          </Button>
+          <Button 
+            pr={ {base: '6', lg: '0'} }
+            colorScheme='red'
+            _hover={{ textDecoration: 'underline' }} // Underline on hover
+            color='red'
+            variant="ghost" 
+            onClick={() => { handleLogout(); onClose(); }}>                  
+            Logga ut
+          </Button>
+        </Stack>
       </Flex>
 
       {/* Children Section */}
@@ -811,6 +835,26 @@ const Profile = () => {
                     isRequired // Accessibility enhancement
                   />
                 </FormControl>
+
+                {/* Notification Preferences */}
+                <Box mt={6} w="full">
+                  <Heading as="h4" size="md" mb={4}>
+                    Notisinställningar
+                  </Heading>
+                  <Checkbox
+                    isChecked={notificationPreferences.chat_notifications || false}
+                    onChange={(e) => handleNotificationChange('chat_notifications', e.target.checked)}
+                  >
+                    Skicka e-postnotiser om nya chattmeddelanden
+                  </Checkbox>
+                  <Checkbox
+                    isChecked={notificationPreferences.passenger_notifications || false}
+                    onChange={(e) => handleNotificationChange('passenger_notifications', e.target.checked)}
+                  >
+                    Skicka e-postnotiser om förändringar i passagerarlistan
+                  </Checkbox>
+                </Box>
+
               </Box>
             </Flex>
           </ModalBody>

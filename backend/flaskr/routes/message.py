@@ -11,6 +11,7 @@ from dateutil import tz
 from models.activity_model import Activity
 from flask_mail import Message
 from extensions import mail
+import json
 
 message_bp = Blueprint('message_bp', __name__)
 active_users = {}
@@ -47,6 +48,13 @@ def send_carpool_notification_email(carpool_id):
         if passenger.user_id and passenger.user_id != sender_id:  # Ignorera avsändaren
             user = User.query.get(passenger.user_id)
             if user and user.email:
+                if user.notification_preferences:
+                    notification_preferences = json.loads(user.notification_preferences)
+                else:
+                    notification_preferences = {}
+                if not notification_preferences.get("chat_notifications", False):
+                    print(f"User {user.email} has disabled chat notifications. Skipping.")
+                    continue
                 if email_notifications_sent.get(user.user_id, {}).get(carpool_id, False):
                     print(f"Email already sent to {user.email} for carpool {carpool_id}. Skipping.")
                     continue
@@ -87,6 +95,13 @@ def send_carpool_notification_email(carpool_id):
         for link in parent_links:
             parent = User.query.get(link.user_id)
             if parent and parent.email and parent.user_id != sender_id:  # Ignorera avsändaren
+                if parent.notification_preferences:
+                    notification_preferences = json.loads(parent.notification_preferences)
+                else:
+                    notification_preferences = {}
+                if not notification_preferences.get("chat_notifications", False):
+                    print(f"User {parent.email} has disabled chat notifications. Skipping.")
+                    continue
                 if email_notifications_sent.get(parent.user_id, {}).get(carpool_id, False):
                     print(f"Email already sent to {parent.email} for carpool {carpool_id}. Skipping.")
                     continue
@@ -125,6 +140,13 @@ def send_carpool_notification_email(carpool_id):
     if carpool.driver_id and carpool.driver_id != sender_id:  # Ignorera avsändaren
         driver = User.query.get(carpool.driver_id)
         if driver and driver.email:
+            if driver.notification_preferences:
+                notification_preferences = json.loads(driver.notification_preferences)
+            else:
+                notification_preferences = {}
+            if not notification_preferences.get("chat_notifications", False):
+                print(f"User {driver.email} has disabled chat notifications. Skipping.")
+                return
             if email_notifications_sent.get(driver.user_id, {}).get(carpool_id, False):
                 print(f"Email already sent to {driver.email} for carpool {carpool_id}. Skipping.")
             else:

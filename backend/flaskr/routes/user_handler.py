@@ -77,7 +77,8 @@ def get_logged_in_user(current_user):
         "city": current_user.city,
         "roles": role_names,
         "phone": current_user.phone,
-        "is_accepted": current_user.is_accepted  
+        "is_accepted": current_user.is_accepted,
+        "notification_preferences": json.loads(current_user.notification_preferences or "{}")  
     }
 
     return jsonify({"user": user_data}), 200

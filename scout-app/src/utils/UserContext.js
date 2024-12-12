@@ -38,7 +38,7 @@ export const UserProvider = ({ children }) => {
         setPhone(user.phone || '');
         setIsAccepted(user.is_accepted);
 
-        const preferences = user.notification_preferences ? JSON.parse(user.notification_preferences) : {}
+        const preferences = user.notification_preferences || {};
         setNotificationPreferences(preferences);
       }
     } catch (error) {
