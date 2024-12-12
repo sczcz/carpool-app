@@ -21,6 +21,7 @@ class User(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     is_accepted = db.Column(db.Boolean, nullable=False, default=False)
     last_logged_in = db.Column(db.DateTime, nullable=True)
+    notification_preferences = db.Column(db.Text, nullable=True)
 
 
 # Sambandstabell mellan User och Role

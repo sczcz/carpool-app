@@ -5,6 +5,7 @@ from models.auth_model import User, Role, UserRole, Child, ParentChildLink
 from functools import wraps
 from datetime import datetime
 from routes.auth import token_required  # Import token_required decorator
+import json
 
 user_handler = Blueprint('user_handler', __name__)
 
@@ -27,6 +28,7 @@ def add_address(current_user):
     first_name = data.get('first_name')
     last_name = data.get('last_name')
     email = data.get('email')
+    notification_preferences = data.get('notification_preferences')
 
     if not all([address, postcode, city]):
         return jsonify({"error": "Address, postcode, and city are required!"}), 400
@@ -40,10 +42,18 @@ def add_address(current_user):
     current_user.last_name = last_name
     current_user.email = email
 
+    if notification_preferences is not None:
+        try:
+            if isinstance(notification_preferences, dict):
+                current_user.notification_preferences = json.dumps(notification_preferences)
+            else:
+                return jsonify({"error": "Invalid notification preferences format. Must be a dictionary."}), 400
+        except Exception as e:
+            return jsonify({"error": f"Failed to update notification preferences: {str(e)}"}), 500
 
     db.session.commit()
 
-    return make_response(jsonify({"message": "Address updated!"}), 200)
+    return make_response(jsonify({"message": "Profile updated!"}), 200)
 
 # Exempel på en skyddad route som returnerar inloggad användare och deras roll
 @user_handler.route('/api/protected/user', methods=['GET'])

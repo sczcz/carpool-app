@@ -11,7 +11,8 @@ export const UserProvider = ({ children }) => {
   const [address, setAddress] = useState(''); 
   const [postcode, setPostcode] = useState(''); 
   const [city, setCity] = useState('');
-  const [phone, setPhone] = useState(''); 
+  const [phone, setPhone] = useState('');
+  const [notificationPreferences, setNotificationPreferences] = useState({}); 
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -36,6 +37,9 @@ export const UserProvider = ({ children }) => {
         setCity(user.city || '');
         setPhone(user.phone || '');
         setIsAccepted(user.is_accepted);
+
+        const preferences = user.notification_preferences ? JSON.parse(user.notification_preferences) : {}
+        setNotificationPreferences(preferences);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -53,6 +57,7 @@ export const UserProvider = ({ children }) => {
     setPostcode('');
     setCity('');
     setPhone('');
+    setNotificationPreferences({})
     setIsInitialized(false);
     setLoading(false);
     setIsAccepted(false);
@@ -66,6 +71,9 @@ export const UserProvider = ({ children }) => {
     if (updatedData.postcode) setPostcode(updatedData.postcode);
     if (updatedData.city) setCity(updatedData.city);
     if (updatedData.phone) setPhone(updatedData.phone);
+    if (updatedData.notificationPreferences) {
+      setNotificationPreferences(updatedData.notificationPreferences);
+    }
   };
 
   const hasRole = (role) => roles.includes(role);
@@ -82,6 +90,8 @@ export const UserProvider = ({ children }) => {
         postcode, 
         city, 
         phone,
+        notificationPreferences,
+        setNotificationPreferences,
         isAccepted, 
         fetchUserData, 
         loading,
