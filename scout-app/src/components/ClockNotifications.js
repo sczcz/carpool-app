@@ -22,8 +22,22 @@ import { fetchNotifications } from '../utils/notifications';
 import socket from '../utils/socket';
 import { useUser } from '../utils/UserContext';
 import CarpoolChat from './CarpoolChat';
+import CarpoolDetails from './CarpoolDetails';
+import { useCarpool } from '../utils/CarpoolContext';
 
 const ClockNotifications = ({ isScrolled }) => {
+  const {
+    activities,
+    isDetailsOpen,
+    setDetailsOpen,
+    selectedActivity,
+    selectedCarpool,
+    onDetailsOpen,
+    onDetailsClose,
+    setSelectedActivity,
+    setSelectedCarpool,
+    fetchCarpoolsForActivity
+  } = useCarpool();
   const [notifications, setNotifications] = useState([]); // Alla notiser
   const [unreadCount, setUnreadCount] = useState(0); // Antal olästa notiser
   const { userId, fullName } = useUser();
@@ -86,11 +100,10 @@ const ClockNotifications = ({ isScrolled }) => {
         credentials: 'include',
         body: JSON.stringify({ carpool_id: carpoolId }),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
-  
         setNotifications((prevNotifications) =>
           prevNotifications.map((notification) =>
             notification.carpool_details?.carpool_id === carpoolId
@@ -98,12 +111,14 @@ const ClockNotifications = ({ isScrolled }) => {
               : notification
           )
         );
-  
+
         setUnreadCount((prevCount) =>
           Math.max(
             prevCount -
               notifications.filter(
-                (n) => n.carpool_details?.carpool_id === carpoolId && !n.is_read
+                (n) =>
+                  n.carpool_details?.carpool_id === carpoolId &&
+                  !n.is_read
               ).length,
             0
           )
@@ -119,28 +134,47 @@ const ClockNotifications = ({ isScrolled }) => {
 
   const handleNotificationClick = (notification) => {
     const carpoolId = notification.carpool_details?.carpool_id;
-    if (carpoolId) {
+  
+    if (notification.type === 'chat' && carpoolId) {
       setSelectedCarpoolId(carpoolId);
       onChatOpen();
-      markNotificationsForCarpoolAsRead(carpoolId);
+      markNotificationsForCarpoolAsRead(carpoolId, 'chat');
+    } else if (notification.type === 'passenger' && carpoolId) {
+      
+      const activity = notification.activity_details;
+      const carpool = notification.carpool_details;
+  
+      if (activity && carpool) {
+        setSelectedActivity(activity);
+        setSelectedCarpool(carpool);
+        onDetailsOpen();
+        markNotificationsForCarpoolAsRead(carpoolId);
+      } else {
+        console.error('Activity or carpool details are missing in notification', notification);
+      }
     }
+  };
+
+  const closeDetails = () => {
+    setDetailsOpen(false);
   };
 
   // Gruppar notiser för visning
   const groupedNotifications = notifications
-  .filter((notification) => !notification.is_read) // Filtrera bort lästa notiser
+  .filter((notification) => !notification.is_read)
   .reduce((acc, notification) => {
-    const carpoolId = notification.carpool_details?.carpool_id || 'unknown'; // Hantera saknade carpool_id
+    const carpoolId = notification.carpool_details?.carpool_id || 'unknown';
+    const type = notification.type || 'unknown';
 
-    if (!acc[carpoolId]) {
-      acc[carpoolId] = { ...notification, count: 0 };
+    const key = `${carpoolId}_${type}`; // Använd både carpoolId och typ som nyckel
+
+    if (!acc[key]) {
+      acc[key] = { ...notification, count: 0 };
     }
-    acc[carpoolId].count += 1;
+    acc[key].count += 1;
 
     return acc;
   }, {});
-
-  
 
   const displayedNotifications = Object.values(groupedNotifications);
 
@@ -190,19 +224,24 @@ const ClockNotifications = ({ isScrolled }) => {
           <MenuList color="brand.500">
             {displayedNotifications.length > 0 ? (
               displayedNotifications.map((notification, index) => (
-                <MenuItem
-                  key={index}
-                  _hover={{
-                    bg: isScrolled ? 'gray.700' : 'gray.100',
-                  }}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <Text color="blue.700">
-                    {notification.count === 1
+              <MenuItem
+                key={index}
+                _hover={{
+                  bg: isScrolled ? 'gray.700' : 'gray.100',
+                }}
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <Text color="blue.700">
+                  {notification.type === 'chat' ? (
+                    notification.count === 1
                       ? `Ett nytt ${notification.message}`
-                      : `${notification.count} nya ${notification.message}`}
-                  </Text>
-                </MenuItem>
+                      : `${notification.count} nya ${notification.message}`
+                  ) : (
+                    // För andra typer av notiser, visa endast meddelandet
+                    notification.message
+                  )}
+                </Text>
+              </MenuItem>
               ))
             ) : (
               <MenuItem>
@@ -219,6 +258,23 @@ const ClockNotifications = ({ isScrolled }) => {
           <ModalCloseButton />
           <ModalBody>
             <CarpoolChat carpoolId={selectedCarpoolId} userName={fullName} userId={userId} />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      {/* Modal för Carpool Details */}
+      <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Carpool Details</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <CarpoolDetails               
+              isOpen={isDetailsOpen}
+              onClose={onDetailsClose}
+              activity={selectedActivity}
+              carpool={selectedCarpool}
+              currentUserId={userId}
+              fetchCarpoolsForActivity={fetchCarpoolsForActivity} />
           </ModalBody>
         </ModalContent>
       </Modal>

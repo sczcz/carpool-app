@@ -5,6 +5,7 @@ from routes.auth import token_required
 from models.carpool_model import Carpool
 from routes.message import email_notifications_sent
 from flask_socketio import emit
+from models.activity_model import Activity
 
 notifications_bp = Blueprint('notifications_bp', __name__)
 
@@ -22,6 +23,8 @@ def get_notifications(current_user):
     notifications_data = []
     for n in notifications:
         carpool = Carpool.query.get(n.carpool_id)
+        activity = Activity.query.get(carpool.activity_id) if carpool else None  # Hämta aktivitet för carpool
+        
         carpool_details = {
             "carpool_id": carpool.id,
             "carpool_type": carpool.carpool_type,
@@ -32,10 +35,18 @@ def get_notifications(current_user):
             "car_info": f"{carpool.car.model_name}" if carpool.car else "Ingen bil tilldelad",
         } if carpool else None
 
+        activity_details = {
+            "activity_id": activity.activity_id,
+            "location": activity.address,
+            "summary": activity.name,
+            "dtstart": activity.start_date.isoformat(),
+        } if activity else None
+
         notifications_data.append({
             "id": n.id,
             "message": n.message,
             "carpool_details": carpool_details,
+            "activity_details": activity_details,  # Lägg till aktivitetsdata
             "is_read": n.is_read,
             "created_at": n.created_at.isoformat()
         })

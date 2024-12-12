@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useCarpool } from '../utils/CarpoolContext';
+import { useUser } from '../utils/UserContext';
 import {
   Modal,
   ModalOverlay,
@@ -22,7 +24,17 @@ import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from '
 import ExpandableText from './ExpandableText';
 import { format, parseISO } from 'date-fns';
 
-const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fetchCarpoolsForActivity }) => {
+const CarpoolDetails = () => {
+  const {
+    selectedActivity: activity,
+    selectedCarpool: carpool,
+    onDetailsClose: onClose,
+    isDetailsOpen: isOpen,
+    fetchCarpoolsForActivity,
+  } = useCarpool();
+  const {
+    userId: currentUserId
+  } = useUser();
   const fontSize = useBreakpointValue({ base: 'sm', md: 'md' });
   const modalSize = useBreakpointValue({ base: 'lg', md: 'lg' });
   const toast = useToast();
@@ -162,6 +174,21 @@ const CarpoolDetails = ({ isOpen, onClose, currentUserId, activity, carpool, fet
     utmanare: '#da005e',
     rover: '#e2e000',
   };
+
+  if (!activity || !activity.scout_level) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Detaljer</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Information om aktiviteten saknas.</Text>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    );
+  }
 
   return (
 <Modal isOpen={isOpen} onClose={onClose} size={modalSize}>

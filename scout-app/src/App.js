@@ -1,6 +1,7 @@
 import { React, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider, useUser } from './utils/UserContext';
+import { CarpoolProvider } from './utils/CarpoolContext';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import DashBoardAdmin from './components/DashBoardAdmin';
@@ -17,7 +18,9 @@ import { Box } from '@chakra-ui/react';
 function App() {
   return (
     <UserProvider>
-      <AppContent />
+      <CarpoolProvider>
+        <AppContent />
+      </CarpoolProvider>
     </UserProvider>
   );
 }

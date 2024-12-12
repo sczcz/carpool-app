@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_socketio import emit
 from extensions import db
 from models.carpool_model import Carpool, Passenger, Car
 from models.auth_model import Child, ParentChildLink
@@ -6,6 +7,7 @@ from models.activity_model import Activity
 from models.message_model import CarpoolMessage
 from datetime import datetime
 from routes.auth import token_required, User
+from routes.carpool_notifications import send_passenger_list_notification
 
 carpool_bp = Blueprint('carpool_bp', __name__)
 
@@ -164,6 +166,9 @@ def add_passenger(current_user):
 
     db.session.add(new_passenger)
     db.session.commit()
+
+    # Skicka notis till föraren
+    send_passenger_list_notification(carpool_id, "added", current_user)
 
     return jsonify({"message": "Passenger added successfully!"}), 201
 
@@ -412,6 +417,8 @@ def remove_passenger(current_user):
         db.session.delete(passenger)
         carpool.available_seats += 1
         db.session.commit()
+        send_passenger_list_notification(carpool_id, "removed", current_user)
+        
         return jsonify({"message": "Passageraren har tagits bort från carpoolen"}), 200
     except Exception as e:
         db.session.rollback()

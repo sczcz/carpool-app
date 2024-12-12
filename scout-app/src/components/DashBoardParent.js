@@ -33,6 +33,7 @@ import { FaUserCircle, FaPlus } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
 import { sv } from 'date-fns/locale'
 import { useUser } from '../utils/UserContext';
+import { useCarpool } from '../utils/CarpoolContext';
 import CarpoolComponent from './CarPoolComponent';
 import CarpoolChat from './CarpoolChat';
 import CarpoolDetails from './CarpoolDetails';
@@ -42,8 +43,19 @@ import { fetchActivitiesByRole, fetchAllVisibleActivities } from '../utils/activ
 
 
 const DashBoardParent = ({ token }) => {
+  const {
+    activities,
+    setActivities,
+    fetchCarpoolsForActivity,
+    selectedActivity,
+    setSelectedActivity,
+    selectedCarpool,
+    setSelectedCarpool,
+    isDetailsOpen,
+    onDetailsOpen,
+    onDetailsClose,
+  } = useCarpool();
   const { userId, fullName, loading } = useUser();
-  const [activities, setActivities] = useState([]);
   const [myActivities, setMyActivities] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,13 +66,9 @@ const DashBoardParent = ({ token }) => {
   const [fetchedCarpools, setFetchedCarpools] = useState(new Set());
   const [selectedActivityId, setSelectedActivityId] = useState(null);
   const [joinedChildrenInCarpool, setJoinedChildrenInCarpool] = useState({});
-  const [childrenWithSameRole, setChildrenWithSameRole] = useState({});
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure();
   const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
-  const [selectedCarpool, setSelectedCarpool] = useState(null);
-  const [selectedActivity, setSelectedActivity] = useState(null);
-  const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
   const toast = useToast();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
   const [filterByRole, setFilterByRole] = useState(true);
@@ -227,68 +235,6 @@ const DashBoardParent = ({ token }) => {
   const handleChildAdded = () => {
     window.location.reload();
   };
-
-  const fetchCarpoolsForActivity = async (activityId) => {
-    setFetchingCarpools(true);
-    try {
-      const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setActivities((prevActivities) =>
-          prevActivities.map((activity) => {
-            if (activity.activity_id === activityId) {
-              return {
-                ...activity,
-                carpools: data.carpools.map((carpool) => ({
-                  ...carpool,
-                  passengers: carpool.passengers.map((passenger) => {
-                    if (passenger.type === "child") {
-                      // Hantera om passageraren är ett barn
-                      return {
-                        ...passenger,
-                        parents: passenger.parents.map((parent) => ({
-                          parent_name: parent.parent_name,
-                          parent_phone: parent.parent_phone,
-                        })),
-                        car: carpool.car,
-                      };
-                    } else if (passenger.type === "user") {
-                      // Hantera om passageraren är en användare
-                      return {
-                        ...passenger,
-                        parents: [], // Ingen "parents" för användare
-                        car: carpool.car,
-                      };
-                    }
-                    return passenger;
-                  }),
-                })),
-              };
-            }
-            return activity;
-          })
-        );
-      } else {
-        throw new Error('Misslyckades med att hämta samåkningar');
-      }
-      
-    } catch (error) {
-      toast({
-        title: 'Fel vid hämtning av samåkningar.',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setFetchingCarpools(false);
-    }
-  };
-  
 
   const handleJoinCarpool = async (carpoolId, activityId) => {
     try {
@@ -981,26 +927,19 @@ const handleLoadMore = () => {
               </ModalBody>
             </ModalContent>
           </Modal>
-            {/* Select Participant Modal */}
-            <SelectParticipantModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                participants={participants}
-                onSelect={handleParticipantSelect}
-              />
-
+          {/* Select Participant Modal */}
+          <SelectParticipantModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              participants={participants}
+              onSelect={handleParticipantSelect}
+          />
 
           {/* Carpool Details Modal */}
           {selectedActivity && selectedCarpool && (
             <CarpoolDetails
-              isOpen={isDetailsOpen}
-              onClose={onDetailsClose}
-              activity={selectedActivity}
-              carpool={selectedCarpool}
-              currentUserId={userId}
-              fetchCarpoolsForActivity={fetchCarpoolsForActivity}
             />
-            )}
+          )}
         </Box>
       </Flex>
     </Box>

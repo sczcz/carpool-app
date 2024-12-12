@@ -271,7 +271,8 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
                     'id': notification.id,
                     'message': message,
                     'carpool_details': carpool_details,
-                    'user_id': carpool.driver_id
+                    'user_id': carpool.driver_id,
+                    'type': "chat"
                 },
                 room=f'user_{carpool.driver_id}'
             )
