@@ -14,7 +14,6 @@ from extensions import mail
 
 message_bp = Blueprint('message_bp', __name__)
 active_users = {}
-message_counts = {}
 email_notifications_sent = {}
 
 def send_carpool_notification_email(carpool_id):
@@ -25,24 +24,69 @@ def send_carpool_notification_email(carpool_id):
         print(f"Carpool {carpool_id} not found.")
         return
 
-    #RIKTIGA TIDSVÄRDET NEDAN
-    #two_days_ago = datetime.utcnow() - timedelta(days=2)
-    #one_day_ago = datetime.utcnow() - timedelta(days=1)
-    #RIKTIGA TIDSVÄRDET OVAN
-    
-    #FÖR TESTNING NEDAN
+    # RIKTIGA TIDSVÄRDEN
+    # two_days_ago = datetime.utcnow() - timedelta(days=2)
+    # one_day_ago = datetime.utcnow() - timedelta(days=1)
+
+    # FÖR TESTNING
     two_days_ago = datetime.utcnow() - timedelta(minutes=2)
     one_day_ago = datetime.utcnow() - timedelta(minutes=1)
-    #FÖR TESTNING OVAN
 
-    recipients = []
+    recipients = set()
 
+    # Hämta senaste meddelandet för att identifiera avsändaren
+    last_message = db.session.query(CarpoolMessage).filter_by(carpool_id=carpool_id).order_by(CarpoolMessage.timestamp.desc()).first()
+    if not last_message:
+        print(f"No messages found for carpool {carpool_id}.")
+        return
+
+    sender_id = last_message.sender_id  # Avsändarens ID
+
+    # Hantera direktpassagerare (som lagt till sig själva)
+    for passenger in carpool.passengers:
+        if passenger.user_id and passenger.user_id != sender_id:  # Ignorera avsändaren
+            user = User.query.get(passenger.user_id)
+            if user and user.email:
+                if email_notifications_sent.get(user.user_id, {}).get(carpool_id, False):
+                    print(f"Email already sent to {user.email} for carpool {carpool_id}. Skipping.")
+                    continue
+
+                # Kontroll 1: >0 olästa meddelanden och inte inloggad på 2 dygn
+                unread_messages_since_last_login = (
+                    db.session.query(CarpoolMessage)
+                    .filter(
+                        CarpoolMessage.carpool_id == carpool_id,
+                        CarpoolMessage.timestamp >= user.last_logged_in if user.last_logged_in else datetime.min
+                    )
+                    .count()
+                )
+                if not user.last_logged_in or user.last_logged_in < two_days_ago:
+                    if unread_messages_since_last_login > 0:
+                        print(f"Adding direct passenger recipient (not logged in 2 days): {user.email}")
+                        recipients.add(user.email)
+                        email_notifications_sent.setdefault(user.user_id, {})[carpool_id] = True
+                        continue
+
+                # Kontroll 2: 5+ olästa meddelanden senaste 1 dygn
+                unread_messages_last_day = (
+                    db.session.query(CarpoolMessage)
+                    .filter(
+                        CarpoolMessage.carpool_id == carpool_id,
+                        CarpoolMessage.timestamp >= one_day_ago
+                    )
+                    .count()
+                )
+                if unread_messages_last_day >= 5:
+                    print(f"Adding direct passenger recipient (5+ unread messages in last day): {user.email}")
+                    recipients.add(user.email)
+                    email_notifications_sent.setdefault(user.user_id, {})[carpool_id] = True
+
+    # Hantera föräldrar till barnpassagerare
     for passenger in carpool.passengers:
         parent_links = ParentChildLink.query.filter_by(child_id=passenger.child_id).all()
         for link in parent_links:
             parent = User.query.get(link.user_id)
-            if parent and parent.email:
-                # Kontrollera om vi redan skickat en notis
+            if parent and parent.email and parent.user_id != sender_id:  # Ignorera avsändaren
                 if email_notifications_sent.get(parent.user_id, {}).get(carpool_id, False):
                     print(f"Email already sent to {parent.email} for carpool {carpool_id}. Skipping.")
                     continue
@@ -59,7 +103,7 @@ def send_carpool_notification_email(carpool_id):
                 if not parent.last_logged_in or parent.last_logged_in < two_days_ago:
                     if unread_messages_since_last_login > 0:
                         print(f"Adding parent recipient (not logged in 2 days): {parent.email}")
-                        recipients.append(parent.email)
+                        recipients.add(parent.email)
                         email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
                         continue
 
@@ -74,8 +118,44 @@ def send_carpool_notification_email(carpool_id):
                 )
                 if unread_messages_last_day >= 5:
                     print(f"Adding parent recipient (5+ unread messages in last day): {parent.email}")
-                    recipients.append(parent.email)
+                    recipients.add(parent.email)
                     email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
+
+    # Hantera föraren
+    if carpool.driver_id and carpool.driver_id != sender_id:  # Ignorera avsändaren
+        driver = User.query.get(carpool.driver_id)
+        if driver and driver.email:
+            if email_notifications_sent.get(driver.user_id, {}).get(carpool_id, False):
+                print(f"Email already sent to {driver.email} for carpool {carpool_id}. Skipping.")
+            else:
+                # Kontroll 1: >0 olästa meddelanden och inte inloggad på 2 dygn
+                unread_messages_since_last_login = (
+                    db.session.query(CarpoolMessage)
+                    .filter(
+                        CarpoolMessage.carpool_id == carpool_id,
+                        CarpoolMessage.timestamp >= driver.last_logged_in if driver.last_logged_in else datetime.min
+                    )
+                    .count()
+                )
+                if not driver.last_logged_in or driver.last_logged_in < two_days_ago:
+                    if unread_messages_since_last_login > 0:
+                        print(f"Adding driver recipient (not logged in 2 days): {driver.email}")
+                        recipients.add(driver.email)
+                        email_notifications_sent.setdefault(driver.user_id, {})[carpool_id] = True
+
+                # Kontroll 2: 5+ olästa meddelanden senaste 1 dygn
+                unread_messages_last_day = (
+                    db.session.query(CarpoolMessage)
+                    .filter(
+                        CarpoolMessage.carpool_id == carpool_id,
+                        CarpoolMessage.timestamp >= one_day_ago
+                    )
+                    .count()
+                )
+                if unread_messages_last_day >= 5:
+                    print(f"Adding driver recipient (5+ unread messages in last day): {driver.email}")
+                    recipients.add(driver.email)
+                    email_notifications_sent.setdefault(driver.user_id, {})[carpool_id] = True
 
     if not recipients:
         print(f"No recipients found for carpool {carpool_id} who match the criteria.")
@@ -85,8 +165,22 @@ def send_carpool_notification_email(carpool_id):
     try:
         with mail.connect() as conn:
             subject = f"Olästa meddelanden i samåkning {carpool_id}"
-            body = f"Din chat har olästa meddelanden. Logga in för att läsa dem!"
-            msg = Message(subject=subject, recipients=recipients, body=body, sender="noreply@carpoolapp.com")
+            body = f"""
+                Hej,
+
+                Du har olästa meddelanden i en av dina samåknings-konversationer. Logga in på
+                http://redo.kustscoutjonstorp.se för att läsa.
+                Hälsningar, Redo-supporten.
+                """
+            html_body = f"""
+                <p>Hej,</p>
+                <p>Du har olästa meddelanden i en av dina samåknings-konversationer. Logga in via</p>
+                <p><a href="http://redo.kustscoutjonstorp.se" style="color:blue;">denna länk</a>
+                för att läsa.</p>
+                <p>Hälsningar, Redo-supporten</p>
+                """
+            msg = Message(subject=subject, recipients=list(recipients), body=body, sender="redo@kustscoutjonstorp.com")
+            msg.html = html_body
             conn.send(msg)
         print(f"Email sent to recipients: {recipients}")
     except Exception as e:
