@@ -935,19 +935,6 @@ const handleLoadMore = () => {
               participants={participants}
               onSelect={handleParticipantSelect}
           />
-
-          {/* Carpool Details Modal */}
-          {selectedActivity && selectedCarpool && (
-            <CarpoolDetails
-            
-              isOpen={isDetailsOpen}
-              onClose={onDetailsClose}
-              activity={selectedActivity}
-              carpool={selectedCarpool}
-              currentUserId={userId}
-              fetchCarpoolsForActivity={fetchCarpoolsForActivity}
-            />
-          )}
         </Box>
       </Flex>
     </Box>

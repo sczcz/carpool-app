@@ -24,7 +24,19 @@ import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from '
 import ExpandableText from './ExpandableText';
 import { format, parseISO } from 'date-fns';
 
-const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForActivity}) => {
+const CarpoolDetails = () => {
+
+  const {
+    activities,
+    setActivities,
+    fetchCarpoolsForActivity,
+    selectedActivity: activity,
+    setSelectedActivity,
+    selectedCarpool: carpool,
+    setSelectedCarpool,
+    isDetailsOpen: isOpen,
+    onDetailsClose: onClose,
+  } = useCarpool();
 
   const {
     userId: currentUserId
@@ -34,7 +46,6 @@ const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForAct
   const toast = useToast();
   const carpoolId = carpool.id;
   const activityLoaded = activity;
-  let flag = true;
 
   const [passengers, setPassengers] = useState([]);
   const [driverInfo, setDriverInfo] = useState(null);
@@ -44,7 +55,7 @@ const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForAct
       fetchPassengers();
       fetchDriverInfo();
     }
-  }, [carpool, flag]);
+  }, [carpool]);
 
   const fetchPassengers = async () => {
     try {
@@ -113,7 +124,6 @@ const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForAct
       });
       
       if (!response.ok) throw new Error('Misslyckades med att ta bort från samåkning');
-      flag = !flag;
       toast({
         title: 'Borttagen från samåkning',
         description: type === 'user'
@@ -188,7 +198,13 @@ const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForAct
   }
 
   return (
-<Modal isOpen={isOpen} onClose={onClose} size={modalSize}>
+<Modal
+  isOpen={isOpen}
+  onClose={() => {
+    setPassengers([]); // Återställ passagerarlistan
+    setDriverInfo(null); // Återställ förarinformationen
+    onClose(); // Anropa Chakra UI:s onClose
+  }} size={modalSize}>
   <ModalOverlay />
   <ModalContent maxW={{ base: '90%', md: '800px' }} mx="auto">
     <ModalHeader fontSize={{ base: 'lg', md: 'xl' }} textAlign="center">
@@ -315,7 +331,6 @@ const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForAct
             <Text fontSize={fontSize}>
               {activity.dtstart ? format(parseISO(activity.dtstart), "d MMMM 'kl' HH:mm") : 'Datum inte tillgängliga'}
             </Text>
-
             <Box>
               <Text fontSize="sm" color="gray.500" mt={3}><Icon as={FaInfoCircle} mr={1} /> Beskrivning:</Text>
               <ExpandableText text={activity.description} fontSize={fontSize} />

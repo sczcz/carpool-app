@@ -1,19 +1,28 @@
 import { React, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider, useUser } from './utils/UserContext';
-import { CarpoolProvider } from './utils/CarpoolContext';
+import { CarpoolProvider, useCarpool } from './utils/CarpoolContext';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import DashBoardAdmin from './components/DashBoardAdmin';
 import DashBoardLeader from './components/DashBoardLeader';
 import DashBoardParent from './components/DashBoardParent'; 
+import CarpoolDetails from './components/CarpoolDetails';
 import Profile from './components/Profile'; 
 import Footer from './components/Footer';
 import ResetPassword from './components/ResetPassword';
 import Error404 from './components/Error404';
 import Error500 from './components/Error500';
 import Information from './components/Information';
-import { Box } from '@chakra-ui/react';
+import { 
+  Box, 
+  Modal, 
+  ModalOverlay, 
+  ModalContent, 
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody
+} from '@chakra-ui/react';
 
 function App() {
   return (
@@ -27,6 +36,7 @@ function App() {
 
 const AppContent = () => {
   const { isInitialized, loading, fetchUserData } = useUser();
+  const { isDetailsOpen, onDetailsClose } = useCarpool();
 
   useEffect(() => {
     if (!isInitialized) {
@@ -57,6 +67,18 @@ const AppContent = () => {
           </Routes>
         </Box>
         <Footer />
+
+        <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Carpool Details</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <CarpoolDetails />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+
       </Box>
     </Router>
   );

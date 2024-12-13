@@ -276,23 +276,6 @@ const ClockNotifications = ({ isScrolled }) => {
           </ModalBody>
         </ModalContent>
       </Modal>
-      {/* Modal för Carpool Details */}
-      <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Carpool Details</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <CarpoolDetails               
-              isOpen={isDetailsOpen}
-              onClose={onDetailsClose}
-              activity={selectedActivity}
-              carpool={selectedCarpool}
-              currentUserId={userId}
-              fetchCarpoolsForActivity={fetchCarpoolsForActivity} />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
     </>
   );
 };
