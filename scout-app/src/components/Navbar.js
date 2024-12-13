@@ -1,6 +1,6 @@
 import React, { useEffect, useState, navigate } from 'react';
 import { FaArrowRight, FaSignOutAlt } from 'react-icons/fa';
-import { useMediaQuery } from '@chakra-ui/react';
+import { Menu, MenuButton, MenuList, MenuItem, Avatar, useMediaQuery } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import {
   Image,
@@ -47,18 +47,15 @@ const Navbar = () => {
       addLink('/dashboard-admin', 'Admin');
       addLink('/dashboard-leader', 'Ledare');
       addLink('/dashboard-parent', 'Vårdnadshavare');
-      addLink('/profile', 'Profil')
 
     }
     if (roles.includes('ledare')) {
       addLink('/dashboard-leader', 'Ledare');
       addLink('/dashboard-parent', 'Vårdnadshavare');
-      addLink('/profile', 'Profil')
 
     }
     if (roles.includes('vårdnadshavare')) {
       addLink('/dashboard-parent', 'Aktiviteter');
-      addLink('/profile', 'Profil')
     }
   }
 
@@ -145,7 +142,13 @@ const Navbar = () => {
 
     <Flex
         alignItems="center"
-        justifyContent={roles.includes('vårdnadshavare') ? 'center' : { base: 'center', md: 'center', lg: 'flex-start' }}
+        justifyContent={
+          !userId
+            ? 'center'
+            : roles.includes('vårdnadshavare')
+            ? 'center'
+            : { base: 'center', md: 'center', lg: 'flex-start' }
+        }
         width="100%" // Gör så att Flex fyller hela navbarens bredd
       >
 
@@ -201,6 +204,22 @@ const Navbar = () => {
 
         {/* Klocka och notiser */}
         {userId ? <ClockNotifications isScrolled={isScrolled} /> : null}
+
+
+         {/* Profilmeny */}
+         {userId ? (
+          <Menu>
+            <MenuButton as={Button} variant="link" colorScheme="brand">
+              <Avatar size="sm" src="https://your-avatar-url.com/avatar.png" />
+            </MenuButton>
+            <MenuList>
+              <MenuItem as={Link} to="/profile" color="brand.500">Profil</MenuItem>
+              <MenuItem color="brand.500" onClick={handleLogout}>
+                Logga ut
+              </MenuItem>          
+            </MenuList>
+          </Menu>
+        ) : null}
       </Flex>
     </Flex>
 
