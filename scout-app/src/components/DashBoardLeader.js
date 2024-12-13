@@ -44,8 +44,8 @@ const Dashboard = ({ token }) => {
     äventyrare: '#e95f13', 
     utmanare: '#da005e',   
     rover: '#e2e000',
-    vuxenscout: '#40e0d0',
-    ledare: '#7fffd4'        
+    vuxenscout: '#5353ec',
+    ledare: '#003660'        
   };
 
   // Hämta aktiviteter från API när komponenten laddas
@@ -242,7 +242,7 @@ const Dashboard = ({ token }) => {
         <Box mb={8} display="flex" alignItems="center" justifyContent="space-between" width="100%">
             {/* Rubrik och info-ikon */}
             <Flex align="center">
-              <Heading as="h3" size="lg" color="brand.600">
+              <Heading as="h3" size="lg" color="brand.500">
                 Aktiviteter
               </Heading>
               <Popover>
