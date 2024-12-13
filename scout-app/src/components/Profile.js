@@ -50,6 +50,7 @@ const Profile = () => {
     updateUserData,
     isInitialized,
     userId,
+    loading
   } = useUser();
 
   const [firstName, setFirstName] = useState('');
@@ -106,6 +107,11 @@ const Profile = () => {
     Electric: 'teal.400',
   };
 
+    useEffect(() => {
+      if (!loading && !userId) {
+        window.location.href = '/';
+      }
+    }, [loading, userId]);
 
   const handleLogout = async () => {
     try {
