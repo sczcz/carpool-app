@@ -229,6 +229,7 @@ const DashBoardParent = ({ token }) => {
   const handleCarpoolClick = (activity, carpool) => {
     setSelectedActivity(activity);
     setSelectedCarpool(carpool);
+    setSelectedCarpoolId(carpool.id);
     onDetailsOpen();
   };
 
@@ -938,6 +939,13 @@ const handleLoadMore = () => {
           {/* Carpool Details Modal */}
           {selectedActivity && selectedCarpool && (
             <CarpoolDetails
+            
+              isOpen={isDetailsOpen}
+              onClose={onDetailsClose}
+              activity={selectedActivity}
+              carpool={selectedCarpool}
+              currentUserId={userId}
+              fetchCarpoolsForActivity={fetchCarpoolsForActivity}
             />
           )}
         </Box>

@@ -56,7 +56,7 @@ const ClockNotifications = ({ isScrolled }) => {
       try {
         const { notifications: fetchedNotifications, unreadCount: fetchedUnreadCount } =
           await fetchNotifications();
-
+          console.log(fetchedNotifications);
         // Uppdatera state med alla notiser
         setNotifications(fetchedNotifications);
     
@@ -70,7 +70,8 @@ const ClockNotifications = ({ isScrolled }) => {
 
     // Hantera inkommande realtidsnotiser
     const handleNotification = (notification) => {
-
+      
+      console.log(notification);
       // Lägg till den nya notisen och uppdatera state
       setNotifications((prevNotifications) => [notification, ...prevNotifications]);
       setUnreadCount((prevCount) => prevCount + 1);
@@ -106,7 +107,7 @@ const ClockNotifications = ({ isScrolled }) => {
       if (response.ok) {
         setNotifications((prevNotifications) =>
           prevNotifications.map((notification) =>
-            notification.carpool_details?.carpool_id === carpoolId
+            notification.carpool_details?.id === carpoolId
               ? { ...notification, is_read: true }
               : notification
           )
@@ -117,7 +118,7 @@ const ClockNotifications = ({ isScrolled }) => {
             prevCount -
               notifications.filter(
                 (n) =>
-                  n.carpool_details?.carpool_id === carpoolId &&
+                  n.carpool_details?.id === carpoolId &&
                   !n.is_read
               ).length,
             0
@@ -132,28 +133,51 @@ const ClockNotifications = ({ isScrolled }) => {
   };
   
 
-  const handleNotificationClick = (notification) => {
-    const carpoolId = notification.carpool_details?.carpool_id;
+  const handleNotificationClick = async (notification) => {
+    const carpoolId = notification.carpool_details?.id;
   
-    if (notification.type === 'chat' && carpoolId) {
-      setSelectedCarpoolId(carpoolId);
-      onChatOpen();
-      markNotificationsForCarpoolAsRead(carpoolId, 'chat');
-    } else if (notification.type === 'passenger' && carpoolId) {
-      
-      const activity = notification.activity_details;
-      const carpool = notification.carpool_details;
+    if (!carpoolId) {
+      console.error('Carpool ID saknas i notifikationen:', notification);
+      return;
+    }
   
-      if (activity && carpool) {
-        setSelectedActivity(activity);
-        setSelectedCarpool(carpool);
-        onDetailsOpen();
+    try {
+      // Hämta aktivitets- och carpooldetaljer från backend baserat på carpool ID
+      const response = await fetch(`/api/protected/activity/by_carpool/${carpoolId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+  
+        // Spara aktivitets- och carpooldetaljer i state
+        setSelectedActivity(data.activity);
+        setSelectedCarpool(data.carpool);
+  
+        if (notification.type === 'chat') {
+          // Öppna chatten
+          setSelectedCarpoolId(carpoolId);
+          onChatOpen();
+        } else if (notification.type === 'passenger') {
+          // Öppna Carpool Details
+          onDetailsOpen();
+        } else {
+          console.error('Okänd typ av notis:', notification);
+        }
+  
+        // Markera notifikationen som läst
         markNotificationsForCarpoolAsRead(carpoolId);
       } else {
-        console.error('Activity or carpool details are missing in notification', notification);
+        console.error('Misslyckades att hämta aktivitetsdetaljer:', response.statusText);
       }
+    } catch (error) {
+      console.error('Fel vid hämtning av aktivitetsdetaljer:', error);
     }
   };
+  
+  
 
   const closeDetails = () => {
     setDetailsOpen(false);
@@ -163,7 +187,7 @@ const ClockNotifications = ({ isScrolled }) => {
   const groupedNotifications = notifications
   .filter((notification) => !notification.is_read)
   .reduce((acc, notification) => {
-    const carpoolId = notification.carpool_details?.carpool_id || 'unknown';
+    const carpoolId = notification.carpool_details?.id || 'unknown';
     const type = notification.type || 'unknown';
 
     const key = `${carpoolId}_${type}`; // Använd både carpoolId och typ som nyckel

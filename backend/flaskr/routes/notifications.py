@@ -2,12 +2,25 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from models.notifications_model import Notification
 from routes.auth import token_required
-from models.carpool_model import Carpool
+from models.carpool_model import Carpool, Car
 from routes.message import email_notifications_sent
 from flask_socketio import emit
 from models.activity_model import Activity
+from models.auth_model import User, Child, ParentChildLink, Role
 
 notifications_bp = Blueprint('notifications_bp', __name__)
+
+role_mapping = {
+    'vårdnadshavare': 1,
+    'ledare': 2,
+    'kutar': 3,
+    'tumlare': 4,
+    'upptäckare': 5,
+    'äventyrare': 6,
+    'utmanare': 7,
+    'rover': 8,
+    'vuxenscout': 10
+}
 
 @notifications_bp.route('/api/notifications', methods=['GET'])
 @token_required
@@ -23,36 +36,88 @@ def get_notifications(current_user):
     notifications_data = []
     for n in notifications:
         carpool = Carpool.query.get(n.carpool_id)
-        activity = Activity.query.get(carpool.activity_id) if carpool else None  # Hämta aktivitet för carpool
-        
+        activity = Activity.query.get(carpool.activity_id) if carpool else None  
+        car = Car.query.get(carpool.car_id)
+
+        scout_level_name = None
+        if activity:
+            role = Role.query.get(activity.role_id)
+            scout_level_name = role.name if role else None
+
+        passengers = []
+        for passenger in carpool.passengers:
+            # Hantera om passageraren är ett barn
+            if passenger.child_id:
+                child = Child.query.get(passenger.child_id)
+                if child:
+                    # Hämta föräldrar från ParentChildLink
+                    parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
+                    parents = [
+                        {
+                            "parent_id": parent.user_id,
+                            "parent_name": f"{User.query.get(parent.user_id).first_name} {User.query.get(parent.user_id).last_name}",
+                            "parent_phone": User.query.get(parent.user_id).phone
+                        }
+                        for parent in parent_links
+                    ]
+                    passengers.append({
+                        "type": "child",
+                        "child_id": child.child_id,
+                        "name": f"{child.first_name} {child.last_name}",
+                        "phone": child.phone,
+                        "parents": parents
+                    })
+
+            # Hantera om passageraren är en användare
+            elif passenger.user_id:
+                user = User.query.get(passenger.user_id)
+                if user:
+                    passengers.append({
+                        "type": "user",
+                        "user_id": user.user_id,
+                        "name": f"{user.first_name} {user.last_name}",
+                        "phone": user.phone
+                    })
+
         carpool_details = {
-            "carpool_id": carpool.id,
-            "carpool_type": carpool.carpool_type,
+            "id": carpool.id,
+            "driver_id": carpool.driver_id,
+            "car_id": carpool.car_id,
+            "car_model_name": car.model_name if car else "Ingen bil tilldelad",
             "available_seats": carpool.available_seats,
             "departure_address": carpool.departure_address,
-            "departure_city": carpool.departure_city,
             "departure_postcode": carpool.departure_postcode,
-            "car_info": f"{carpool.car.model_name}" if carpool.car else "Ingen bil tilldelad",
+            "departure_city": carpool.departure_city,
+            "carpool_type": carpool.carpool_type,
+            "passengers": passengers
         } if carpool else None
 
         activity_details = {
             "activity_id": activity.activity_id,
-            "location": activity.address,
             "summary": activity.name,
             "dtstart": activity.start_date.isoformat(),
+            "dtend": activity.end_date.isoformat() if activity.end_date else None,
+            "location": activity.address,
+            "description": activity.description,
+            "scout_level": list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
+            if activity.role_id in role_mapping.values() else None
         } if activity else None
+
+        notification_type = "chat" if n.message_id else "passenger"
 
         notifications_data.append({
             "id": n.id,
             "message": n.message,
             "carpool_details": carpool_details,
-            "activity_details": activity_details,  # Lägg till aktivitetsdata
+            "activity_details": activity_details,  
             "is_read": n.is_read,
-            "created_at": n.created_at.isoformat()
+            "created_at": n.created_at.isoformat(),
+            "type": notification_type,  # Lägg till typ
         })
 
     unread_count = sum(1 for n in notifications if not n.is_read)
     return jsonify({"notifications": notifications_data, "unreadCount": unread_count}), 200
+
 
 
 

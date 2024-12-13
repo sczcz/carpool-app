@@ -4,7 +4,7 @@ import requests
 from icalendar import Calendar, Event
 from routes.auth import token_required
 import sys
-from models.auth_model import Child, Role, ParentChildLink, UserRole
+from models.auth_model import Child, Role, ParentChildLink, UserRole, User
 from models.activity_model import Activity
 from models.carpool_model import Passenger, Carpool
 import datetime
@@ -322,3 +322,85 @@ def create_activity(current_user):
         db.session.rollback()
         current_app.logger.error(f"Fel vid skapande av aktivitet: {e}")
         return make_response(jsonify({"error": "Ett fel inträffade vid skapande av aktiviteten."}), 500)
+
+
+@activity_bp.route('/api/protected/activity/by_carpool/<int:carpool_id>', methods=['GET'])
+@token_required
+def get_activity_by_carpool(current_user, carpool_id):
+    try:
+        # Hämta carpool baserat på ID
+        carpool = Carpool.query.get(carpool_id)
+        if not carpool:
+            return make_response(jsonify({"error": "Carpoolen hittades inte."}), 404)
+
+        # Hämta aktivitet kopplad till carpool
+        activity = Activity.query.get(carpool.activity_id)
+        if not activity:
+            return make_response(jsonify({"error": "Aktiviteten kopplad till carpoolen hittades inte."}), 404)
+        
+        passengers = []
+        for passenger in carpool.passengers:
+            # Hantera om passageraren är ett barn
+            if passenger.child_id:
+                child = Child.query.get(passenger.child_id)
+                if child:
+                    # Hämta föräldrar från ParentChildLink
+                    parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
+                    parents = [
+                        {
+                            "parent_id": parent.user_id,
+                            "parent_name": f"{User.query.get(parent.user_id).first_name} {User.query.get(parent.user_id).last_name}",
+                            "parent_phone": User.query.get(parent.user_id).phone
+                        }
+                        for parent in parent_links
+                    ]
+                    passengers.append({
+                        "type": "child",
+                        "child_id": child.child_id,
+                        "name": f"{child.first_name} {child.last_name}",
+                        "phone": child.phone,
+                        "parents": parents
+                    })
+
+            # Hantera om passageraren är en användare
+            elif passenger.user_id:
+                user = User.query.get(passenger.user_id)
+                if user:
+                    passengers.append({
+                        "type": "user",
+                        "user_id": user.user_id,
+                        "name": f"{user.first_name} {user.last_name}",
+                        "phone": user.phone
+                    })
+
+        # Bygg respons med aktivitet och carpool-detaljer
+        response = {
+            "activity": {
+                "activity_id": activity.activity_id,
+                "summary": activity.name,
+                "dtstart": activity.start_date.isoformat(),
+                "dtend": activity.end_date.isoformat() if activity.end_date else None,
+                "location": activity.address,
+                "description": activity.description,
+                "scout_level": list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
+                if activity.role_id in role_mapping.values() else None
+            },
+            "carpool": {
+                "id": carpool.id,
+                "driver_id": carpool.driver_id,
+                "carpool_type": carpool.carpool_type,
+                "available_seats": carpool.available_seats,
+                "departure_address": carpool.departure_address,
+                "departure_postcode": carpool.departure_postcode,
+                "departure_city": carpool.departure_city,
+                "car_model_name": carpool.car.model_name if carpool.car else "Ingen bil tilldelad",
+                "created_at": carpool.created_at.isoformat(),
+                "passengers": passengers
+            }
+        }
+
+        return make_response(jsonify(response), 200)
+
+    except Exception as e:
+        current_app.logger.error(f"Fel vid hämtning av aktivitet baserat på carpool: {e}")
+        return make_response(jsonify({"error": "Ett fel uppstod vid hämtning av aktivitet."}), 500)

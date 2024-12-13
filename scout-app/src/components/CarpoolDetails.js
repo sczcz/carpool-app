@@ -24,26 +24,26 @@ import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from '
 import ExpandableText from './ExpandableText';
 import { format, parseISO } from 'date-fns';
 
-const CarpoolDetails = () => {
-  const {
-    selectedActivity: activity,
-    selectedCarpool: carpool,
-    onDetailsClose: onClose,
-    isDetailsOpen: isOpen,
-    fetchCarpoolsForActivity,
-  } = useCarpool();
+const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForActivity}) => {
+
+
+
   const {
     userId: currentUserId
   } = useUser();
   const fontSize = useBreakpointValue({ base: 'sm', md: 'md' });
   const modalSize = useBreakpointValue({ base: 'lg', md: 'lg' });
   const toast = useToast();
+  const carpoolId = carpool.id;
+  const activityLoaded = activity;
 
   const [passengers, setPassengers] = useState([]);
   const [driverInfo, setDriverInfo] = useState(null);
 
   useEffect(() => {
     if (carpool) {
+      console.log('FRÅN CARPOOLDETAILS, CARPOOL FINNS: ', carpool) // Funkar och ID finns
+      console.log('INFO OM AKTIVITETEN FRÅN CARPOOLDETAILS: ', activity) // Funkar och ID finns
       fetchPassengers();
       fetchDriverInfo();
     }
@@ -51,7 +51,7 @@ const CarpoolDetails = () => {
 
   const fetchPassengers = async () => {
     try {
-      const response = await fetch(`/api/carpool/${carpool.id}/passengers`, {
+      const response = await fetch(`/api/carpool/${carpoolId}/passengers`, {
         method: 'GET',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -77,7 +77,7 @@ const CarpoolDetails = () => {
 
   const fetchDriverInfo = async () => {
     try {
-      const response = await fetch(`/api/carpool/${carpool.id}/driver`, {
+      const response = await fetch(`/api/carpool/${carpoolId}/driver`, {
         method: 'GET',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -104,7 +104,7 @@ const CarpoolDetails = () => {
   const handleUnbook = async (id, type) => {
     try {
       const payload = {
-        carpool_id: carpool.id,
+        carpool_id: carpoolId,
         ...(type === 'user' ? { user_id: id } : { child_id: id }),
       };
   
