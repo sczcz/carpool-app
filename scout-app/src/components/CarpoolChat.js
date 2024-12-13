@@ -68,7 +68,7 @@ function CarpoolChat({ carpoolId, userName, userId }) {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({ carpool_id: carpoolId }), // Skickar carpool ID
+          body: JSON.stringify({ carpool_id: carpoolId, type: 'chat' }), // Skickar carpool ID
         });
         if (!response.ok) {
           console.error('Misslyckades med att markera notifikationer som lästa');

@@ -26,8 +26,6 @@ import { format, parseISO } from 'date-fns';
 
 const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForActivity}) => {
 
-
-
   const {
     userId: currentUserId
   } = useUser();
@@ -36,18 +34,17 @@ const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForAct
   const toast = useToast();
   const carpoolId = carpool.id;
   const activityLoaded = activity;
+  let flag = true;
 
   const [passengers, setPassengers] = useState([]);
   const [driverInfo, setDriverInfo] = useState(null);
 
   useEffect(() => {
     if (carpool) {
-      console.log('FRÅN CARPOOLDETAILS, CARPOOL FINNS: ', carpool) // Funkar och ID finns
-      console.log('INFO OM AKTIVITETEN FRÅN CARPOOLDETAILS: ', activity) // Funkar och ID finns
       fetchPassengers();
       fetchDriverInfo();
     }
-  }, [carpool]);
+  }, [carpool, flag]);
 
   const fetchPassengers = async () => {
     try {
@@ -114,9 +111,9 @@ const CarpoolDetails = ({activity, carpool, onClose, isOpen, fetchCarpoolsForAct
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-  
+      
       if (!response.ok) throw new Error('Misslyckades med att ta bort från samåkning');
-  
+      flag = !flag;
       toast({
         title: 'Borttagen från samåkning',
         description: type === 'user'

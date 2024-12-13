@@ -120,53 +120,74 @@ def get_notifications(current_user):
 
 
 
-
-
-# Mark notifications for a carpool as read
 @notifications_bp.route('/api/notifications/mark-read', methods=['POST'])
 @token_required
 def mark_notifications_as_read(current_user):
     try:
+        # Ta emot payload
         carpool_id = request.json.get('carpool_id')
+        notif_type = request.json.get('type') 
+        print(f"Received payload: {request.json}")
 
-        if not carpool_id:
-            return jsonify({"error": "No carpool ID provided"}), 400
+        if not carpool_id or not notif_type:
+            return jsonify({"error": "Carpool ID and type are required"}), 400
 
-        # Hitta alla notifikationer för det angivna carpool_id och användaren
-        notifications = Notification.query.filter_by(
+        if notif_type not in ['chat', 'passenger']:
+            return jsonify({"error": "Invalid type provided"}), 400
+
+        # Filtrera notifikationer baserat på type
+        query = Notification.query.filter_by(
             carpool_id=carpool_id,
             user_id=current_user.user_id,
-            is_read=False  # Endast olästa notifikationer
-        ).all()
+            is_read=False
+        )
+        query = query.filter(Notification.message_id.isnot(None) if notif_type == 'chat' else Notification.message_id.is_(None))
+        print(f"Generated query: {query}")
 
-        if notifications:
-            # Markera alla notifikationer som lästa
-            for notification in notifications:
-                notification.is_read = True
-            db.session.commit()
+        notifications = query.all()
 
-            reset_email_notification_flag(current_user.user_id, carpool_id)
-            delete_read_notifications(current_user.user_id, carpool_id)
+        if not notifications:
+            print(f"No unread {notif_type} notifications found for carpool_id {carpool_id}")
+            return jsonify({"message": f"No unread {notif_type} notifications found"}), 200
 
-            # Skicka socket-event till frontend för att uppdatera notiser
-            emit('update_notifications', {'message': 'Notifications updated'}, room=f"user_{current_user.user_id}", namespace='/')
+        # Markera alla notifikationer som lästa
+        query.update({'is_read': True}, synchronize_session=False)
+        db.session.commit()
 
-            return jsonify({"message": f"All notifications for carpool {carpool_id} marked as read"}), 200
+        reset_email_notification_flag(current_user.user_id, carpool_id)
+        delete_read_notifications(current_user.user_id, carpool_id, notif_type)
 
-        # Logga om inga notifikationer hittades
-        return jsonify({"message": "No unread notifications found"}), 200
+        # Skicka socket-event
+        emit(
+            'update_notifications',
+            {
+                'message': f"{notif_type.capitalize()} notifications updated",
+                'carpool_id': carpool_id,
+                'type': notif_type
+            },
+            room=f"user_{current_user.user_id}",
+            namespace='/'
+        )
+
+        return jsonify({"message": f"All {notif_type} notifications for carpool {carpool_id} marked as read"}), 200
+
     except Exception as e:
         print(f"Error processing request: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-    
-    
-def delete_read_notifications(user_id, carpool_id=None):
-    #Local helper function
+
+def delete_read_notifications(user_id, carpool_id=None, notif_type=None):
+    # Local helper function
     try:
         query = Notification.query.filter_by(user_id=user_id, is_read=True)
         if carpool_id:
             query = query.filter_by(carpool_id=carpool_id)
+
+        # Filtrera baserat på type
+        if notif_type == 'message':
+            query = query.filter(Notification.message_id.isnot(None))  # Endast med message_id
+        elif notif_type == 'passenger':
+            query = query.filter(Notification.message_id.is_(None))  # Endast utan message_id
 
         # Hämta och radera alla matchande notifikationer
         notifications_to_delete = query.all()
@@ -175,9 +196,10 @@ def delete_read_notifications(user_id, carpool_id=None):
                 db.session.delete(notification)
             db.session.commit()
 
-        print(f"Deleted {len(notifications_to_delete)} read notifications for user {user_id} and carpool {carpool_id}")
+        print(f"Deleted {len(notifications_to_delete)} read {notif_type} notifications for user {user_id} and carpool {carpool_id}")
     except Exception as e:
         print(f"Error deleting read notifications: {str(e)}")
+
 
 def reset_email_notification_flag(user_id, carpool_id):
     """Nollställer email_notifications_sent-flaggan för användaren och samåkningen."""

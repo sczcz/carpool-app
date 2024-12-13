@@ -56,8 +56,6 @@ const ClockNotifications = ({ isScrolled }) => {
       try {
         const { notifications: fetchedNotifications, unreadCount: fetchedUnreadCount } =
           await fetchNotifications();
-          console.log(fetchedNotifications);
-        // Uppdatera state med alla notiser
         setNotifications(fetchedNotifications);
     
         setUnreadCount(fetchedUnreadCount);
@@ -68,11 +66,8 @@ const ClockNotifications = ({ isScrolled }) => {
 
     loadNotifications();
 
-    // Hantera inkommande realtidsnotiser
     const handleNotification = (notification) => {
       
-      console.log(notification);
-      // Lägg till den nya notisen och uppdatera state
       setNotifications((prevNotifications) => [notification, ...prevNotifications]);
       setUnreadCount((prevCount) => prevCount + 1);
     };
@@ -91,7 +86,7 @@ const ClockNotifications = ({ isScrolled }) => {
   };
   }, [userId]);
 
-  const markNotificationsForCarpoolAsRead = async (carpoolId) => {
+  const markNotificationsForCarpoolAsRead = async (carpoolId, type) => {
     try {
       const response = await fetch('/api/notifications/mark-read', {
         method: 'POST',
@@ -99,26 +94,26 @@ const ClockNotifications = ({ isScrolled }) => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ carpool_id: carpoolId }),
+        body: JSON.stringify({ carpool_id: carpoolId, type }), // Skicka med type
       });
-
       const result = await response.json();
-
+  
       if (response.ok) {
         setNotifications((prevNotifications) =>
           prevNotifications.map((notification) =>
-            notification.carpool_details?.id === carpoolId
+            notification.carpool_details?.id === carpoolId && notification.type === type
               ? { ...notification, is_read: true }
               : notification
           )
         );
-
+  
         setUnreadCount((prevCount) =>
           Math.max(
             prevCount -
               notifications.filter(
                 (n) =>
                   n.carpool_details?.id === carpoolId &&
+                  n.type === type &&
                   !n.is_read
               ).length,
             0
@@ -132,6 +127,7 @@ const ClockNotifications = ({ isScrolled }) => {
     }
   };
   
+  
 
   const handleNotificationClick = async (notification) => {
     const carpoolId = notification.carpool_details?.id;
@@ -142,7 +138,6 @@ const ClockNotifications = ({ isScrolled }) => {
     }
   
     try {
-      // Hämta aktivitets- och carpooldetaljer från backend baserat på carpool ID
       const response = await fetch(`/api/protected/activity/by_carpool/${carpoolId}`, {
         method: 'GET',
         credentials: 'include',
@@ -152,23 +147,18 @@ const ClockNotifications = ({ isScrolled }) => {
       if (response.ok) {
         const data = await response.json();
   
-        // Spara aktivitets- och carpooldetaljer i state
         setSelectedActivity(data.activity);
         setSelectedCarpool(data.carpool);
   
         if (notification.type === 'chat') {
-          // Öppna chatten
           setSelectedCarpoolId(carpoolId);
           onChatOpen();
         } else if (notification.type === 'passenger') {
-          // Öppna Carpool Details
           onDetailsOpen();
         } else {
           console.error('Okänd typ av notis:', notification);
         }
-  
-        // Markera notifikationen som läst
-        markNotificationsForCarpoolAsRead(carpoolId);
+        markNotificationsForCarpoolAsRead(carpoolId, notification.type);
       } else {
         console.error('Misslyckades att hämta aktivitetsdetaljer:', response.statusText);
       }
@@ -176,6 +166,7 @@ const ClockNotifications = ({ isScrolled }) => {
       console.error('Fel vid hämtning av aktivitetsdetaljer:', error);
     }
   };
+  
   
   
 

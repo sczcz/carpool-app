@@ -24,7 +24,6 @@ export const CarpoolProvider = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Data hämtad från /carpool/list: ', data);
         setActivities((prevActivities) =>
           prevActivities.map((activity) => {
             if (activity.activity_id === activityId) {

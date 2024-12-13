@@ -23,9 +23,9 @@ const SelectParticipantModal = ({ isOpen, onClose, participants, onSelect }) => 
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
-              {participants.map((participant) => (
+            {participants.map((participant) => (
                 <Box
-                  key={participant.id}
+                  key={`${participant.name}-${participant.id}`} // Kombinerar namn och ID för att skapa en unik nyckel
                   w="100%"
                   p={4}
                   borderRadius="md"
@@ -46,6 +46,7 @@ const SelectParticipantModal = ({ isOpen, onClose, participants, onSelect }) => 
                   </Text>
                 </Box>
               ))}
+
             </VStack>
           </ModalBody>
           <ModalFooter>

@@ -250,7 +250,7 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
 
     # Hämta övergripande information om carpoolen
     carpool_details = {
-        "carpool_id": carpool.id,
+        "id": carpool.id,
         "carpool_type": carpool.carpool_type,
         "available_seats": carpool.available_seats,
         "departure_address": carpool.departure_address,
@@ -293,7 +293,8 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
                             'id': notification.id,
                             'message': message,
                             'carpool_details': carpool_details,
-                            'user_id': parent_link.user_id
+                            'user_id': parent_link.user_id,
+                            'type': "chat"
                         },
                         room=f'user_{parent_link.user_id}'
                     )
@@ -310,7 +311,8 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
                         'id': notification.id,
                         'message': message,
                         'carpool_details': carpool_details,
-                        'user_id': passenger.user_id
+                        'user_id': passenger.user_id,
+                        'type': "chat"
                     },
                     room=f'user_{passenger.user_id}'
                 )

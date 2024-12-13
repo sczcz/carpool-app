@@ -22,6 +22,9 @@ def send_passenger_list_notification(carpool_id, action, current_user):
     if not driver or not driver.email:
         print(f"Driver for carpool {carpool_id} not found or has no email.")
         return
+    
+    if current_user.user_id == driver.user_id:
+        return
 
     # Hämta aktivitet kopplad till carpoolen
     activity = Activity.query.get(carpool.activity_id) if carpool.activity_id else None
