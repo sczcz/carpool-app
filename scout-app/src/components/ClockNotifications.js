@@ -22,7 +22,6 @@ import { fetchNotifications } from '../utils/notifications';
 import socket from '../utils/socket';
 import { useUser } from '../utils/UserContext';
 import CarpoolChat from './CarpoolChat';
-import CarpoolDetails from './CarpoolDetails';
 import { useCarpool } from '../utils/CarpoolContext';
 
 const ClockNotifications = ({ isScrolled }) => {
@@ -36,14 +35,16 @@ const ClockNotifications = ({ isScrolled }) => {
     onDetailsClose,
     setSelectedActivity,
     setSelectedCarpool,
-    fetchCarpoolsForActivity
+    fetchCarpoolsForActivity,
+    selectedCarpoolId,
+    setSelectedCarpoolId,
+    isChatOpen,
+    onChatClose,
+    openChat
   } = useCarpool();
   const [notifications, setNotifications] = useState([]); // Alla notiser
   const [unreadCount, setUnreadCount] = useState(0); // Antal olästa notiser
   const { userId, fullName } = useUser();
-  const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
-
-  const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure();
 
   useEffect(() => {
     if (!userId) return;
@@ -152,7 +153,7 @@ const ClockNotifications = ({ isScrolled }) => {
   
         if (notification.type === 'chat') {
           setSelectedCarpoolId(carpoolId);
-          onChatOpen();
+          openChat(carpoolId);
         } else if (notification.type === 'passenger') {
           onDetailsOpen();
         } else {

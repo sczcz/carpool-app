@@ -35,12 +35,8 @@ import { sv } from 'date-fns/locale'
 import { useUser } from '../utils/UserContext';
 import { useCarpool } from '../utils/CarpoolContext';
 import CarpoolComponent from './CarPoolComponent';
-import CarpoolChat from './CarpoolChat';
-import CarpoolDetails from './CarpoolDetails';
 import AddChildModal from './AddChildModal';
 import SelectParticipantModal from './SelectParticipantModal'
-import { fetchActivitiesByRole, fetchAllVisibleActivities } from '../utils/activities';
-
 
 const DashBoardParent = ({ token }) => {
   const {
@@ -54,6 +50,10 @@ const DashBoardParent = ({ token }) => {
     isDetailsOpen,
     onDetailsOpen,
     onDetailsClose,
+    openChat,
+    selectedCarpoolId,
+    setSelectedCarpoolId,
+    isChatOpen,
   } = useCarpool();
   const { userId, fullName, loading } = useUser();
   const [myActivities, setMyActivities] = useState([]);
@@ -67,8 +67,6 @@ const DashBoardParent = ({ token }) => {
   const [selectedActivityId, setSelectedActivityId] = useState(null);
   const [joinedChildrenInCarpool, setJoinedChildrenInCarpool] = useState({});
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isChatOpen, onOpen: onChatOpen, onClose: onChatClose } = useDisclosure();
-  const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
   const toast = useToast();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
   const [filterByRole, setFilterByRole] = useState(true);
@@ -415,7 +413,7 @@ const handleLoadMore = () => {
 
   const openChatModal = (carpoolId) => {
     setSelectedCarpoolId(carpoolId);
-    onChatOpen();
+    openChat(carpoolId);
   };
 
   if (loading) {
@@ -916,18 +914,6 @@ const handleLoadMore = () => {
             </ModalContent>
           </Modal>
 
-          {/* Modal for Carpool Chat */}
-          <Modal isOpen={isChatOpen} onClose={onChatClose} size="lg">
-            <ModalOverlay />
-            <ModalContent>
-              <ModalHeader>Carpool Chat</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                {/* Rendera CarpoolChat och skicka in valt carpoolId */}
-                <CarpoolChat carpoolId={selectedCarpoolId} userName={fullName} userId={userId}/>
-              </ModalBody>
-            </ModalContent>
-          </Modal>
           {/* Select Participant Modal */}
           <SelectParticipantModal
               isOpen={isModalOpen}

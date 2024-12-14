@@ -10,8 +10,17 @@ import {
 } from '@chakra-ui/react';
 import { format, isSameDay } from 'date-fns';
 import socket from '../utils/socket';
+import { useCarpool } from '../utils/CarpoolContext';
+import { useUser } from '../utils/UserContext';
 
-function CarpoolChat({ carpoolId, userName, userId }) {
+function CarpoolChat() {
+  const {
+    selectedCarpoolId : carpoolId,
+  } = useCarpool();
+  const {
+    userId,
+    fullName: userName
+  } = useUser();
   const [allMessages, setAllMessages] = useState([]); // Alla meddelanden
   const [visibleMessages, setVisibleMessages] = useState([]); // Synliga meddelanden
   const [messageContent, setMessageContent] = useState('');
@@ -35,7 +44,6 @@ function CarpoolChat({ carpoolId, userName, userId }) {
 
   useEffect(() => {
     if (!carpoolId || !userId) {
-      console.error("carpoolId eller userId saknas, kan inte ladda chatten");
       return;
     }
 

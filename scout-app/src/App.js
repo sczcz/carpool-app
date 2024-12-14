@@ -8,6 +8,7 @@ import DashBoardAdmin from './components/DashBoardAdmin';
 import DashBoardLeader from './components/DashBoardLeader';
 import DashBoardParent from './components/DashBoardParent'; 
 import CarpoolDetails from './components/CarpoolDetails';
+import CarpoolChat from './components/CarpoolChat';
 import Profile from './components/Profile'; 
 import Footer from './components/Footer';
 import ResetPassword from './components/ResetPassword';
@@ -36,7 +37,13 @@ function App() {
 
 const AppContent = () => {
   const { isInitialized, loading, fetchUserData } = useUser();
-  const { isDetailsOpen, onDetailsClose } = useCarpool();
+  const { 
+    isDetailsOpen, 
+    onDetailsClose, 
+    isChatOpen, 
+    onChatClose,
+    selectedCarpoolId 
+  } = useCarpool();
 
   useEffect(() => {
     if (!isInitialized) {
@@ -75,6 +82,17 @@ const AppContent = () => {
             <ModalCloseButton />
             <ModalBody>
               <CarpoolDetails />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+
+        <Modal isOpen={isChatOpen && selectedCarpoolId !== null} onClose={onChatClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Carpool Chat</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <CarpoolChat carpoolId={selectedCarpoolId} />
             </ModalBody>
           </ModalContent>
         </Modal>

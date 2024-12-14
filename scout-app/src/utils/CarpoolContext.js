@@ -9,10 +9,22 @@ export const CarpoolProvider = ({ children }) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [activities, setActivities] = useState([]);
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedCarpoolId, setSelectedCarpoolId] = useState(null);
   const toast = useToast();
 
   const onDetailsOpen = () => setIsDetailsOpen(true);
   const onDetailsClose = () => setIsDetailsOpen(false);
+
+  const openChat = (carpoolId) => {
+    setSelectedCarpoolId(carpoolId);
+    setIsChatOpen(true);
+  };
+  
+  const closeChat = () => {
+    setSelectedCarpoolId(null);
+    setIsChatOpen(false);
+  };
 
   const fetchCarpoolsForActivity = async (activityId) => {
     setFetchingCarpools(true);
@@ -88,7 +100,11 @@ export const CarpoolProvider = ({ children }) => {
         setActivities,
         fetchCarpoolsForActivity,
         fetchingCarpools,
-        activities
+        isChatOpen,
+        onChatClose: closeChat,
+        openChat,
+        selectedCarpoolId,
+        setSelectedCarpoolId
       }}
     >
       {children}
