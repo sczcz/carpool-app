@@ -70,9 +70,17 @@ const Register = ({ isOpen, onClose }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered size={modalSize}>
             <ModalOverlay />
-            <ModalContent>
-                <ModalHeader>Registrera användare</ModalHeader>
-                <ModalCloseButton />
+            <ModalContent
+                mt={{ base: 32, md: 28 ,lg: 10 }}
+            >
+                <ModalHeader
+                 mt={{ base: 32, md: 28 , lg: 0  }}
+                >
+                    Registrera användare
+                </ModalHeader>
+                <ModalCloseButton 
+                 mt={{ base: 32, md: 28 , lg: 0 }}
+                />
                 <ModalBody>
                     <Box width="full" p={4}>
                         <form onSubmit={handleRegister}>

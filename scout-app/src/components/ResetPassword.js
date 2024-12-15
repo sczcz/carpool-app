@@ -49,9 +49,17 @@ const ResetPassword = () => {
   };
 
   return (
-    <Box maxW="sm" mx="auto" mt="10">
-      <VStack spacing={4} align="stretch">
-        <Text fontSize="lg">Återställ lösenord</Text>
+    <Box
+      maxW={{ base: '90%', sm: 'sm' }} // Adjust width for mobile
+      mx="auto"
+      mt="10"
+      p={{ base: 4, sm: 6 }} // Add padding for mobile and larger sizes
+    >
+      <VStack spacing={6} align="stretch">
+        <Text fontSize={{ base: 'xl', sm: 'lg' }} fontWeight="bold">
+          Återställ lösenord
+        </Text>
+        
         <FormControl id="new-password" isRequired>
           <FormLabel>Nytt lösenord:</FormLabel>
           <Input
@@ -59,8 +67,10 @@ const ResetPassword = () => {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             bg="white"
+            size="sm" // Adjust input size for mobile
           />
         </FormControl>
+        
         <FormControl id="confirm-password" isRequired>
           <FormLabel>Bekräfta lösenord:</FormLabel>
           <Input
@@ -68,15 +78,24 @@ const ResetPassword = () => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             bg="white"
+            size="sm" // Adjust input size for mobile
           />
         </FormControl>
-        <Button colorScheme="brand" onClick={handleSubmit}>
+        
+        <Button
+          colorScheme="brand"
+          onClick={handleSubmit}
+          width="full" // Make button full width on mobile
+          size="sm" // Adjust button size for mobile
+        >
           Återställ lösenord
         </Button>
+        
         {message && <Text color="red.500">{message}</Text>}
       </VStack>
     </Box>
   );
+  
 };
 
 export default ResetPassword;

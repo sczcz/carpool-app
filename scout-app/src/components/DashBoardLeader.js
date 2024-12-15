@@ -44,8 +44,8 @@ const Dashboard = ({ token }) => {
     äventyrare: '#e95f13', 
     utmanare: '#da005e',   
     rover: '#e2e000',
-    vuxenscout: '#40e0d0',
-    ledare: '#7fffd4'        
+    vuxenscout: '#5353ec',
+    ledare: '#003660'        
   };
 
   // Hämta aktiviteter från API när komponenten laddas
@@ -224,25 +224,28 @@ const Dashboard = ({ token }) => {
   };
 
   return (
-    <Flex direction="column" align="center" justify="center" p={8} width="100%">
+  <Flex direction="column" align="center" justify="center" p={4} width="100%" overflowX="hidden">
   {/* Header med "+ Skapa ny aktivitet" */}
   <Flex justify="space-between" align="center" width="100%" maxW="1200px" mb={8}>
-    <Heading as="h1" size="xl" color="brand.500">
+  <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="brand.500">
       Ledare
     </Heading>
   </Flex>
 
-      <Grid
-        templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
-        gap={6}
-        width="100%"
-        maxW="1200px"
-      > 
+  <Grid
+    templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
+    gap={{ base: 4, md: 6 }} // Adjusted gap for mobile
+    px={{ base: 2, md: 4 }} // Adjusted padding for mobile
+    width="100%"
+    maxW="1200px"
+  >
+
+
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
-        <Box mb={8} display="flex" alignItems="center" justifyContent="space-between" width="100%">
+        <Box mb={6} display="flex" flexDirection={{ base: 'column', md: 'row' }} alignItems="center" justifyContent="space-between" width="100%" fontSize={{ base: 'sm', md: 'md' }}>
             {/* Rubrik och info-ikon */}
             <Flex align="center">
-              <Heading as="h3" size="lg" color="brand.600">
+              <Heading as="h3" size="lg" color="brand.500">
                 Aktiviteter
               </Heading>
               <Popover>
@@ -278,6 +281,7 @@ const Dashboard = ({ token }) => {
               color="brand.500"
               fontWeight="bold"
               variant="link"
+              fontSize={{ base: 'sm', md: 'md' }}
               onClick={() => setIsModalOpen(true)}
               _hover={{ textDecoration: "underline", color: "blue.700" }}
             >
@@ -307,13 +311,28 @@ const Dashboard = ({ token }) => {
               <>
               {filteredActivities.slice(0, visibleCount).map((activity) => (
                 <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="lg">
-                  <Flex>
-                    <Text fontSize="lg" fontWeight="bold" color="brand.600">{activity.summary.split('//')[0].trim()}</Text>
-                    <Tag ml={4} size="lg" color={'white'} backgroundColor={roleColors[activity.scout_level] || 'gray.200'} >
-                      <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
-                      </Tag>
-                  </Flex>
-                  <Text fontSize="md" color="brand.500">Plats: {activity.location}</Text>
+                  <Flex direction={{ base: 'column', md: 'row' }} align="center" justify="space-between" width="100%">
+                  <Text
+                    fontSize={{ base: 'md', md: 'lg' }} // Adjust font size for mobile
+                    fontWeight="bold"
+                    color="brand.600"
+                    noOfLines={1} // Ensure text doesn't overflow in smaller viewports
+                  >
+                    {activity.summary.split('//')[0].trim()}
+                  </Text>
+                  <Tag
+                    ml={{ base: 0, md: 4 }} // Adjust margin for smaller screens
+                    size={{ base: 'sm', md: 'lg' }} // Adjust tag size for mobile
+                    color="white"
+                    backgroundColor={roleColors[activity.scout_level] || 'gray.200'}
+                  >
+                    <TagLabel fontSize={{ base: 'sm', md: 'md' }}> {/* Adjust label font size */}
+                      {activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}
+                    </TagLabel>
+                  </Tag>
+                </Flex>
+
+                  <Text fontSize={{ base: 'sm', md: 'md' }} color="brand.500">Plats: {activity.location}</Text>
                   <Text fontSize="md" color="brand.500">Datum: {new Date(activity.dtstart).toLocaleString()}</Text>
                   <Text fontSize="md" color="brand.400">
                     Status: {activity.isVisible ? 'Synlig' : 'Dold'}
@@ -323,6 +342,7 @@ const Dashboard = ({ token }) => {
                     mt={2}
                     size="sm"
                     colorScheme="blue"
+                    fontSize={{ base: 'xs', md: 'sm' }}
                     onClick={() => toggleActivity(activity.activity_id)}
                     rightIcon={openActivityId === activity.activity_id ? <ChevronUpIcon /> : <ChevronDownIcon />}
                   >
@@ -331,7 +351,7 @@ const Dashboard = ({ token }) => {
 
                   <Button
                     mt={2}
-                    ml={4}
+                    ml={{ base: 0, sm:4  }}                    
                     size="sm"
                     colorScheme={activity.isVisible ? 'red' : 'green'}
                     onClick={() => toggleActivityVisibility(activity.activity_id, activity.isVisible)}
