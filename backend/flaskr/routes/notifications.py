@@ -127,7 +127,6 @@ def mark_notifications_as_read(current_user):
         # Ta emot payload
         carpool_id = request.json.get('carpool_id')
         notif_type = request.json.get('type') 
-        print(f"Received payload: {request.json}")
 
         if not carpool_id or not notif_type:
             return jsonify({"error": "Carpool ID and type are required"}), 400
@@ -142,12 +141,10 @@ def mark_notifications_as_read(current_user):
             is_read=False
         )
         query = query.filter(Notification.message_id.isnot(None) if notif_type == 'chat' else Notification.message_id.is_(None))
-        print(f"Generated query: {query}")
 
         notifications = query.all()
 
         if not notifications:
-            print(f"No unread {notif_type} notifications found for carpool_id {carpool_id}")
             return jsonify({"message": f"No unread {notif_type} notifications found"}), 200
 
         # Markera alla notifikationer som lästa
@@ -196,7 +193,6 @@ def delete_read_notifications(user_id, carpool_id=None, notif_type=None):
                 db.session.delete(notification)
             db.session.commit()
 
-        print(f"Deleted {len(notifications_to_delete)} read {notif_type} notifications for user {user_id} and carpool {carpool_id}")
     except Exception as e:
         print(f"Error deleting read notifications: {str(e)}")
 
@@ -206,7 +202,6 @@ def reset_email_notification_flag(user_id, carpool_id):
     if user_id in email_notifications_sent:
         if carpool_id in email_notifications_sent[user_id]:
             del email_notifications_sent[user_id][carpool_id]
-            print(f"Email notification flag reset for user {user_id} and carpool {carpool_id}")
 
         # Ta bort användaren från email_notifications_sent om alla carpools har tagits bort
         if not email_notifications_sent[user_id]:
