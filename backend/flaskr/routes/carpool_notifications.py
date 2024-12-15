@@ -19,9 +19,9 @@ def send_passenger_list_notification(carpool_id, action, current_user):
 
     # Hämta föraren (skaparen av carpoolen)
     driver = User.query.get(carpool.driver_id)
-    if not driver or not driver.email:
-        print(f"Driver for carpool {carpool_id} not found or has no email.")
-        return
+    if driver and driver.email:
+        if email_notifications_sent.get(driver.user_id, {}).get(carpool_id, False):
+            return
     
     if current_user.user_id == driver.user_id:
         return
@@ -151,6 +151,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
             msg = Message(subject=subject, recipients=[driver.email], body=body, sender="redo@kustscoutjonstorp.se")
             msg.html = html_body
             conn.send(msg)
-        print(f"Passenger list notification sent to {driver.email} for action {action}.")
+            email_notifications_sent.setdefault(driver.user_id, {})[carpool_id] = True
     except Exception as e:
         print(f"Error sending passenger list notification: {e}")
