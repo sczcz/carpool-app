@@ -52,15 +52,15 @@ const Register = ({ isOpen, onClose }) => {
                 } else {
                     // Användare skapad - toast
                     toast({
-                        title: 'Användare skapad!',
-                        description: 'Den nya användaren har registrerats och väntar på godkännande.',
+                        title: data.message,
+                        description: 'Den nya användaren har registrerats och väntar på godkännande.', 
                         status: 'success',
                         duration: 5000,
                         isClosable: true,
-                        position: 'bottom-center',
+                        position: 'bottom', // Toast längst ner
                     });
 
-                    // Reset form and close modal
+                    // Reset form och stäng modal
                     setFirstName('');
                     setLastName('');
                     setEmail('');
