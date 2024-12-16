@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { InfoIcon } from '@chakra-ui/icons';
 import { FaTrash, FaCarSide} from 'react-icons/fa';
 import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
   Box,
   Heading,
   HStack,
@@ -16,7 +22,7 @@ import {
   useToast,
   IconButton, 
   Popover, 
-  PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
+  PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody,
 } from "@chakra-ui/react";
 import { useUser } from "../utils/UserContext";
 import useRoleProtection from "../utils/useRoleProtection";
@@ -29,9 +35,22 @@ const DashBoardAdmin = () => {
   const navigate = useNavigate();
   const [allUsers, setAllUsers] = useState([]);
   const [filter, setFilter] = useState(""); // Defaultvärde är en tom sträng
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // State för dialog
+  const [userToDelete, setUserToDelete] = useState(null); // Håller användaren som ska raderas
+  const cancelRef = useRef();
 
   // Breakpoint-specific button size
   const buttonSize = useBreakpointValue({ base: "sm", md: "md" });
+
+  const openDeleteDialog = (userId) => {
+    setUserToDelete(userId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setUserToDelete(null);
+  };
 
   const promoteToAdmin = (userId) => {
     fetch('/api/admin/make-admin', {
@@ -143,7 +162,7 @@ const DashBoardAdmin = () => {
       .then((data) => {
         if (data.message) {
           // Uppdatera state för att ta bort accepterad användare
-          setUnacceptedUsers((prev) => prev.filter((user) => user.user_id !== userId));
+          setUnacceptedUsers((prev) => prev.filter((user) => user.id !== userId));
           toast({
             title: 'Användare accepterad',
             description: data.message,
@@ -164,31 +183,37 @@ const DashBoardAdmin = () => {
       );
   };
 
-  const deleteUser = (userId) => {
-    fetch(`/api/admin/delete-user/${userId}`, {
-      method: 'DELETE',
-      credentials: 'include',
+  const confirmDeleteUser = () => {
+    if (!userToDelete) return;
+
+    fetch(`/api/admin/delete-user/${userToDelete}`, {
+      method: "DELETE",
+      credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.message) {
-          // Uppdatera både unacceptedUsers och allUsers
-          setUnacceptedUsers((prev) => prev.filter((user) => user.user_id !== userId));
-          setAllUsers((prev) => prev.filter((user) => user.id !== userId)); // Uppdatera allUsers
+          setUnacceptedUsers((prev) =>
+            prev.filter((user) => user.id !== userToDelete)
+          );
+          setAllUsers((prev) =>
+            prev.filter((user) => user.id !== userToDelete)
+          );
           toast({
-            title: 'Användare borttagen',
+            title: "Användare borttagen",
             description: data.message,
-            status: 'success',
+            status: "success",
             duration: 5000,
             isClosable: true,
           });
         }
+        closeDeleteDialog();
       })
       .catch((err) =>
         toast({
-          title: 'Fel vid borttagning av användare',
+          title: "Fel vid borttagning av användare",
           description: err.message,
-          status: 'error',
+          status: "error",
           duration: 5000,
           isClosable: true,
         })
@@ -300,7 +325,7 @@ const DashBoardAdmin = () => {
           >
             {unacceptedUsers.map((user, idx) => (
               <Card
-                key={user.user_id}
+                key={user.id}
                 shadow="md"
                 borderWidth="1px"
                 borderRadius="lg"
@@ -329,7 +354,7 @@ const DashBoardAdmin = () => {
                       size={buttonSize}
                       borderRadius="full"
                       width={["100%", "auto"]}
-                      onClick={() => acceptUser(user.user_id)}
+                      onClick={() => acceptUser(user.id)}
                     >
                       Acceptera
                     </Button>
@@ -338,7 +363,7 @@ const DashBoardAdmin = () => {
                       size={buttonSize}
                       borderRadius="full"
                       width={["100%", "auto"]}
-                      onClick={() => deleteUser(user.user_id)}
+                      onClick={() => openDeleteDialog(user.id)}
                     >
                       Ta Bort
                     </Button>
@@ -346,6 +371,36 @@ const DashBoardAdmin = () => {
                 </CardFooter>
               </Card>
             ))}
+
+          {/* AlertDialog för bekräftelse */}
+          <AlertDialog
+            isOpen={isDeleteDialogOpen}
+            leastDestructiveRef={cancelRef}
+            onClose={closeDeleteDialog}
+          >
+            <AlertDialogOverlay>
+              <AlertDialogContent>
+                <AlertDialogHeader>Bekräfta borttagning</AlertDialogHeader>
+                <AlertDialogBody>
+                  Detta raderar användarkontot samt all data kopplad till denne. Är du
+                  säker?
+                </AlertDialogBody>
+                <AlertDialogFooter>
+                  <Button ref={cancelRef} onClick={closeDeleteDialog}>
+                    Avbryt
+                  </Button>
+                  <Button
+                    colorScheme="red"
+                    onClick={confirmDeleteUser}
+                    ml={3}
+                  >
+                    Radera
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialogOverlay>
+          </AlertDialog>
+
           </Box>
         </Box>
       </Box>
@@ -421,7 +476,7 @@ const DashBoardAdmin = () => {
                           size={buttonSize}
                           borderRadius="full"
                           width={["100%", "auto"]}
-                          onClick={() => deleteUser(user.id)}
+                          onClick={() => openDeleteDialog(user.id)}
                         >
                           Ta Bort
                         </Button>
@@ -476,6 +531,9 @@ const DashBoardAdmin = () => {
                 <Text mb={2}>  
                   Detta rensar även samåkningar som är kopplade till aktiviteterna samt passagerare
                   som är kopplade till samåkningarna.
+                </Text>
+                <Text mb={2}>  
+                  Utöver detta raderas även olästa notiser kopplade till ovanstående samåkningar.
                 </Text>
               </PopoverBody>
             </PopoverContent>

@@ -23,6 +23,10 @@ class User(db.Model):
     last_logged_in = db.Column(db.DateTime, nullable=True)
     notification_preferences = db.Column(db.Text, nullable=True)
 
+    @property
+    def id(self):
+        return self.user_id
+
 
 # Sambandstabell mellan User och Role
 class UserRole(db.Model):

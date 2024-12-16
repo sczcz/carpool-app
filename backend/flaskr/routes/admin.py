@@ -1,10 +1,13 @@
 from flask import Blueprint, request, jsonify, current_app
 from extensions import db
-from models.auth_model import User, Role, UserRole
+from models.auth_model import User, Role, UserRole, ParentChildLink, Child
 from models.activity_model import Activity
+from models.carpool_model import Car
 from routes.auth import token_required
-import datetime
 from models.carpool_model import Carpool, Passenger
+from models.message_model import CarpoolMessage
+from models.notifications_model import Notification
+import datetime
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -88,7 +91,7 @@ def get_unaccepted_users(current_user):
 
     user_data = [
         {
-            "user_id": user.user_id,
+            "id": user.user_id,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
@@ -130,10 +133,52 @@ def delete_user(current_user, user_id):
     if not user:
         return jsonify({"error": "User not found!"}), 404
 
-    db.session.delete(user)
-    db.session.commit()
+    try:
+        # Ta bort notiser kopplade till användaren
+        notifications = Notification.query.filter_by(user_id=user_id).all()
+        for notification in notifications:
+            db.session.delete(notification)
 
-    return jsonify({"message": f"User {user.email} has been deleted."}), 200
+        # Ta bort alla samåkningar som användaren har skapat
+        carpools = Carpool.query.filter_by(driver_id=user_id).all()
+        for carpool in carpools:
+            # Ta bort passagerare kopplade till carpoolen
+            Passenger.query.filter_by(carpool_id=carpool.id).delete()
+
+            # Ta bort meddelanden kopplade till carpoolen
+            CarpoolMessage.query.filter_by(carpool_id=carpool.id).delete()
+
+            # Ta bort själva carpoolen
+            db.session.delete(carpool)
+
+        # Ta bort alla länkar mellan användaren och barn
+        child_links = ParentChildLink.query.filter_by(user_id=user_id).all()
+        for link in child_links:
+            db.session.delete(link)
+
+            # Kontrollera om barnet inte längre är länkat till någon annan användare
+            remaining_links = ParentChildLink.query.filter_by(child_id=link.child_id).all()
+            if not remaining_links:
+                child = Child.query.get(link.child_id)
+                if child:
+                    db.session.delete(child)
+
+        #Ta bort sparade bilar
+        cars = Car.query.filter_by(owner_id=user_id).all()
+        for car in cars:
+             db.session.delete(car)
+
+        # Ta bort själva användaren
+        db.session.delete(user)
+        db.session.commit()
+
+        return jsonify({"message": f"Användare {user.email} och dess data har raderats."}), 200
+
+    except Exception as e:
+        db.session.rollback()  # Återställ ändringar om något går fel
+        current_app.logger.error(f"Error deleting user {user_id}: {e}")
+        return jsonify({"error": "An error occurred while deleting the user."}), 500
+
 
 
 @admin_bp.route('/api/admin/cleanup-activities', methods=['DELETE'])
