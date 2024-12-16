@@ -53,13 +53,13 @@ const Home = () => {
           mb={{ base: 4, md: 6 }}
           overflow="hidden"
         >
-          <Stack maxW="2xl" align="flex-start" spacing={{ base: 4, md: 6 }}>
+          <Stack maxW="2xl" align="center" spacing={{ base: 4, md: 6 }} textAlign="center">
             <Text
               color="brand.500"
               fontWeight={700}
               lineHeight={1.2}
               fontSize={{ base: '3xl', md: '4xl' }}
-              textAlign={{ base: 'center', md: 'left' }}
+              textAlign="center"
             >
               Välkommen till Jonstorps Kustscoutkår!
             </Text>
@@ -70,14 +70,13 @@ const Home = () => {
               textAlign="center"
               px={{ base: 4, sm: 6 }}
             >
-              {/* Display shorter message for mobile */}
               {useBreakpointValue({
                 base: 'Vi underlättar samordning och samåkning för föräldrar och scouter.',
                 md: 'Vi erbjuder en innovativ plattform som förenklar samordningen av transporter genom att främja samåkning mellan föräldrar och scouter. Tjänsten gör det enkelt att hitta och erbjuda platser i bilar, vilket minskar onödig körning och klimatpåverkan.',
                 lg: 'Vi erbjuder en innovativ plattform som förenklar samordningen av transporter genom att främja samåkning mellan föräldrar och scouter. Tjänsten gör det enkelt att hitta och erbjuda platser i bilar, vilket minskar onödig körning och klimatpåverkan. Genom att använda vår tjänst kan föräldrar planera resor, scoutledare organisera aktiviteter och scouter få relevant information. Tillsammans kan vi skapa en hållbar och trygg miljö för alla våra medlemmar och göra ett positivt avtryck i scoutäventyret!'
               })}
             </Text>
-            <Stack direction={{ sm: 'row' }} spacing={{ base: 4, sm: 6 }}>
+            <Stack direction={{ sm: 'row' }} spacing={{ base: 4, sm: 6 }} align="center">
               <Button
                 colorScheme="brand"
                 size={{ base: 'sm', md: 'md' }}
@@ -110,11 +109,9 @@ const Home = () => {
         <Register isOpen={isRegisterOpen} onClose={onRegisterClose} />
       </VStack>
   
-      {/* Optionally, add a small footer with some spacing */}
       <Box h="20px" />
     </Flex>
   );
-  
 };
 
 export default Home;
