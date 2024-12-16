@@ -18,6 +18,7 @@ import {
     GridItem,
     Box,
     useBreakpointValue,
+    useToast,
 } from '@chakra-ui/react';
 
 const Register = ({ isOpen, onClose }) => {
@@ -32,6 +33,7 @@ const Register = ({ isOpen, onClose }) => {
     const [address, setAddress] = useState('');
     const [postcode, setPostcode] = useState('');
     const [city, setCity] = useState('');
+    const toast = useToast(); // Initialize useToast
 
     const handleRegister = (e) => {
         e.preventDefault();
@@ -48,7 +50,17 @@ const Register = ({ isOpen, onClose }) => {
                 if (data.error) {
                     setError(data.error);
                 } else {
-                    alert(data.message);
+                    // Användare skapad - toast
+                    toast({
+                        title: 'Användare skapad!',
+                        description: 'Den nya användaren har registrerats och väntar på godkännande.',
+                        status: 'success',
+                        duration: 5000,
+                        isClosable: true,
+                        position: 'bottom-center',
+                    });
+
+                    // Reset form and close modal
                     setFirstName('');
                     setLastName('');
                     setEmail('');
@@ -64,6 +76,7 @@ const Register = ({ isOpen, onClose }) => {
             })
             .catch((error) => {
                 console.error('Error:', error);
+                setError('Ett oväntat fel inträffade. Försök igen.');
             });
     };
 
@@ -71,15 +84,15 @@ const Register = ({ isOpen, onClose }) => {
         <Modal isOpen={isOpen} onClose={onClose} isCentered size={modalSize}>
             <ModalOverlay />
             <ModalContent
-                mt={{ base: 32, md: 28 ,lg: 10 }}
+                mt={{ base: 32, md: 28, lg: 10 }}
             >
                 <ModalHeader
-                 mt={{ base: 32, md: 28 , lg: 0  }}
+                    mt={{ base: 32, md: 28, lg: 0 }}
                 >
                     Registrera användare
                 </ModalHeader>
-                <ModalCloseButton 
-                 mt={{ base: 32, md: 28 , lg: 0 }}
+                <ModalCloseButton
+                    mt={{ base: 32, md: 28, lg: 0 }}
                 />
                 <ModalBody>
                     <Box width="full" p={4}>
