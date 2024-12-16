@@ -90,7 +90,7 @@ def login():
         return jsonify({"error": "Invalid email or password!"}), 401
     
     if not user.is_accepted:
-        return jsonify({"error": "User account is not accepted yet!"}), 402
+        return jsonify({"error": "Användarkontot är inte accepterat än!"}), 402
     
     # Skapa JWT-token
     token = jwt.encode({
