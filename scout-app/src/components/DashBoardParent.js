@@ -636,7 +636,7 @@ const handleLoadMore = () => {
                                     openChatModal(carpool.id);
                                   }}
                                 >
-                                  Chatt
+                                  Chat
                                 </Button>
                                 <Button
                                     display={{ base: 'inline-flex', md: 'none' }} // Visible only on smaller screens
@@ -861,7 +861,7 @@ const handleLoadMore = () => {
                                       openChatModal(carpool.id);
                                     }}
                                   >
-                                    Chatt
+                                    Chat
                                   </Button>
                                   <Button
                                     display={{ base: 'inline-flex', md: 'none' }} // Visible only on smaller screens
