@@ -73,7 +73,7 @@ def register():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     
-    return jsonify({"message": f"User {email} created!"}), 201
+    return jsonify({"message": f"Användare {email} skapad!"}), 201
 
 
 # Route för inloggning (POST)
