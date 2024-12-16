@@ -7,7 +7,7 @@ import sys
 from models.auth_model import Child, Role, ParentChildLink, UserRole, User
 from models.activity_model import Activity
 from models.carpool_model import Passenger, Carpool
-import datetime
+from datetime import datetime, timedelta, timezone
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -36,6 +36,9 @@ def fetch_calendar_events():
         ical_data = response.content.decode('utf-8')
         cal = Calendar.from_ical(ical_data)
 
+        now = datetime.now(timezone.utc)  
+        one_month_ago = now - timedelta(days=30)
+
         for component in cal.walk():
             if component.name == "VEVENT":
                 summary = str(component.get('summary'))
@@ -44,6 +47,9 @@ def fetch_calendar_events():
                     scout_level = summary.split("//")[-1].split('-')[0].strip()
                 
                 start_date = component.get('dtstart').dt
+                if start_date < one_month_ago:
+                    continue
+
                 existing_activity = Activity.query.filter_by(
                     name=summary,
                     start_date=start_date
@@ -83,7 +89,7 @@ def fetch_calendar_events():
 @activity_bp.route('/api/protected/activity/by_role', methods=['GET'])
 @token_required
 def get_activities_by_role(current_user):
-    now = datetime.datetime.now()
+    now = datetime.now()
 
     # --- Barnaktiviteter ---
     # Hämta barn som är kopplade till den inloggade användaren
@@ -161,7 +167,7 @@ def get_activities_by_role(current_user):
 @activity_bp.route('/api/protected/activity/no_role', methods=['GET'])
 @token_required
 def get_visible_activities(current_user):
-    now = datetime.datetime.now()
+    now = datetime.now()
 
     # Hämta alla aktiviteter som är synliga och inte passerade
     activities = Activity.query.filter(
@@ -191,7 +197,7 @@ def get_visible_activities(current_user):
 @activity_bp.route('/api/protected/activity/all', methods=['GET'])
 @token_required
 def get_all_activities(current_user):
-    now = datetime.datetime.now()
+    now = datetime.now()
     activities = Activity.query.filter(Activity.start_date >= now).all()
     
     events_list = [{
@@ -256,7 +262,7 @@ def parse_date(date_string):
     """Försök att tolka datumet med och utan sekunder."""
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M"):
         try:
-            return datetime.datetime.strptime(date_string, fmt)  # Observera "datetime.datetime"
+            return datetime.strptime(date_string, fmt)
         except ValueError:
             continue
     raise ValueError(f"Fel format på datum: {date_string}")

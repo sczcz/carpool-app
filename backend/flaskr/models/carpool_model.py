@@ -6,9 +6,9 @@ from sqlalchemy.orm import relationship
 class Carpool(db.Model):
     __tablename__ = 'carpool'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    driver_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='SET NULL'))
+    driver_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'))
     car_id = db.Column(db.Integer, db.ForeignKey('cars.car_id', ondelete='CASCADE'))
-    activity_id = db.Column(db.Integer, db.ForeignKey('activities.activity_id', ondelete='SET NULL'))  # Koppling till aktivitet
+    activity_id = db.Column(db.Integer, db.ForeignKey('activities.activity_id', ondelete='CASCADE'))  # Koppling till aktivitet
     available_seats = db.Column(db.Integer, nullable=False)
     departure_address = db.Column(db.String(255), nullable=False)  # Adress för utgångsplats
     departure_postcode = db.Column(db.String(20), nullable=False)  # Postnummer för utgångsplats
