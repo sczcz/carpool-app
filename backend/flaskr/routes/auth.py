@@ -87,7 +87,7 @@ def login():
     user = User.query.filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
-        return jsonify({"error": "Invalid email or password!"}), 401
+        return jsonify({"error": "Fel användarnamn eller lösenord!"}), 401
     
     if not user.is_accepted:
         return jsonify({"error": "Användarkontot är inte accepterat än!"}), 402
