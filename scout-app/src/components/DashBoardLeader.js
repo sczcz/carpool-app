@@ -296,12 +296,15 @@ const Dashboard = ({ token }) => {
               onActivityCreated={handleActivityCreated}
             />
             {/* Rollfiltrering */}
-            <Select placeholder="Välj roll" onChange={handleRoleChange} mb={6} value={selectedRole}>
-              <option value="Alla roller">Alla roller</option>
-              {uniqueRoles.map((role, index) => (
-                <option key={index} value={role}>{role}</option>
-              ))}
-            </Select>
+              <Select onChange={handleRoleChange} mb={6} value={selectedRole}>
+                <option value="Alla roller">Alla roller</option>
+                {uniqueRoles.map((role, index) => (
+                  <option key={index} value={role}>
+                    {role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()}
+                  </option>
+                ))}
+              </Select>
+
   
             {filteredActivities.length === 0 ? (
               <Text fontSize="md" color="brand.400">
@@ -360,57 +363,102 @@ const Dashboard = ({ token }) => {
                   </Button>
 
                   <Collapse in={openActivityId === activity.activity_id}>
-                    <Box mt={4}>
-                      {activity.carpools ? (
-                        activity.carpools.length > 0 ? (
-                          activity.carpools.map((carpool) => (
-                            <Box key={carpool.id} p={3} bg="gray.100" mb={2} borderRadius="md">
-                              <Text fontWeight="bold" color="brand.600">
-                                Avresa från: {carpool.departure_address || "Ingen adress tillgänglig"}, {carpool.departure_city || "Ingen stad tillgänglig"}
-                              </Text>
-                              <Text>Typ av samåkning: {translateCarpoolType(carpool?.carpool_type) || 'N/A'}</Text>
-                              <Text>Tillgängliga platser: {carpool.available_seats || 0}</Text>
-                              <Box mt={2}>
-                                <Text fontWeight="bold">Passagerare:</Text>
-                                {carpool.passengers && carpool.passengers.length > 0 ? (
-                                  carpool.passengers.map((passenger, index) => (
-                                    <Box key={index} ml={4} mt={1}>
-                                      <Text fontWeight="bold">
-                                        Namn:{" "}
-                                        {passenger.type === "user"
-                                          ? passenger.name || "Okänd användare"
-                                          : passenger.name || "Okänt barn"}
-                                      </Text>
-                                      <Text>Telefon: {passenger.phone || "Ingen telefon tillgänglig"}</Text>
+  <Box mt={4}>
+    {activity.carpools ? (
+      activity.carpools.length > 0 ? (
+        activity.carpools.map((carpool) => (
+          <Box
+            key={carpool.id}
+            p={4}
+            bg="gray.50"
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="gray.200"
+            boxShadow="sm"
+            mb={4}
+          >
+            {/* Förare */}
+            <Box mb={4}>
+              <Text fontWeight="bold" fontSize="lg" color="brand.600">
+                Förare: {carpool.driver_name || "Ingen förare tillgänglig"}
+              </Text>
+              {carpool.driver_phone && (
+                <Text color="brand.500" fontSize="sm">
+                  Telefon: {carpool.driver_phone}
+                </Text>
+              )}
+            </Box>
 
-                                      {passenger.type === "child" && passenger.parents?.length > 0 && (
-                                        <Box mt={2} pl={4}>
-                                          <Text fontSize="sm" fontWeight="bold" color="gray.600">
-                                            Vårdnadshavare:
-                                          </Text>
-                                          {passenger.parents.map((parent, idx) => (
-                                            <Text key={idx} fontSize="sm" color="gray.500" ml={2}>
-                                              {parent.parent_name || "Okänd"} - {parent.parent_phone || "Ingen telefon"}
-                                            </Text>
-                                          ))}
-                                        </Box>
-                                      )}
-                                    </Box>
-                                  ))
-                                ) : (
-                                  <Text>Inga passagerare</Text>
-                                )}
-                              </Box>
-                            </Box>
-                          ))
-                        ) : (
-                          <Text>Inga tillgängliga samåkningar.</Text>
-                        )
-                      ) : (
-                        <Text>Laddar samåkningar...</Text>
-                      )}
-                    </Box>
-                  </Collapse>
+            {/* Avreseinformation */}
+            <Box mb={4}>
+              <Text fontWeight="bold" fontSize="md" color="gray.700">
+                Avresa från:
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                {carpool.departure_address || "Ingen adress tillgänglig"},{" "}
+                {carpool.departure_city || "Ingen stad tillgänglig"}
+              </Text>
+            </Box>
+
+            {/* Övriga detaljer */}
+            <Box mb={4}>
+              <Text fontSize="sm" color="gray.600">
+                Typ av samåkning: {translateCarpoolType(carpool?.carpool_type) || "N/A"}
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                Tillgängliga platser: {carpool.available_seats || 0}
+              </Text>
+            </Box>
+
+            {/* Passagerare */}
+            <Box>
+              <Text fontWeight="bold" fontSize="md" color="gray.700" mb={2}>
+                Passagerare:
+              </Text>
+              {carpool.passengers && carpool.passengers.length > 0 ? (
+                carpool.passengers.map((passenger, index) => (
+                  <Box key={index} ml={4} mb={3} p={2} bg="white" borderRadius="md" boxShadow="xs">
+                    <Text fontWeight="bold" fontSize="sm">
+                      Namn:{" "}
+                      {passenger.type === "user"
+                        ? passenger.name || "Okänd användare"
+                        : passenger.name || "Okänt barn"}
+                    </Text>
+                    <Text fontSize="sm">
+                      Telefon: {passenger.phone || "Ingen telefon tillgänglig"}
+                    </Text>
+                    {passenger.type === "child" && passenger.parents?.length > 0 && (
+                      <Box mt={2}>
+                        <Text fontWeight="bold" fontSize="sm" color="gray.600">
+                          Vårdnadshavare:
+                        </Text>
+                        {passenger.parents.map((parent, idx) => (
+                          <Text key={idx} fontSize="sm" color="gray.500" ml={2}>
+                            {parent.parent_name || "Okänd"} - {parent.parent_phone || "Ingen telefon"}
+                          </Text>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                ))
+              ) : (
+                <Text fontSize="sm" color="gray.500">
+                  Inga passagerare
+                </Text>
+              )}
+            </Box>
+          </Box>
+        ))
+      ) : (
+        <Text>Inga tillgängliga samåkningar.</Text>
+      )
+    ) : (
+      <Text>Laddar samåkningar...</Text>
+    )}
+  </Box>
+</Collapse>
+
+
                 </Box>
               ))}
 
