@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { InfoIcon } from '@chakra-ui/icons';
+import { FaTrash, FaCarSide} from 'react-icons/fa';
 import {
   Box,
   Heading,
@@ -186,6 +187,43 @@ const DashBoardAdmin = () => {
       .catch((err) =>
         toast({
           title: 'Fel vid borttagning av användare',
+          description: err.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        })
+      );
+  };
+
+  const clearOldActivities = () => {
+    fetch('/api/admin/cleanup-activities', {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.message) {
+          const { deleted_activities, deleted_carpools, deleted_passengers } = data;
+          toast({
+            title: 'Rensning klar',
+            description: `${data.message}\nAktiviteter: ${deleted_activities}, Samåkningar: ${deleted_carpools}, Passagerare: ${deleted_passengers}`,
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+          });
+        } else if (data.error) {
+          toast({
+            title: 'Fel vid rensning',
+            description: data.error,
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+          });
+        }
+      })
+      .catch((err) =>
+        toast({
+          title: 'Serverfel',
           description: err.message,
           status: 'error',
           duration: 5000,
@@ -408,7 +446,45 @@ const DashBoardAdmin = () => {
           </Box>
         </Box>
       </Box>
+      <Box mt={8} textAlign="center">
+        <HStack justify="flex-start" spacing={4}>
+          <Button
+            leftIcon={<FaTrash />}
+            colorScheme="red"
+            size="md"
+            borderRadius="full"
+            onClick={clearOldActivities}
+          >
+            Rensa gamla aktiviteter från DB
+          </Button>
+          <Popover>
+            <PopoverTrigger>
+              <IconButton
+                icon={<InfoIcon />}
+                aria-label="Mer information"
+                variant="ghost"
+                fontSize="lg"
+              />
+            </PopoverTrigger>
+            <PopoverContent>
+              <PopoverArrow />
+              <PopoverBody textAlign="left">
+                <Text mb={2}>
+                  Detta raderar gamla aktiviteter från databasen. Aktiviteter anses gamla om
+                  slutdatumet passerat eller startdatum inträffade för mer än 3 månader sedan.
+                </Text>
+                <Text mb={2}>  
+                  Detta rensar även samåkningar som är kopplade till aktiviteterna samt passagerare
+                  som är kopplade till samåkningarna.
+                </Text>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+        </HStack>
+      </Box>
     </Box>
+
+  
   );
 };
 
