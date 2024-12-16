@@ -101,10 +101,15 @@ def list_carpools(current_user):
         # Hämta bilinformation om den finns
         car = Car.query.get(carpool.car_id)
 
+        # Hämta förarens information om den finns
+        driver = User.query.get(carpool.driver_id)
+
         # Bygg carpool-objektet
         carpool_list.append({
             "id": carpool.id,
             "driver_id": carpool.driver_id,
+            "driver_name": f"{driver.first_name} {driver.last_name}" if driver else "Ingen förare tilldelad",
+            "driver_phone": driver.phone if driver else "Ingen telefon tillgänglig",
             "car_id": carpool.car_id,
             "car_model_name": car.model_name if car else "Ingen bil tilldelad",
             "available_seats": carpool.available_seats,
@@ -116,6 +121,8 @@ def list_carpools(current_user):
         })
 
     return jsonify({"carpools": carpool_list}), 200
+
+
 
 @carpool_bp.route('/api/carpool/add-passenger', methods=['POST'])
 @token_required
