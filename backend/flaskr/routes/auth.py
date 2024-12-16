@@ -54,7 +54,7 @@ def register():
     user_exists = User.query.filter_by(email=email).first()
     
     if user_exists:
-        return jsonify({"error": "User already exists!"}), 400
+        return jsonify({"error": "Användaren är redan registrerad!"}), 400
 
     # Hasha lösenordet innan det sparas
     hashed_password = generate_password_hash(password)
@@ -73,7 +73,7 @@ def register():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     
-    return jsonify({"message": f"User {email} created!"}), 201
+    return jsonify({"message": f"Användare {email} skapad!"}), 201
 
 
 # Route för inloggning (POST)
@@ -87,10 +87,10 @@ def login():
     user = User.query.filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
-        return jsonify({"error": "Invalid email or password!"}), 401
+        return jsonify({"error": "Fel användarnamn eller lösenord!"}), 401
     
     if not user.is_accepted:
-        return jsonify({"error": "User account is not accepted yet!"}), 402
+        return jsonify({"error": "Användarkontot är inte accepterat än!"}), 402
     
     # Skapa JWT-token
     token = jwt.encode({
@@ -148,7 +148,7 @@ def token_required(f):
             
             # Kontrollera accepteringsstatus
             if not current_user.is_accepted:
-                return jsonify({"error": "User has not been accepted by admin."}), 403
+                return jsonify({"error": "Användaren har inte godkänts av administratören."}), 403
                     
         except jwt.ExpiredSignatureError:
             return jsonify({"error": "Token has expired!"}), 401

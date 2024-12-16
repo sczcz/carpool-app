@@ -89,7 +89,7 @@ const AppContent = () => {
         <Modal isOpen={isChatOpen && selectedCarpoolId !== null} onClose={onChatClose} size="lg">
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>Carpool Chat</ModalHeader>
+            <ModalHeader>Samåkning - Chatt</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
               <CarpoolChat carpoolId={selectedCarpoolId} />

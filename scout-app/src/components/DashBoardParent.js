@@ -519,7 +519,7 @@ const handleLoadMore = () => {
                         <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
                       </Tag>
                       <Button colorScheme="brand" size="sm" onClick={() => toggleMyCarpool(index)}>
-                        {openMyCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
+                        {openMyCarpoolIndex === index ? 'Dölj samåkning' : 'Visa samåkning'}
                       </Button>
                     </Flex>
                     <Text fontWeight="bold">{format(parseISO(activity.dtstart), "d MMMM", { locale: sv })}</Text>
@@ -737,7 +737,7 @@ const handleLoadMore = () => {
                       size="sm"
                       onClick={() => toggleCarpool(index, activity.activity_id)}
                     >
-                      {openCarpoolIndex === index ? 'Dölj Carpool' : 'Visa Carpool'}
+                      {openCarpoolIndex === index ? 'Dölj samåkning' : 'Visa samåkning'}
                     </Button>
                   </Flex>
                   <Text fontWeight="bold">

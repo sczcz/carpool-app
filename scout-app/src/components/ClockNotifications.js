@@ -270,7 +270,7 @@ const ClockNotifications = ({ isScrolled }) => {
       <Modal isOpen={isChatOpen} onClose={onChatClose} size="lg">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Carpool Chat</ModalHeader>
+          <ModalHeader>Samåkning - Chatt</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <CarpoolChat carpoolId={selectedCarpoolId} userName={fullName} userId={userId} />
