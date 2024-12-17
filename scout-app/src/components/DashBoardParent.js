@@ -539,7 +539,7 @@ const handleLoadMore = () => {
                           openCarpoolModal(activity.activity_id);
                         }}
                       >
-                          Lägg till Samåkning
+                          Lägg till samåkning
                         </Button>
 
                         {fetchingCarpools ? (
@@ -577,7 +577,7 @@ const handleLoadMore = () => {
                                 </Text>
                               </Flex>
                               <Text fontSize="sm" color="gray.500" mb={2}>
-                                Tillgängliga Platser: {carpool.available_seats}
+                                Tillgängliga platser: {carpool.available_seats}
                               </Text>
 
                               {/* Buttons Section */}
@@ -763,7 +763,7 @@ const handleLoadMore = () => {
                           openCarpoolModal(activity.activity_id);
                         }}
                       >
-                          Lägg till Samåkning
+                          Lägg till samåkning
                         </Button>
 
                         {fetchingCarpools ? (
@@ -802,7 +802,7 @@ const handleLoadMore = () => {
                                   </Text>
                                 </Flex>
                                 <Text fontSize="sm" color="gray.500" mb={2}>
-                                  Tillgängliga Platser: {carpool.available_seats}
+                                  Tillgängliga platser: {carpool.available_seats}
                                 </Text>
 
                                 {/* Buttons Section */}

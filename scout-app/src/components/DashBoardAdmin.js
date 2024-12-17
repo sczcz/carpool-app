@@ -263,7 +263,7 @@ const DashBoardAdmin = () => {
       {/* Page Heading */}
       <Box mb={8} display="flex" alignItems="center">
         <Heading  as="h1" size="xl" textAlign={["center", "left"]}>
-          Admin Dashboard
+          Administratör
         </Heading>
         <Popover>
         <PopoverTrigger>
@@ -478,7 +478,7 @@ const DashBoardAdmin = () => {
                           width={["100%", "auto"]}
                           onClick={() => openDeleteDialog(user.id)}
                         >
-                          Ta Bort
+                          Ta bort
                         </Button>
                         {user.roles.includes("ledare") && !user.roles.includes("admin") && (
                           <Button

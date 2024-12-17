@@ -730,7 +730,7 @@ const Profile = () => {
                     fontSize={{ base: "sm", sm: "md" }}
                     color="black"
                   >
-                    Fuel Type: {car.fuel_type || 'Unknown'}
+                    Bränsletyp: {car.fuel_type || 'Unknown'}
                   </Text>
 
                   {/* Button Section */}

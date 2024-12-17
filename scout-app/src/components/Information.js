@@ -6,10 +6,10 @@ const Information = () => {
     <Box p={8} maxW="800px" mx="auto">
       <VStack align="start" spacing={4}>
         <Heading as="h1" size="xl" color="brand.600">
-          Integritetspolicy för Alltid Redo
+          Integritetspolicy för Redo
         </Heading>
         <Text fontSize="sm" color="gray.500">
-          Senast uppdaterad: 2024-12-02
+          Senast uppdaterad: 2024-12-17
         </Text>
         
         <Heading as="h2" size="lg" color="brand.600">

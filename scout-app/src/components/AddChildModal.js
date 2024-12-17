@@ -97,7 +97,7 @@ const AddChildModal = ({ isOpen, onClose, onChildAdded }) => {
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Lägg till Barn</ModalHeader>
+        <ModalHeader>Lägg till barn</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl>
