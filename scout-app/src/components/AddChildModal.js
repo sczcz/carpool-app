@@ -111,12 +111,12 @@ const AddChildModal = ({ isOpen, onClose, onChildAdded }) => {
           <FormControl mt={4}>
             <FormLabel>Roll</FormLabel>
             <Select value={childRole} onChange={(e) => setChildRole(e.target.value)}>
-              <option value="kutar">Kutar</option>
-              <option value="tumlare">Tumlare</option>
-              <option value="upptäckare">Upptäckare</option>
-              <option value="äventyrare">Äventyrare</option>
-              <option value="utmanare">Utmanare</option>
-              <option value="rover">Rover</option>
+              <option value="kutar">Kutar (0-9 år)</option>
+              <option value="tumlare">Tumlare (0-9 år)</option>
+              <option value="upptäckare">Upptäckare (10-11år)</option>
+              <option value="äventyrare">Äventyrare (12-14 år)</option>
+              <option value="utmanare">Utmanare (15-18 år)</option>
+              <option value="rover">Rover (19-25 år)</option>
             </Select>
           </FormControl>
           <FormControl mt={4}>
