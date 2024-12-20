@@ -653,16 +653,17 @@ const Profile = () => {
                 <Select
                   value={child.role}
                   onChange={(e) => handleRoleChange(index, e.target.value)}
-                  width={{ base: "100%", md: "150px" }} // Responsive width
+                  width={{ base: "100%", md: "fit-content" }}
+                  maxWidth="100%"
                   color="black" // Set text color for Select
                   bg="white" // Optional: Set background color for better visibility
                   pl={4}
                 >
-                  <option value="kutar">Kutar  (0-9 år) </option>
-                  <option value="tumlare">Tumlare  (0-9 år) </option>
-                  <option value="upptäckare">Upptäckare (10-11år) </option>
-                  <option value="äventyrare">Äventyrare (12-14 år) </option>
-                  <option value="utmanare">Utmanare (15-18 år) </option>
+                  <option value="kutar">Kutar  (0-9 år)</option>
+                  <option value="tumlare">Tumlare  (0-9 år)</option>
+                  <option value="upptäckare">Upptäckare (10-11år)</option>
+                  <option value="äventyrare">Äventyrare (12-14 år)</option>
+                  <option value="utmanare">Utmanare (15-18 år)</option>
                   <option value="rover">Rover (19-25 år) </option>
                 </Select>
 
