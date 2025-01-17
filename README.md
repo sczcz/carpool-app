@@ -32,10 +32,6 @@ npm run start
 ### Steg 8: Öppna applikationen
 Navigera till http://localhost:3000 i valfri webb-läsare
 
-### Krav:
-Python 3.x
-Flask och andra beroenden (installeras via requirements.txt)
-
 ## API-dokumentation
 För åtkomst till Swagger UI starta applikationen i branchen "swagger-api-docs" och navigera till http://localhost:5000/api/docs
 
