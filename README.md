@@ -3,9 +3,6 @@
 Scoutkar är en webbaserad applikation för att hantera bokningar av samåkning och kommunikation mellan medlemmar i en scoutkår.
 
 ## Krav:
-Python 3.12.x
-Node.js 20.10.x
-
 Innan du börjar säkerställ att du har installerat:
  - Python 3.12.x
  - Node.js 20.10.x
