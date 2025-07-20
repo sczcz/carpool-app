@@ -1,4 +1,3 @@
-// AddChildModal.js
 import React, { useState } from 'react';
 import {
   Modal,
@@ -21,11 +20,10 @@ const AddChildModal = ({ isOpen, onClose, onChildAdded }) => {
   const [childLastName, setChildLastName] = useState('');
   const [childRole, setChildRole] = useState('kutar');
   const [childPhone, setChildPhone] = useState('');
-  const [birthDate, setBirthDate] = useState(''); // Nytt fält för födelsedatum
+  const [birthDate, setBirthDate] = useState('');
   const toast = useToast();
 
   const handleAddChild = async () => {
-    // Kontrollera om obligatoriska fält är ifyllda
     if (!childFirstName || !childLastName || !childRole || !birthDate) {
       toast({
         title: 'Fel',
@@ -47,7 +45,7 @@ const AddChildModal = ({ isOpen, onClose, onChildAdded }) => {
           last_name: childLastName,
           phone: childPhone || null,
           role: childRole,
-          birth_date: birthDate, // Skicka födelsedatum
+          birth_date: birthDate,
         }),
       });
 

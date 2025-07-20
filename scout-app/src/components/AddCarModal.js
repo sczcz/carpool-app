@@ -1,4 +1,3 @@
-// AddCarModal.js
 import React, { useState } from 'react';
 import {
   Modal,
@@ -49,10 +48,9 @@ const AddCarModal = ({ isOpen, onClose, onCarAdded }) => {
             isClosable: true,
           });
           const newCar = { reg_number: regNumber, model_name: modelName, fuel_type: fuelType };
-            onCarAdded(newCar); // Pass new car to parent component
-            onClose(); // Close the modal
+            onCarAdded(newCar);
+            onClose();
 
-          // Reset form fields
           setRegNumber('');
           setFuelType('Gas');
           setModelName('');

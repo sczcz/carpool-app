@@ -134,14 +134,12 @@ const CarpoolDetails = () => {
         isClosable: true,
       });
   
-      // Uppdatera passagerarlistan i frontend
       setPassengers((prevPassengers) =>
         type === 'user'
           ? prevPassengers.filter((p) => p.user_id !== id)
           : prevPassengers.filter((p) => p.child_id !== id)
       );
   
-      // Hämta uppdaterade carpools
       await fetchCarpoolsForActivity(activity.activity_id);
     } catch (error) {
       toast({
@@ -201,9 +199,9 @@ const CarpoolDetails = () => {
 <Modal
   isOpen={isOpen}
   onClose={() => {
-    setPassengers([]); // Återställ passagerarlistan
-    setDriverInfo(null); // Återställ förarinformationen
-    onClose(); // Anropa Chakra UI:s onClose
+    setPassengers([]);
+    setDriverInfo(null);
+    onClose();
   }} size={modalSize}>
   <ModalOverlay />
   <ModalContent maxW={{ base: '90%', md: '800px' }} mx="auto">
@@ -266,7 +264,6 @@ const CarpoolDetails = () => {
                         </Text>
                       </HStack>
 
-                      {/* Kontrollera om passageraren är barn och nuvarande användare är en förälder */}
                       {passenger.type === 'child' && isParentOfChild(passenger) && (
                         <IconButton
                           icon={<FaTrash />}
@@ -279,7 +276,6 @@ const CarpoolDetails = () => {
                         />
                       )}
 
-                      {/* Kontrollera om passageraren är användaren själv */}
                       {passenger.type === 'user' && passenger.user_id === currentUserId && (
                         <IconButton
                           icon={<FaTrash />}

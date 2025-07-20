@@ -2,7 +2,7 @@ export const fetchNotifications = async () => {
   try {
     const response = await fetch('/api/notifications', {
       method: 'GET',
-      credentials: 'include', // Skickar cookies för autentisering
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },

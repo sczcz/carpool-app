@@ -89,10 +89,10 @@ const DashBoardParent = ({ token }) => {
     return activity.carpools?.some((carpool) => {
       const isDriver = carpool.driver_id === userId;
       const hasSelfAsPassenger = carpool.passengers?.some(
-        (passenger) => passenger.user_id === userId // Kontrollera user_id för vuxna
+        (passenger) => passenger.user_id === userId
       );
       const hasChildAsPassenger = carpool.passengers?.some((passenger) =>
-        passenger.parents?.some((parent) => parent.parent_id === userId) // Kontrollera föräldrar
+        passenger.parents?.some((parent) => parent.parent_id === userId)
       );
       return isDriver || hasSelfAsPassenger || hasChildAsPassenger;
     });
@@ -142,8 +142,8 @@ const DashBoardParent = ({ token }) => {
     setActivityLoading(true);
     try {
       const apiEndpoint = filterByRole
-        ? '/api/protected/activity/by_role' // Rollbaserade aktiviteter
-        : '/api/protected/activity/no_role'; // Alla synliga aktiviteter
+        ? '/api/protected/activity/by_role'
+        : '/api/protected/activity/no_role';
   
       const response = await fetch(apiEndpoint, { credentials: 'include' });
       const data = await response.json();
@@ -247,10 +247,10 @@ const DashBoardParent = ({ token }) => {
       }
   
       const participantsData = await response.json();
-      setParticipants(participantsData); // Uppdatera modalens data
-      setSelectedCarpoolId(carpoolId);  // Spara carpool ID:n
-      setSelectedActivityId(activityId); // Spara aktivitet ID:n
-      setIsModalOpen(true); // Öppna modalen
+      setParticipants(participantsData);
+      setSelectedCarpoolId(carpoolId);
+      setSelectedActivityId(activityId);
+      setIsModalOpen(true);
     } catch (error) {
       toast({
         title: 'Fel',
@@ -287,8 +287,8 @@ const DashBoardParent = ({ token }) => {
         isClosable: true,
       });
   
-      setIsModalOpen(false); // Stäng modalen
-      fetchCarpoolsForActivity(selectedActivityId); // Uppdatera carpools
+      setIsModalOpen(false);
+      fetchCarpoolsForActivity(selectedActivityId);
     } catch (error) {
       toast({
         title: 'Fel',
@@ -467,7 +467,7 @@ const handleLoadMore = () => {
             <Button
               fontSize={{ base: 'sm', lg: 'md' }}
               colorScheme={filterByRole ? 'gray' : 'gray'}
-              onClick={() => setFilterByRole(!filterByRole)} // Endast uppdatera state här
+              onClick={() => setFilterByRole(!filterByRole)}
             >
               {filterByRole ? 'Visa alla aktiviteter' : 'Visa endast aktiviteter baserat på dina barns roller'}
             </Button>
@@ -479,10 +479,10 @@ const handleLoadMore = () => {
 
           {myActivities.length > 0 && (
             <Box p={4}
-            bg="blue.50"  // Sätt en ljusblå bakgrund
-            borderRadius="lg" // Rundade hörn
-            shadow="md" // Mjuk skugga
-            borderWidth="0px" // Ta bort ramen
+            bg="blue.50"
+            borderRadius="lg"
+            shadow="md"
+            borderWidth="0px"
           >
               <Box mb={8} display="flex" alignItems="center">
               <Heading as="h2" size="md" mb={4} color="gray.700" mt={5} fontWeight="bold">
@@ -585,14 +585,14 @@ const handleLoadMore = () => {
                                 {carpool.driver_id === userId && (
                                   <Button
                                   colorScheme="red"
-                                  variant="outline" // Use outline variant if you want a border
+                                  variant="outline"
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDeleteCarpool(carpool.id, activity.activity_id);
                                     }}
                                   >
-                                  <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
+                                  <Icon as={FaTrash} color="red.500" />
                                   </Button>
                                 )}
 
@@ -612,7 +612,7 @@ const handleLoadMore = () => {
                                       }
                                       handleJoinCarpool(carpool.id, activity.activity_id);
                                     }}
-                                    isDisabled={joinedChildrenInCarpool[carpool.id]?.allJoined} // Disable if "Joined"
+                                    isDisabled={joinedChildrenInCarpool[carpool.id]?.allJoined}
                                   >
                                     {loadingJoinState[carpool.id] ? (
                                       <Spinner size="xs" />
@@ -639,13 +639,13 @@ const handleLoadMore = () => {
                                   Chatt
                                 </Button>
                                 <Button
-                                    display={{ base: 'inline-flex', md: 'none' }} // Visible only on smaller screens
+                                    display={{ base: 'inline-flex', md: 'none' }}
                                     colorScheme="cyan"
                                     color="white"
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleCarpoolClick(activity, carpool); // Open carpool details modal
+                                      handleCarpoolClick(activity, carpool);
                                     }}
                                   >
                                     Info
@@ -691,7 +691,6 @@ const handleLoadMore = () => {
               </Popover>
             </Box>
 
-            {/* Display a message if there are no activities */}
             {activities.length === 0 && (
               <VStack spacing={4}>
                 <Box mb={8} display="flex" alignItems="center">
@@ -718,7 +717,6 @@ const handleLoadMore = () => {
                 </Button>
               </VStack>
             )}
-            {/* AddChildModal component */}
             <AddChildModal
               isOpen={isAddChildOpen}
               onClose={closeAddChildModal}
@@ -810,14 +808,14 @@ const handleLoadMore = () => {
                                   {carpool.driver_id === userId && (
                                     <Button
                                     colorScheme="red"
-                                    variant="outline" // Use outline variant if you want a border
+                                    variant="outline"
                                       size="sm"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleDeleteCarpool(carpool.id, activity.activity_id);
                                       }}
                                     >
-                                      <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
+                                      <Icon as={FaTrash} color="red.500" />
                                     </Button>
                                   )}
 
@@ -837,7 +835,7 @@ const handleLoadMore = () => {
                                         }
                                         handleJoinCarpool(carpool.id, activity.activity_id);
                                       }}
-                                      isDisabled={joinedChildrenInCarpool[carpool.id]?.allJoined} // Disable if "Joined"
+                                      isDisabled={joinedChildrenInCarpool[carpool.id]?.allJoined}
                                     >
                                       {loadingJoinState[carpool.id] ? (
                                         <Spinner size="xs" />
@@ -864,12 +862,12 @@ const handleLoadMore = () => {
                                     Chatt
                                   </Button>
                                   <Button
-                                    display={{ base: 'inline-flex', md: 'none' }} // Visible only on smaller screens
+                                    display={{ base: 'inline-flex', md: 'none' }}
                                     colorScheme="cyan"
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleCarpoolClick(activity, carpool); // Open carpool details modal
+                                      handleCarpoolClick(activity, carpool);
                                     }}
                                   >
                                     Info
@@ -914,7 +912,6 @@ const handleLoadMore = () => {
             </ModalContent>
           </Modal>
 
-          {/* Select Participant Modal */}
           <SelectParticipantModal
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}

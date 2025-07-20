@@ -21,11 +21,11 @@ function CarpoolChat() {
     userId,
     fullName: userName
   } = useUser();
-  const [allMessages, setAllMessages] = useState([]); // Alla meddelanden
-  const [visibleMessages, setVisibleMessages] = useState([]); // Synliga meddelanden
+  const [allMessages, setAllMessages] = useState([]);
+  const [visibleMessages, setVisibleMessages] = useState([]);
   const [messageContent, setMessageContent] = useState('');
-  const [messagesToShow, setMessagesToShow] = useState(10); // Antal meddelanden att visa initialt
-  const [hasMoreMessages, setHasMoreMessages] = useState(true); // Om det finns fler att ladda
+  const [messagesToShow, setMessagesToShow] = useState(10);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const messagesContainerRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -55,16 +55,16 @@ function CarpoolChat() {
         });
         if (response.ok) {
           const data = await response.json();
-          const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // Äldsta först
+          const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
           setAllMessages(sortedData);
-          setVisibleMessages(sortedData.slice(-messagesToShow)); // Visa senaste
+          setVisibleMessages(sortedData.slice(-messagesToShow));
           setHasMoreMessages(sortedData.length > messagesToShow);
-          scrollToBottom(); // Scrolla till botten vid inladdning
+          scrollToBottom();
         } else {
           console.error('Misslyckades med att hämta meddelanden');
         }
       } catch (error) {
-        console.error('Error vid hämtning av meddelanden:', error);
+        console.error('Fel vid hämtning av meddelanden:', error);
       }
     };
 
@@ -76,7 +76,7 @@ function CarpoolChat() {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({ carpool_id: carpoolId, type: 'chat' }), // Skickar carpool ID
+          body: JSON.stringify({ carpool_id: carpoolId, type: 'chat' }),
         });
         if (!response.ok) {
           console.error('Misslyckades med att markera notifikationer som lästa');
@@ -94,7 +94,7 @@ function CarpoolChat() {
       if (data.carpool_id === parseInt(carpoolId)) {
         setAllMessages((prevMessages) => [...prevMessages, data.message]);
         setVisibleMessages((prevVisible) => [...prevVisible, data.message]);
-        setTimeout(scrollToBottom, 0); // Scrolla till botten vid nytt meddelande
+        setTimeout(scrollToBottom, 0);
       }
     });
 
@@ -106,14 +106,14 @@ function CarpoolChat() {
 
   const handleScroll = () => {
     if (messagesContainerRef.current.scrollTop === 0 && hasMoreMessages) {
-      const prevScrollHeight = messagesContainerRef.current.scrollHeight; // Behåll scrollhöjden
+      const prevScrollHeight = messagesContainerRef.current.scrollHeight;
       const newMessagesToShow = messagesToShow + 10;
       const newVisibleMessages = allMessages.slice(-newMessagesToShow);
 
       setMessagesToShow(newMessagesToShow);
       setVisibleMessages(newVisibleMessages);
       setHasMoreMessages(allMessages.length > newMessagesToShow);
-      setTimeout(() => maintainScrollPosition(prevScrollHeight), 0); // Behåll positionen efter uppdatering
+      setTimeout(() => maintainScrollPosition(prevScrollHeight), 0);
     }
   };
 

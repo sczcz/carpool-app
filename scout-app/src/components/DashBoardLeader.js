@@ -30,9 +30,9 @@ const Dashboard = ({ token }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openActivityId, setOpenActivityId] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(3); // Startar med 3
+  const [visibleCount, setVisibleCount] = useState(3);
   const [fetchingCarpools, setFetchingCarpools] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('Alla roller'); // Filtrering
+  const [selectedRole, setSelectedRole] = useState('Alla roller');
   const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -48,7 +48,6 @@ const Dashboard = ({ token }) => {
     ledare: '#003660'        
   };
 
-  // Hämta aktiviteter från API när komponenten laddas
   useEffect(() => {
     fetchActivities();
   }, [token]);
@@ -71,7 +70,7 @@ const Dashboard = ({ token }) => {
       const sortedActivities = data.events
         .map((activity) => ({
           ...activity,
-          isVisible: activity.is_visible, // Flagga som backend skickar
+          isVisible: activity.is_visible,
         }))
         .sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
       setActivities(sortedActivities);
@@ -95,7 +94,6 @@ const Dashboard = ({ token }) => {
     }
   };
 
-  // Funktion för att hämta samåkningar för en specifik aktivitet
   const fetchCarpoolsForActivity = async (activityId) => {
     setFetchingCarpools(true);
     try {
@@ -106,7 +104,6 @@ const Dashboard = ({ token }) => {
   
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched carpools data:", data.carpools); // Debugging log
         setActivities((prevActivities) =>
           prevActivities.map((activity) => {
             if (activity.activity_id === activityId) {
@@ -176,28 +173,26 @@ const Dashboard = ({ token }) => {
   const toggleActivity = (activityId) => {
     setOpenActivityId(openActivityId === activityId ? null : activityId);
     if (openActivityId !== activityId) {
-      fetchCarpoolsForActivity(activityId); // Ladda samåkningar när aktivitet öppnas
+      fetchCarpoolsForActivity(activityId);
     }
   };
 
   const loadMoreActivities = () => {
-    setVisibleCount((prevCount) => prevCount + 3); // Ladda tre nya varje gång
+    setVisibleCount((prevCount) => prevCount + 3);
   };
 
-  // Filtrering av aktiviteter baserat på scout_level
   const filteredActivities = activities.filter((activity) => {
     if (selectedRole === 'Alla roller') {
-      return true; // Visa alla om ingen specifik roll är vald
+      return true;
     }
-    return activity.scout_level === selectedRole; // Visa bara aktiviteter som matchar vald roll
+    return activity.scout_level === selectedRole;
   });
 
   const handleRoleChange = (e) => {
-    setSelectedRole(e.target.value); // Uppdatera vald roll
-    setVisibleCount(3); // Återställ till 3 synliga aktiviteter vid rollbyte
+    setSelectedRole(e.target.value);
+    setVisibleCount(3);
   };
 
-  // Hämta unika roller för dropdown
   const uniqueRoles = [...new Set(activities.map(activity => activity.scout_level))];
 
   if (loading) {
@@ -219,13 +214,11 @@ const Dashboard = ({ token }) => {
   }
 
   const handleActivityCreated = () => {
-    // Uppdatera aktiviteter efter att en ny aktivitet har skapats
     fetchActivities();
   };
 
   return (
   <Flex direction="column" align="center" justify="center" p={4} width="100%" overflowX="hidden">
-  {/* Header med "+ Skapa ny aktivitet" */}
   <Flex justify="space-between" align="center" width="100%" maxW="1200px" mb={8}>
   <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="brand.500">
       Ledare
@@ -234,8 +227,8 @@ const Dashboard = ({ token }) => {
 
   <Grid
     templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
-    gap={{ base: 4, md: 6 }} // Adjusted gap for mobile
-    px={{ base: 2, md: 4 }} // Adjusted padding for mobile
+    gap={{ base: 4, md: 6 }}
+    px={{ base: 2, md: 4 }}
     width="100%"
     maxW="1200px"
   >
@@ -243,7 +236,6 @@ const Dashboard = ({ token }) => {
 
         <GridItem w="100%" colSpan={{ base: 1, md: 2, lg: 3 }}>
         <Box mb={6} display="flex" flexDirection={{ base: 'column', md: 'row' }} alignItems="center" justifyContent="space-between" width="100%" fontSize={{ base: 'sm', md: 'md' }}>
-            {/* Rubrik och info-ikon */}
             <Flex align="center">
               <Heading as="h3" size="lg" color="brand.500">
                 Aktiviteter
@@ -275,7 +267,6 @@ const Dashboard = ({ token }) => {
               </Popover>
             </Flex>
 
-            {/* Lägg till knappen här */}
             <Button
               rightIcon={<FaPlus />}
               color="brand.500"
@@ -289,13 +280,11 @@ const Dashboard = ({ token }) => {
             </Button>
           </Box>
 
-           {/* Modal för att skapa en ny aktivitet */}
             <CreateActivityModal
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
               onActivityCreated={handleActivityCreated}
             />
-            {/* Rollfiltrering */}
               <Select onChange={handleRoleChange} mb={6} value={selectedRole}>
                 <option value="Alla roller">Alla roller</option>
                 {uniqueRoles.map((role, index) => (
@@ -316,20 +305,20 @@ const Dashboard = ({ token }) => {
                 <Box key={activity.activity_id} bg="white" p={4} mt={4} borderRadius="md" boxShadow="lg">
                   <Flex direction={{ base: 'column', md: 'row' }} align="center" justify="space-between" width="100%">
                   <Text
-                    fontSize={{ base: 'md', md: 'lg' }} // Adjust font size for mobile
+                    fontSize={{ base: 'md', md: 'lg' }}
                     fontWeight="bold"
                     color="brand.600"
-                    noOfLines={1} // Ensure text doesn't overflow in smaller viewports
+                    noOfLines={1}
                   >
                     {activity.summary.split('//')[0].trim()}
                   </Text>
                   <Tag
-                    ml={{ base: 0, md: 4 }} // Adjust margin for smaller screens
-                    size={{ base: 'sm', md: 'lg' }} // Adjust tag size for mobile
+                    ml={{ base: 0, md: 4 }}
+                    size={{ base: 'sm', md: 'lg' }}
                     color="white"
                     backgroundColor={roleColors[activity.scout_level] || 'gray.200'}
                   >
-                    <TagLabel fontSize={{ base: 'sm', md: 'md' }}> {/* Adjust label font size */}
+                    <TagLabel fontSize={{ base: 'sm', md: 'md' }}>
                       {activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}
                     </TagLabel>
                   </Tag>
@@ -377,7 +366,6 @@ const Dashboard = ({ token }) => {
             boxShadow="sm"
             mb={4}
           >
-            {/* Förare */}
             <Box mb={4}>
               <Text fontWeight="bold" fontSize="lg" color="brand.600">
                 Förare: {carpool.driver_name || "Ingen förare tillgänglig"}
@@ -389,7 +377,6 @@ const Dashboard = ({ token }) => {
               )}
             </Box>
 
-            {/* Avreseinformation */}
             <Box mb={4}>
               <Text fontWeight="bold" fontSize="md" color="gray.700">
                 Avresa från:
@@ -400,7 +387,6 @@ const Dashboard = ({ token }) => {
               </Text>
             </Box>
 
-            {/* Övriga detaljer */}
             <Box mb={4}>
               <Text fontSize="sm" color="gray.600">
                 Typ av samåkning: {translateCarpoolType(carpool?.carpool_type) || "N/A"}
@@ -410,7 +396,7 @@ const Dashboard = ({ token }) => {
               </Text>
             </Box>
 
-            {/* Passagerare */}
+            {/* This is the passenger section */}
             <Box>
               <Text fontWeight="bold" fontSize="md" color="gray.700" mb={2}>
                 Passagerare:

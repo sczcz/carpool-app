@@ -42,17 +42,15 @@ const ClockNotifications = ({ isScrolled }) => {
     onChatClose,
     openChat
   } = useCarpool();
-  const [notifications, setNotifications] = useState([]); // Alla notiser
-  const [unreadCount, setUnreadCount] = useState(0); // Antal olästa notiser
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { userId, fullName } = useUser();
 
   useEffect(() => {
     if (!userId) return;
 
-    // Anslut till användarens socket-kanal
     socket.emit('join_user', { user_id: userId });
 
-    // Ladda notiser från backend
     const loadNotifications = async () => {
       try {
         const { notifications: fetchedNotifications, unreadCount: fetchedUnreadCount } =
@@ -73,7 +71,6 @@ const ClockNotifications = ({ isScrolled }) => {
       setUnreadCount((prevCount) => prevCount + 1);
     };
 
-    // Uppdatera notiser vid ändringar från backend
     const updateNotifications = () => {
       loadNotifications();
     };
@@ -95,7 +92,7 @@ const ClockNotifications = ({ isScrolled }) => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ carpool_id: carpoolId, type }), // Skicka med type
+        body: JSON.stringify({ carpool_id: carpoolId, type }),
       });
       const result = await response.json();
   
@@ -175,14 +172,13 @@ const ClockNotifications = ({ isScrolled }) => {
     setDetailsOpen(false);
   };
 
-  // Gruppar notiser för visning
   const groupedNotifications = notifications
   .filter((notification) => !notification.is_read)
   .reduce((acc, notification) => {
     const carpoolId = notification.carpool_details?.id || 'unknown';
     const type = notification.type || 'unknown';
 
-    const key = `${carpoolId}_${type}`; // Använd både carpoolId och typ som nyckel
+    const key = `${carpoolId}_${type}`;
 
     if (!acc[key]) {
       acc[key] = { ...notification, count: 0 };
@@ -253,7 +249,6 @@ const ClockNotifications = ({ isScrolled }) => {
                       ? `Ett nytt ${notification.message}`
                       : `${notification.count} nya ${notification.message}`
                   ) : (
-                    // För andra typer av notiser, visa endast meddelandet
                     notification.message
                   )}
                 </Text>

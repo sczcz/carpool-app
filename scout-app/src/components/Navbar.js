@@ -18,19 +18,19 @@ import {
   CloseButton,
 } from '@chakra-ui/react';
 import { HamburgerIcon } from '@chakra-ui/icons';
-import Login from './Login';  // Import the Login component
-import Register from './Register'; // Import the Register component
+import Login from './Login';
+import Register from './Register';
 import LilyWhiteIcon from '../assets/lily-white.svg'; 
 import LilyBlueIcon from '../assets/lily-blue.svg';
-import ClockNotifications from './ClockNotifications'; // Importera ClockNotifications
+import ClockNotifications from './ClockNotifications';
 import { useUser } from '../utils/UserContext';
 
 const Navbar = () => {
-  const { roles, isInitialized, clearUserData, userId } = useUser(); // Hämta roll och inloggningsstatus
-  const { isOpen, onOpen, onClose } = useDisclosure();  // Hook to control the drawer
-  const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure(); // Hook for login modal
-  const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure(); // Hook for register modal
-  const [isScrolled, setIsScrolled] = useState(false);  // State to manage scroll status
+  const { roles, isInitialized, clearUserData, userId } = useUser();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
+  const { isOpen: isRegisterOpen, onOpen: onRegisterOpen, onClose: onRegisterClose } = useDisclosure();
+  const [isScrolled, setIsScrolled] = useState(false);
   const links = [];
   const isMobile = useMediaQuery("(max-width: 767px)");
 
@@ -59,7 +59,6 @@ const Navbar = () => {
     }
   }
 
-  // Effect to handle scroll events
   useEffect(() => {
     let timer;
 
@@ -87,7 +86,7 @@ const Navbar = () => {
     try {
       const response = await fetch('/api/logout', {
         method: 'POST',
-        credentials: 'include'  // Include cookies in the request
+        credentials: 'include'
       });
       
       if (response.ok) {
@@ -119,7 +118,7 @@ const Navbar = () => {
       mx="auto"
       width="100%"
     >
-      {/* Hamburger Icon for Mobile and Tablet */}
+      {/* This is the hamburger icon */}
       <IconButton
         aria-label="Open Menu"
         icon={<HamburgerIcon />}
@@ -149,19 +148,17 @@ const Navbar = () => {
             ? 'center'
             : { base: 'center', md: 'center', lg: 'flex-start' }
         }
-        width="100%" // Gör så att Flex fyller hela navbarens bredd
+        width="100%"
       >
 
-        {/* Dynamic Logo */}
         <Image
-          display={{ base: 'none', sm: 'flex' }} // Dölj på mobiler
+          display={{ base: 'none', sm: 'flex' }}
           src={isScrolled ? LilyWhiteIcon : LilyBlueIcon}
           alt="Jonstorps Kustscoutkår Logo"
           boxSize="1.5em"
-          ml={2} // Minimal marginal efter loggan
+          ml={2}
         />
 
-        {/* Title */}
         <Text
           fontSize={{ base: 'xl', sm: '2xl', md: '3xl', lg: '3xl' }}
           fontWeight="extrabold"
@@ -176,9 +173,8 @@ const Navbar = () => {
       </Flex>
 
 
-    {/* Buttons and Profile Menu */}
+    {/* These are the buttons and profile menu */}
     <Flex alignItems="center" justifyContent="space-between">
-        {/* Navigation Links */}
       <Flex gap={4} display={roles.includes('vårdnadshavare') ? 'none' : { base: 'none', lg: 'flex' }}>
         {links.map(({ to, label }) => (
           <Button
@@ -202,11 +198,8 @@ const Navbar = () => {
         ))}
       </Flex>
 
-        {/* Klocka och notiser */}
         {userId ? <ClockNotifications isScrolled={isScrolled} /> : null}
 
-
-         {/* Profilmeny */}
          {userId ? (
           <Menu>
             <MenuButton as={Button} variant="link" colorScheme="brand">
@@ -223,7 +216,6 @@ const Navbar = () => {
       </Flex>
     </Flex>
 
-      {/* Drawer for Mobile and Tablet */}
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
@@ -234,7 +226,6 @@ const Navbar = () => {
           </DrawerHeader>
           <DrawerBody>
             <Flex direction="column" gap={4}>
-              {/* Add Scouterna Link to Mobile Drawer */}
               <Button
                 as="a"
                 href="https://www.scouterna.se"
@@ -245,19 +236,17 @@ const Navbar = () => {
                 onClick={onClose}
                 position="relative"
                 width="full"
-                justifyContent="flex-start" // Ensures left alignment for text and icon
+                justifyContent="flex-start"
               >
-                {/* Logo and Text */}
                 <Flex align="center" justify="flex-start" width="100%">
                   <Image
                     src={LilyBlueIcon}
                     alt="Scouterna Logo"
                     boxSize="1.5em"
-                    mr="2" // Space between logo and text
+                    mr="2"
                   />
                   Scouterna
                 </Flex>
-                {/* Right Icon */}
                 <Box
                   position="absolute"
                   right="1rem"
@@ -276,7 +265,7 @@ const Navbar = () => {
                   variant="ghost"
                   colorScheme="brand"
                   onClick={onClose}
-                  justifyContent="flex-start" // Ensures left alignment for text
+                  justifyContent="flex-start"
                   width="full"
                   position="relative"
                 >
@@ -293,7 +282,6 @@ const Navbar = () => {
                 </Button>
               ))}
 
-              {/* Profile Links moved to the Hamburger Menu */}
               {userId ? (
                 <>
                   <Button
@@ -302,7 +290,7 @@ const Navbar = () => {
                       handleLogout();
                       onClose();
                     }}
-                    justifyContent="flex-start" // Ensures left alignment for text
+                    justifyContent="flex-start"
                     width="full"
                   >
                     <Flex align="center" gap={2}>

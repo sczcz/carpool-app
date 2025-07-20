@@ -20,13 +20,13 @@ import {
   IconButton,
   Popover, PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
-import AddCarModal from './AddCarModal'; // Import AddCarModal
+import AddCarModal from './AddCarModal';
 
 
 const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) => {
   const [newCar, setNewCar] = useState({
     from: '',
-    destination: activity?.location || 'Plats saknas', // Lägg till "?" för att kontrollera om activity är null eller undefined
+    destination: activity?.location || 'Plats saknas',
     spots: '',
     departure_postcode: '',
     departure_city: '',
@@ -38,7 +38,7 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
-  const toastShown = useRef(false); // Track if the toast has been shown
+  const toastShown = useRef(false);
 
   const gridTemplateColumns = useBreakpointValue({ base: '1fr', md: '1fr 1fr' });
 
@@ -59,9 +59,8 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
           const data = await response.json();
           setCars(data.cars);
 
-          // Only show toast if no cars are available and it hasn't been shown yet
           if (data.cars.length === 0 && !toastShown.current) {
-            setIsAddCarModalOpen(true); // Open AddCarModal if no cars are available
+            setIsAddCarModalOpen(true);
             toast({
               title: 'Ingen bil registrerad',
               description: "Du måste lägga till en bil för att registrera en samåkning",
@@ -69,7 +68,7 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
               duration: 5000,
               isClosable: true,
             });
-            toastShown.current = true; // Set the ref to true so toast is not shown again
+            toastShown.current = true;
           }
         } else {
           throw new Error('Kunde inte hämta bilar');
@@ -91,9 +90,8 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
 
   const handleCarAdded = (newCar) => {
     setCars((prevCars) => [...prevCars, newCar]);
-    setIsAddCarModalOpen(false); // Close the modal after adding a car
+    setIsAddCarModalOpen(false);
   
-    // Refetch cars to update the list
     const fetchCars = async () => {
       try {
         const response = await fetch('/api/protected/get-cars', {
@@ -186,7 +184,7 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
                 fontSize={{ base: 'lg', md: 'xl', lg: 'xl' }}
                 color="gray.500"
                 ml={2}
-                _hover={{ color: "gray.700", cursor: 'pointer' }} // Apply hover effect
+                _hover={{ color: "gray.700", cursor: 'pointer' }}
               />
             </PopoverTrigger>
             <PopoverContent>
@@ -331,7 +329,7 @@ const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) =
             <AddCarModal
         isOpen={isAddCarModalOpen}
         onClose={() => setIsAddCarModalOpen(false)}
-        onCarAdded={handleCarAdded} // Pass the callback function
+        onCarAdded={handleCarAdded}
       />
     </Box>
   );

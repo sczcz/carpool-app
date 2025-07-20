@@ -30,16 +30,15 @@ import useRoleProtection from "../utils/useRoleProtection";
 const DashBoardAdmin = () => {
   useRoleProtection(["admin"]);
   const { isInitialized, fetchUserData, hasRole } = useUser();
-  const [unacceptedUsers, setUnacceptedUsers] = useState([]); // State för icke-accepterade användare
-  const toast = useToast(); // Chakra UI toast för notifieringar
+  const [unacceptedUsers, setUnacceptedUsers] = useState([]);
+  const toast = useToast();
   const navigate = useNavigate();
   const [allUsers, setAllUsers] = useState([]);
-  const [filter, setFilter] = useState(""); // Defaultvärde är en tom sträng
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // State för dialog
-  const [userToDelete, setUserToDelete] = useState(null); // Håller användaren som ska raderas
+  const [filter, setFilter] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const cancelRef = useRef();
 
-  // Breakpoint-specific button size
   const buttonSize = useBreakpointValue({ base: "sm", md: "md" });
 
   const openDeleteDialog = (userId) => {
@@ -64,7 +63,6 @@ const DashBoardAdmin = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.message) {
-          // Uppdatera allUsers för att reflektera ändringen
           setAllUsers((prevUsers) =>
             prevUsers.map((user) =>
               user.id === userId
@@ -108,8 +106,8 @@ const DashBoardAdmin = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) { // Kontrollera att data är en array
-          setAllUsers(data); // Uppdatera allUsers med hämtade data
+        if (Array.isArray(data)) {
+          setAllUsers(data);
         } else {
           console.error('Data från backend är inte en array:', data);
         }
@@ -125,11 +123,10 @@ const DashBoardAdmin = () => {
       );
   }, [toast]);
 
-  // Hämta icke-accepterade användare vid laddning
   useEffect(() => {
     fetch('/api/admin/unaccepted-users', {
       method: 'GET',
-      credentials: 'include', // Skickar cookies för autentisering
+      credentials: 'include',
     })
       .then((res) => res.json())
       .then((data) => {
@@ -148,7 +145,6 @@ const DashBoardAdmin = () => {
       );
   }, [toast]);
 
-  // Funktion för att acceptera en användare
   const acceptUser = (userId) => {
     fetch('/api/admin/accept-user', {
       method: 'PUT',
@@ -161,7 +157,6 @@ const DashBoardAdmin = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.message) {
-          // Uppdatera state för att ta bort accepterad användare
           setUnacceptedUsers((prev) => prev.filter((user) => user.id !== userId));
           toast({
             title: 'Användare accepterad',
@@ -372,7 +367,6 @@ const DashBoardAdmin = () => {
               </Card>
             ))}
 
-          {/* AlertDialog för bekräftelse */}
           <AlertDialog
             isOpen={isDeleteDialogOpen}
             leastDestructiveRef={cancelRef}
@@ -405,7 +399,7 @@ const DashBoardAdmin = () => {
         </Box>
       </Box>
 
-      {/* Active Users Section */}
+      {/* Active users section */}
       <Box>
         <HStack justifyContent="space-between" mb={4} flexWrap="wrap">
           <Heading as="h2" size="lg" mb={[2, 0]} textAlign={["center", "left"]}>
@@ -416,8 +410,8 @@ const DashBoardAdmin = () => {
             placeholder="Filter"
             size="md"
             borderRadius="lg"
-            onChange={(e) => setFilter(e.target.value)} // Uppdaterar filter
-            value={filter} // Binder valt värde
+            onChange={(e) => setFilter(e.target.value)}
+            value={filter}
           >
             <option value="vårdnadshavare">Vårdnadshavare</option>
             <option value="ledare">Ledare</option>
@@ -441,7 +435,7 @@ const DashBoardAdmin = () => {
           >
             {Array.isArray(allUsers) &&
               allUsers
-                .filter((user) => (filter ? user.roles.includes(filter) : true)) // Filtrerar baserat på roll
+                .filter((user) => (filter ? user.roles.includes(filter) : true))
                 .map((user, idx) => (
                   <Card
                     key={idx}
@@ -488,7 +482,7 @@ const DashBoardAdmin = () => {
                             size={buttonSize}
                             borderRadius="full"
                             width={["100%", "auto"]}
-                            onClick={() => promoteToAdmin(user.id)} // Koppla funktionen till onClick
+                            onClick={() => promoteToAdmin(user.id)}
                           >
                             Gör Admin
                           </Button>

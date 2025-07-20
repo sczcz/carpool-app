@@ -25,7 +25,7 @@ const SelectParticipantModal = ({ isOpen, onClose, participants, onSelect }) => 
             <VStack spacing={4}>
             {participants.map((participant) => (
                 <Box
-                  key={`${participant.name}-${participant.id}`} // Kombinerar namn och ID för att skapa en unik nyckel
+                  key={`${participant.name}-${participant.id}`}
                   w="100%"
                   p={4}
                   borderRadius="md"

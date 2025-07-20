@@ -63,31 +63,27 @@ const Profile = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [notificationPreferences, setNotificationPreferences] = useState({});
-  // Children information
   const [children, setChildren] = useState([]);
   const [childFirstName, setChildFirstName] = useState('');
   const [childLastName, setChildLastName] = useState('');
   const [childRole, setChildRole] = useState('kutar');
   const [childPhone, setChildPhone] = useState('');
 
-  const { onClose } = useDisclosure();  // Hook to control the drawer
+  const { onClose } = useDisclosure();
 
-  // Modal states
   const [isAddChildOpen, setAddChildOpen] = useState(false);
   const [isAddressInfoOpen, setNewInfoOpen] = useState(false);
   const [isAddCarOpen, setAddCarOpen] = useState(false);
 
-  // Car information
   const [regNumber, setRegNumber] = useState('');
   const [fuelType, setFuelType] = useState('Gas');
   const [consumption, setConsumption] = useState('');
   const [modelName, setModelName] = useState('');
 
-  // Car information (this was missing in your code)
-  const [cars, setCars] = useState([]);  // Now defined as state for cars
+  const [cars, setCars] = useState([]);
 
 
-  const { clearUserData } = useUser(); // Hämta roll och inloggningsstatus
+  const { clearUserData } = useUser();
 
 
   const handleChildAdded = (newChild) => {
@@ -120,7 +116,7 @@ const Profile = () => {
     try {
       const response = await fetch('/api/logout', {
         method: 'POST',
-        credentials: 'include'  // Include cookies in the request
+        credentials: 'include'
       });
 
       if (response.ok) {
@@ -196,8 +192,6 @@ const Profile = () => {
     setNotificationPreferences(contextNotificationPreferences || {});
   }, [fullName, contextAddress, contextPostcode, contextCity, contextPhone, contextNotificationPreferences]);
 
-
-  // Handle new car addition
   const handleCarAdded = async (newCar) => {
     try {
       setCars((prevCars) => [...prevCars, newCar]);
@@ -236,7 +230,7 @@ const Profile = () => {
           lastName, 
           email,
           notificationPreferences, 
-        }); // Uppdatera kontexten
+        });
         toast({
           title: 'Profilen har uppdaterats framgångsrikt!',
           status: 'success',
@@ -268,18 +262,17 @@ const Profile = () => {
   const handleAddChild = async () => {
     if (childFirstName && childLastName && childRole) {
       try {
-        // Skicka POST-begäran till backend för att lägga till ett barn
         const response = await fetch('/api/protected/add-child', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include', // Skicka med cookies för autentisering
+          credentials: 'include',
           body: JSON.stringify({
             first_name: childFirstName,
             last_name: childLastName,
-            phone: childPhone,  // Nytt fält för telefonnummer
-            role: childRole,  // Skicka rollen från dropdown-menyn
+            phone: childPhone,
+            role: childRole,
           }),
         });
 
@@ -288,12 +281,11 @@ const Profile = () => {
           alert('Barn tillagt framgångsrikt!');
           setAddChildOpen(false);
 
-          // Lägg till barnet i listan efter att det framgångsrikt har lagts till i backend
           setChildren([...children, { childId: data.child_id, firstName: childFirstName, lastName: childLastName, role: childRole, phone: childPhone }]);
           setChildFirstName('');
           setChildLastName('');
           setChildRole('kutar');
-          setChildPhone('');  // Återställ telefonnummerfältet
+          setChildPhone('');
         } else {
           const error = await response.json();
           alert(`Fel: ${error.message || 'Misslyckades att lägga till barn'}`);
@@ -357,15 +349,12 @@ const Profile = () => {
   };
 
   const handleRemoveChild = async (index) => {
-    const childToRemove = children[index]; // Get the child to be deleted
+    const childToRemove = children[index];
 
     if (childToRemove && childToRemove.childId) {
-      // Confirm before deleting
       if (window.confirm(`Är du säker på att du vill ta bort ${childToRemove.firstName} ${childToRemove.lastName}?`)) {
-        // Call the delete API
         await deleteChild(childToRemove.childId);
 
-        // After successful deletion, remove the child from state
         setChildren(children.filter((_, i) => i !== index));
       }
     } else {
@@ -373,7 +362,6 @@ const Profile = () => {
     }
   };
 
-  // Delete API function (already written)
   const deleteChild = async (childId) => {
     try {
       const response = await fetch('/api/protected/delete-child', {
@@ -381,8 +369,8 @@ const Profile = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // This ensures cookies are included for authentication
-        body: JSON.stringify({ child_id: childId }) // Send the child ID
+        credentials: 'include',
+        body: JSON.stringify({ child_id: childId })
       });
 
       if (response.ok) {
@@ -520,11 +508,11 @@ const Profile = () => {
           <Avatar
             size="2xl"
             name={fullName}
-            src="https://your-avatar-url.com/avatar.png" // Replace with your avatar URL
-            bg="#043A63" // Background color when no image is provided
-            color="white" // Text color for initials
-            mr={[6, 6, 0]} // Add margin-right for smaller screens (4) and remove it for larger screens (0)
-            display={{ base: 'none', md: 'flex' }} // Hide on mobile, show on tablet and larger screens
+            src="https://your-avatar-url.com/avatar.png"
+            bg="#043A63"
+            color="white"
+            mr={[6, 6, 0]}
+            display={{ base: 'none', md: 'flex' }}
 
           />
           <Stack spacing={1} ml={[0, 0, 4]} textAlign={['center', 'center', 'left']}>
@@ -546,49 +534,49 @@ const Profile = () => {
           </Stack>
         </Flex>
 
-        {/* Buttons */}
+        {/* Buttons below here */}
         <Stack
-          fontSize={{ base: 'sm', lg: 'md' }} // Smaller text on mobile, medium on large screens
-          spacing={{ base: 2, lg: 4 }} // Smaller spacing on mobile, larger spacing on desktop
-          mt={[4, 4, -2]} // Negative margin to move buttons up
-          alignSelf="center" // Align buttons at the top of the user info
+          fontSize={{ base: 'sm', lg: 'md' }}
+          spacing={{ base: 2, lg: 4 }}
+          mt={[4, 4, -2]}
+          alignSelf="center"
           direction={{ base: 'column', lg: 'row' }} 
-          pr={{ base: 0, md: 20 , lg: '0' }} // Add padding-right 10 on tablet (md) and larger
+          pr={{ base: 0, md: 20 , lg: '0' }}
         >
           <Button
             rightIcon={<FaPen />}
               colorScheme="brand"
-              variant="link" // No background
+              variant="link"
               onClick={() => setNewInfoOpen(true)}
-              _hover={{ textDecoration: 'underline' }} // Underline on hover
-              color="brand.500" // Set text color to brand.500
+              _hover={{ textDecoration: 'underline' }}
+              color="brand.500"
             >
             Redigera profil
           </Button>
           <Button
             rightIcon={<FaPlus />}
             colorScheme="brand"
-            variant="link" // No background
+            variant="link"
             onClick={() => setAddChildOpen(true)}
-            _hover={{ textDecoration: 'underline' }} // Underline on hover
-            color="brand.500" // Set text color to brand.500
+            _hover={{ textDecoration: 'underline' }}
+            color="brand.500"
           >
             Lägg till barn
           </Button>
           <Button
             rightIcon={<FaPlus />}
             colorScheme="brand"
-            variant="link" // No background
+            variant="link"
             onClick={() => setAddCarOpen(true)}
-            _hover={{ textDecoration: 'underline' }} // Underline on hover
-            color="brand.500" // Set text color to brand.500
+            _hover={{ textDecoration: 'underline' }}
+            color="brand.500"
           >
             Lägg till bil
           </Button>
           <Button 
             pr={ {base: '6', lg: '0'} }
             colorScheme='red'
-            _hover={{ textDecoration: 'underline' }} // Underline on hover
+            _hover={{ textDecoration: 'underline' }}
             color='red'
             variant="ghost" 
             onClick={() => { handleLogout(); onClose(); }}>                  
@@ -597,7 +585,7 @@ const Profile = () => {
         </Stack>
       </Flex>
 
-      {/* Children Section */}
+      {/* Children section below */}
       <VStack spacing={2} align="start" mt={[4, 4, 0]}>
         <Heading as="h4" size="md" mb={4} colorScheme="brand" >
           {firstName} {lastName} Barn:
@@ -607,42 +595,39 @@ const Profile = () => {
             <Box
               key={index}
               borderWidth="1px"
-              borderTopRadius="lg" // Rounded top corners
-              borderBottomLeftRadius="lg" // Rounded bottom left corner
-              borderBottomRightRadius="lg" // Rounded bottom right corner
+              borderTopRadius="lg"
+              borderBottomLeftRadius="lg"
+              borderBottomRightRadius="lg"
               overflow="hidden"
               boxShadow="lg"
               p={0}
               pb={4}
-              bg="white" // Set background color to white
+              bg="white"
               transition="0.2s"
             >
-              {/* Colored Top Box */}
+
               <Box
-                bg={roleColors[child.role] || 'gray.200'} // Set the color for the top part of the card
-                borderTopRadius="lg" // Ensure the top remains rounded
-                p={4} // Adjust padding for the colored box for better fit
+                bg={roleColors[child.role] || 'gray.200'}
+                borderTopRadius="lg"
+                p={4}
               >
-                {/* You can also add content here if needed */}
               </Box>
 
-              {/* Role in the White Box */}
               <Text
-                fontSize={{ base: "md", sm: "lg" }} // Responsive font sizes
-                fontWeight="bold" // Make the role text thicker
-                color={roleColors[child.role] || 'gray.200'} // Set color based on role
-                mt={2} // Margin top for spacing
+                fontSize={{ base: "md", sm: "lg" }}
+                fontWeight="bold"
+                color={roleColors[child.role] || 'gray.200'}
+                mt={2}
                 pl={4}
               >
                 {child.role.charAt(0).toUpperCase() + child.role.slice(1).toLowerCase()}: {child.firstName}
               </Text>
 
-              {/* Other Text in the White Box */}
               <Text
-                fontSize={{ base: "sm", sm: "md" }} // Responsive font sizes
+                fontSize={{ base: "sm", sm: "md" }}
                 color="black"
-                mt={1} // Margin top for spacing
-                noOfLines={2} // Limit lines to avoid overflow
+                mt={1}
+                noOfLines={2}
                 pl={4}
                 pr={4}
               >
@@ -655,8 +640,8 @@ const Profile = () => {
                   onChange={(e) => handleRoleChange(index, e.target.value)}
                   width={{ base: "100%", md: "fit-content" }}
                   maxWidth="100%"
-                  color="black" // Set text color for Select
-                  bg="white" // Optional: Set background color for better visibility
+                  color="black"
+                  bg="white"
                   pl={4}
                 >
                   <option value="kutar">Kutar  (0-9 år)</option>
@@ -667,7 +652,6 @@ const Profile = () => {
                   <option value="rover">Rover (19-25 år) </option>
                 </Select>
 
-                {/* Placera Spara-knappen nära rullmenyn */}
                 {child.role !== child.originalRole && (
                   <Box>
                     <Button
@@ -680,43 +664,42 @@ const Profile = () => {
                   </Box>
                 )}
 
-                {/* Använd Spacer för att skjuta soptunneikonen längst till höger */}
                 <Spacer />
 
                 <Button
                   colorScheme="red"
                   onClick={() => handleRemoveChild(index)}
-                  variant="outline" // Use outline variant if you want a border
-                  aria-label="Remove Child" // Accessibility label
+                  variant="outline"
+                  aria-label="Remove Child"
                   mr={4}
                 >
-                  <Icon as={FaTrash} color="red.500" /> {/* Red color for the icon */}
+                  <Icon as={FaTrash} color="red.500" />
                 </Button>
               </HStack>
             </Box>
           ))}
         </SimpleGrid>
-        {/* Render the cars below children */}
+
         <Heading as="h4" size="md" mt={6} colorScheme="brand">
           Bilar:
         </Heading>
         <SimpleGrid mt={3} columns={[1, 1, 2]} spacing={4} width="full">
           {cars.map((car, index) => (
-            car ? ( // Check if car is not undefined
+            car ? (
               <Box
                 key={index}
                 borderWidth="1px"
-                borderTopRadius="lg" // Rounded top corners
-                borderBottomRadius="lg" // Rounded bottom corners
+                borderTopRadius="lg"
+                borderBottomRadius="lg"
                 overflow="hidden"
                 boxShadow="lg"
                 p={4}
-                bg="white" // Background color of the card
-                borderColor="gray.300" // Border color
+                bg="white"
+                borderColor="gray.300"
               >
-                {/* Colored Header for the Car Information */}
+            
                 <Box
-                  bg={fuelTypeColors[car.fuel_type] || 'gray.200'} // Use default color if fuel_type is missing
+                  bg={fuelTypeColors[car.fuel_type] || 'gray.200'}
                   borderTopRadius="lg"
                   p={3}
                 >
@@ -725,7 +708,6 @@ const Profile = () => {
                   </Text>
                 </Box>
 
-                {/* Main Content with Centered Text and Delete Button */}
                 <HStack justifyContent="space-between" mt={3} alignItems="center">
                   <Text
                     fontSize={{ base: "sm", sm: "md" }}
@@ -734,7 +716,6 @@ const Profile = () => {
                     Bränsletyp: {car.fuel_type || 'Unknown'}
                   </Text>
 
-                  {/* Button Section */}
                   <Button
                     colorScheme="red"
                     onClick={() => handleRemoveCar(car.car_id)}
@@ -745,14 +726,13 @@ const Profile = () => {
                   </Button>
                 </HStack>
               </Box>
-            ) : null // Skip rendering if car is undefined
+            ) : null
           ))}
         </SimpleGrid>
       </VStack>
 
       <Divider mb={6} />
 
-      {/* AddChildModal */}
       <AddChildModal
         isOpen={isAddChildOpen}
         onClose={() => setAddChildOpen(false)}
@@ -762,19 +742,17 @@ const Profile = () => {
       <Modal isOpen={isAddressInfoOpen} onClose={() => setNewInfoOpen(false)}>
         <ModalOverlay />
         <ModalContent
-          maxW={{ base: '90%', sm: '500px', lg: '800px' }} // Responsive width
-          p={4} // Add padding for better spacing
+          maxW={{ base: '90%', sm: '500px', lg: '800px' }}
+          p={4}
         >
           <ModalHeader fontSize={{ base: 'lg', lg: '2xl' }}>Redigera profil</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            {/* Flex container for splitting content */}
             <Flex
               direction={{ base: 'column', lg: 'row' }}
               gap={8}
               justifyContent="space-between"
             >
-              {/* Left side: Name, Last Name, and Phone */}
               <Box flex="1">
                 <FormControl>
                   <FormLabel>E-post</FormLabel>
@@ -783,7 +761,7 @@ const Profile = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Skriv in din nya e-postadress"
                     type="email"
-                    isRequired // Krav för att undvika tomt fält
+                    isRequired
                   />
                 </FormControl>
 
@@ -813,7 +791,6 @@ const Profile = () => {
                 </FormControl>
               </Box>
 
-              {/* Right side: Address Information */}
               <Box flex="1">
                 <FormControl>
                   <FormLabel>Adress</FormLabel>
@@ -821,7 +798,7 @@ const Profile = () => {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Skriv in din adress"
-                    isRequired // Accessibility enhancement
+                    isRequired
                   />
                 </FormControl>
                 <FormControl mt={4}>
@@ -830,7 +807,7 @@ const Profile = () => {
                     value={postcode}
                     onChange={(e) => setPostcode(e.target.value)}
                     placeholder="Skriv in postnummer"
-                    isRequired // Accessibility enhancement
+                    isRequired
                   />
                 </FormControl>
                 <FormControl mt={4}>
@@ -839,11 +816,10 @@ const Profile = () => {
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="Skriv in stad"
-                    isRequired // Accessibility enhancement
+                    isRequired
                   />
                 </FormControl>
 
-                {/* Notification Preferences */}
                 <Box mt={6} w="full">
                   <Heading as="h4" size="md" mb={4}>
                     Notisinställningar
@@ -875,7 +851,7 @@ const Profile = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-      {/* AddCarModal */}
+      
       <AddCarModal
         isOpen={isAddCarOpen}
         onClose={() => setAddCarOpen(false)}

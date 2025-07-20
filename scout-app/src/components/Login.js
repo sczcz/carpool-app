@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUser } from '../utils/UserContext'; // Importera UserContext
+import { useUser } from '../utils/UserContext';
 import {
   Modal,
   ModalOverlay,
@@ -47,11 +47,11 @@ const Login = ({ isOpen, onClose }) => {
         return;
       }
 
-      await fetchUserData(); // Uppdatera användardata via UserContext
+      await fetchUserData();
       setEmail('');
       setPassword('');
       setError('');
-      onClose(); // Stäng modal vid framgång
+      onClose();
       window.location.reload();
     } catch (err) {
       console.error('Fel vid inloggning:', err);
@@ -78,7 +78,7 @@ const Login = ({ isOpen, onClose }) => {
           }
   
           resolve('Ett mail med återställningsinstruktioner har skickats!');
-          setForgotPassword(false); // Återställ till login-läge
+          setForgotPassword(false);
         } catch (err) {
           reject('Ett oväntat fel inträffade, försök igen.');
         }

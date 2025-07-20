@@ -12,9 +12,7 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-    # Relationship to the User model
     user = db.relationship('User', backref='notifications', lazy=True)
-    # Relationship to the Carpool model
     carpool = db.relationship('Carpool', backref='notifications', lazy=True)
 
     carpool_message = db.relationship('CarpoolMessage', backref='notifications', lazy=True)

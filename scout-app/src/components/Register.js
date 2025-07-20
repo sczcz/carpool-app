@@ -22,7 +22,7 @@ import {
 } from '@chakra-ui/react';
 
 const Register = ({ isOpen, onClose }) => {
-    const modalSize = useBreakpointValue({ base: "full", lg: "3xl" }); // Wide modal for large screens
+    const modalSize = useBreakpointValue({ base: "full", lg: "3xl" });
     const [first_name, setFirstName] = useState('');
     const [last_name, setLastName] = useState('');
     const [email, setEmail] = useState('');
@@ -33,7 +33,7 @@ const Register = ({ isOpen, onClose }) => {
     const [address, setAddress] = useState('');
     const [postcode, setPostcode] = useState('');
     const [city, setCity] = useState('');
-    const toast = useToast(); // Initialize useToast
+    const toast = useToast();
 
     const handleRegister = (e) => {
         e.preventDefault();
@@ -50,17 +50,15 @@ const Register = ({ isOpen, onClose }) => {
                 if (data.error) {
                     setError(data.error);
                 } else {
-                    // Användare skapad - toast
                     toast({
                         title: data.message,
                         description: 'Den nya användaren har registrerats och väntar på godkännande.', 
                         status: 'success',
                         duration: 5000,
                         isClosable: true,
-                        position: 'bottom', // Toast längst ner
+                        position: 'bottom',
                     });
 
-                    // Reset form och stäng modal
                     setFirstName('');
                     setLastName('');
                     setEmail('');
@@ -98,10 +96,9 @@ const Register = ({ isOpen, onClose }) => {
                     <Box width="full" p={4}>
                         <form onSubmit={handleRegister}>
                             <Grid
-                                templateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }} // Single column on small screens, two columns on large
+                                templateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}
                                 gap={4}
                             >
-                                {/* Left Column */}
                                 <GridItem>
                                     <FormControl isRequired>
                                         <FormLabel>Förnamn:</FormLabel>
@@ -145,7 +142,6 @@ const Register = ({ isOpen, onClose }) => {
                                     </FormControl>
                                 </GridItem>
 
-                                {/* Right Column */}
                                 <GridItem>
                                     <FormControl isRequired>
                                         <FormLabel>Telefonnummer:</FormLabel>

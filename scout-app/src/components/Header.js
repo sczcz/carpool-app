@@ -6,16 +6,15 @@ const Header = () => {
     return (
         <Box as="header" bg="white" p={4}>
             <Flex alignItems="center" justifyContent="center">
-                {/* Scouterna Link on the left with margin */}
                 <Link 
                     href="https://www.scouterna.se" 
                     isExternal 
                     color="brand.500"
                     fontSize="lg" 
                     fontWeight="bold"
-                    display={["none", "none", "flex"]} // Hide on mobile and tablet screens
+                    display={["none", "none", "flex"]}
                     alignItems="center" 
-                    mr={8} // Adjust this margin to move it further left, as it was on the left side
+                    mr={8}
                 >
                     Scouterna
                     <Image 
@@ -26,11 +25,10 @@ const Header = () => {
                     />
                 </Link>
 
-                {/* Main Title */}
                 <Link 
                     href="/" 
-                    style={{ textDecoration: 'none' }} // Remove underline from link
-                    textAlign="center" // Center text alignment
+                    style={{ textDecoration: 'none' }}
+                    textAlign="center"
                 >
                     <Heading 
                         as="h1" 

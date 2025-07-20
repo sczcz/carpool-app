@@ -9,4 +9,4 @@ class CarpoolMessage(db.Model):
     carpool_id = db.Column(db.Integer, db.ForeignKey('carpool.id', ondelete='CASCADE'), nullable=True)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(20), default='sent')  # Status: "sent", "delivered", "read"
+    status = db.Column(db.String(20), default='sent')

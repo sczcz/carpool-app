@@ -7,7 +7,6 @@ class Role(db.Model):
     name = db.Column(db.String(255), nullable=False)
 
 
-# Användar-tabell
 class User(db.Model):
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -28,7 +27,6 @@ class User(db.Model):
         return self.user_id
 
 
-# Sambandstabell mellan User och Role
 class UserRole(db.Model):
     __tablename__ = 'user_role'
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), primary_key=True)
@@ -41,11 +39,11 @@ class Child(db.Model):
     first_name = db.Column(db.String(255), nullable=False)
     last_name = db.Column(db.String(255), nullable=False)
     date_of_birth = db.Column(db.Date, nullable=False)  
-    phone = db.Column(db.String(20), nullable=True)  # Nullable telefonnummer
+    phone = db.Column(db.String(20), nullable=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id', ondelete='CASCADE'), nullable=True)
 
 
-# Ny många-till-många-tabell för att länka barn och föräldrar
+# This is the parent child link (many-to-many)
 class ParentChildLink(db.Model):
     __tablename__ = 'parent_child_link'
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), primary_key=True)

@@ -45,7 +45,6 @@ export const CarpoolProvider = ({ children }) => {
                   ...carpool,
                   passengers: carpool.passengers.map((passenger) => {
                     if (passenger.type === 'child') {
-                      // Hantera om passageraren är ett barn
                       return {
                         ...passenger,
                         parents: passenger.parents.map((parent) => ({
@@ -55,10 +54,9 @@ export const CarpoolProvider = ({ children }) => {
                         car: carpool.car,
                       };
                     } else if (passenger.type === 'user') {
-                      // Hantera om passageraren är en användare
                       return {
                         ...passenger,
-                        parents: [], // Ingen "parents" för användare
+                        parents: [],
                         car: carpool.car,
                       };
                     }

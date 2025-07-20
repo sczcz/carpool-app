@@ -42,7 +42,7 @@ const ResetPassword = () => {
       }
 
       setMessage('Lösenordet har återställts! Omdirigerar till startsidan...');
-      setTimeout(() => navigate('/'), 3000); // Omdirigera till startsidan efter 3 sekunder
+      setTimeout(() => navigate('/'), 3000);
     } catch (err) {
       setMessage('Ett oväntat fel inträffade, försök igen.');
     }
@@ -50,10 +50,10 @@ const ResetPassword = () => {
 
   return (
     <Box
-      maxW={{ base: '90%', sm: 'sm' }} // Adjust width for mobile
+      maxW={{ base: '90%', sm: 'sm' }}
       mx="auto"
       mt="10"
-      p={{ base: 4, sm: 6 }} // Add padding for mobile and larger sizes
+      p={{ base: 4, sm: 6 }}
     >
       <VStack spacing={6} align="stretch">
         <Text fontSize={{ base: 'xl', sm: 'lg' }} fontWeight="bold">
@@ -67,7 +67,7 @@ const ResetPassword = () => {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             bg="white"
-            size="sm" // Adjust input size for mobile
+            size="sm"
           />
         </FormControl>
         
@@ -78,15 +78,15 @@ const ResetPassword = () => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             bg="white"
-            size="sm" // Adjust input size for mobile
+            size="sm"
           />
         </FormControl>
         
         <Button
           colorScheme="brand"
           onClick={handleSubmit}
-          width="full" // Make button full width on mobile
-          size="sm" // Adjust button size for mobile
+          width="full"
+          size="sm"
         >
           Återställ lösenord
         </Button>

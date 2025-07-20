@@ -8,7 +8,7 @@ import {
   Image,
   Link,
 } from '@chakra-ui/react';
-import LilyBlueIcon from '../assets/lily-blue.svg'; // Import your new SVG
+import LilyBlueIcon from '../assets/lily-blue.svg';
 export default function Footer() {
   return (
     <Box
@@ -21,7 +21,7 @@ export default function Footer() {
     >
       <Container as={Stack} maxW="6xl" spacing={4}>
         <Stack 
-          direction={{ base: 'column', md: 'row' }} // Stack vertically on mobile, horizontally on desktop
+          direction={{ base: 'column', md: 'row' }}
           alignItems="center"
           justifyContent="center"
         >
@@ -31,17 +31,17 @@ export default function Footer() {
             boxSize="1.5em"
           />
           <Text 
-            fontSize={{ base: 'md', md: 'lg' }} // Smaller font on mobile, larger on desktop
+            fontSize={{ base: 'md', md: 'lg' }}
             fontWeight="bold" 
-            ml={{ base: 0, md: 2 }} // No margin on mobile, margin on desktop
-            display={{ base: 'block', md: 'block' }} // Ensure text is shown on all sizes
+            ml={{ base: 0, md: 2 }}
+            display={{ base: 'block', md: 'block' }}
           >
             Jonstorps Kustscoutkår
           </Text>
         </Stack>
         
         <Stack 
-          direction={{ base: 'column', md: 'row' }} // Stack vertically on mobile, horizontally on desktop
+          direction={{ base: 'column', md: 'row' }}
           spacing={4}
           justifyContent="center"
         >

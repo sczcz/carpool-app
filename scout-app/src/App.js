@@ -61,7 +61,6 @@ const AppContent = () => {
         <Navbar />
         <Box flex="1" as="main">
           <Routes>
-            {/* Main Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/dashboard-parent" element={<DashBoardParent />} />
             <Route path="/dashboard-leader" element={<DashBoardLeader />} />
