@@ -1,44 +1,63 @@
 # Scoutkar
 
-Scoutkar är en webbaserad applikation för att hantera bokningar av samåkning och kommunikation mellan medlemmar i en scoutkår.
+Scoutkar is a web-based application for managing carpool bookings and communication between members of a scout troop.
 
-## Krav:
-Innan du börjar säkerställ att du har installerat:
- - Python 3.12.x
+## Requirements:
+Before you begin, make sure you have installed:
+ - Python 3.12.x  
  - Node.js 20.10.x
 
-### Steg 1: Navigera till projektmappen
+### Step 1: Navigate to the project folder
+```bash
 cd scoutkar
+```
 
-### Steg 2: Skapa en virtuell miljö
+### Step 2: Create a virtual environment
+```bash
 python -m venv .venv
+```
 
-### Steg 3: Aktivera den virtuella miljön
-windows:    .\.venv\Scripts\activate
-mac:        source .venv/bin/activate
+### Step 3: Activate the virtual environment
+- Windows:  
+  ```bash
+  .\.venv\Scripts\activate
+  ```
+- macOS/Linux:  
+  ```bash
+  source .venv/bin/activate
+  ```
 
-### Steg 4: Installera beroenden
+### Step 4: Install backend dependencies
+```bash
 pip install -r requirements.txt
+```
 
-### Steg 5: Navigera till frontend-mappen
+### Step 5: Navigate to the frontend folder
+```bash
 cd scout-app
+```
 
-### Steg 6: Installera beroenden för frontend
+### Step 6: Install frontend dependencies
+```bash
 npm install
+```
 
-### Steg 7: Starta applikationen
+### Step 7: Start the application
+```bash
 npm run start
+```
 
-### Steg 8: Öppna applikationen
-Navigera till http://localhost:3000 i valfri webb-läsare
+### Step 8: Open the application
+Navigate to `http://localhost:3000` in any web browser.
 
-## API-dokumentation
-För åtkomst till Swagger UI starta applikationen i branchen "swagger-api-docs" och navigera till http://localhost:5000/api/docs
+## API Documentation
+To access Swagger UI, start the application using the `swagger-api-docs` branch and go to:  
+`http://localhost:5000/api/docs`
 
-## Miljövariabler (endast för deployment)
-Skapa en .env fil i samma mapp som app.py och lägg till värden på följande variabler:
+## Environment Variables (for deployment only)
+Create a `.env` file in the same folder as `app.py` and add values for the following variables:
 
-
+```
 FLASK_SECRET_KEY=
 JWT_SECRET_KEY=
 
@@ -58,5 +77,6 @@ MAIL_USE_SSL=
 ADMIN_EMAIL=
 ADMIN_PASSWORD=
 
-#CORS and socketio
+# CORS and socketio
 CORS_ALLOWED_ORIGINS=
+```
