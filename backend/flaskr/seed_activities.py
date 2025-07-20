@@ -91,7 +91,7 @@ def seed_activities():
 
     roles = [3, 4, 5, 6, 7]
 
-    # Generera aktiviteter
+    # Generate activities
     activities = []
     for _ in range(30):
         name = random.choice(activity_names)

@@ -2,7 +2,6 @@ from models.auth_model import Role
 from extensions import db
 
 def seed_roles():
-    # Seed roles if they don't already exist
     if not Role.query.filter_by(name='vårdnadshavare').first():
         guardian_role = Role(name='vårdnadshavare')
         db.session.add(guardian_role)

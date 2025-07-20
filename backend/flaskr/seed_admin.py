@@ -21,7 +21,7 @@ def seed_admin():
         print("Admin user already exists!")
         return
 
-    # Skapa en ny användare för admin
+    # Admin created here <---
     hashed_password = generate_password_hash('supersecurepassword')
     admin_user = User(
         email='admin@example.com',

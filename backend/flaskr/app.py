@@ -34,7 +34,7 @@ CORS(app, supports_credentials=True, resources={r"/api/*": {
 
 init_mail(app)
 
-# Database setup
+# Database
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(basedir, 'instance', 'users.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
@@ -43,18 +43,17 @@ app.config['JWT_SECRET'] = os.getenv('JWT_SECRET', 'default_secret_key')
 
 db.init_app(app)
 
-# Ensure the instance folder exists
+# DB local storage
 if not os.path.exists(os.path.join(basedir, 'instance')):
     os.makedirs(os.path.join(basedir, 'instance'))
 
-# Create all tables and seed roles in the app context
+# Create all tables and seed roles
 with app.app_context():
     db.create_all()
 
-    # Seed roles once (if not already seeded)
     seed_roles()
 
-    # Check if any users exist, if not, call add_test_data
+    # Generate test data (users, cars, children etc)
     if not User.query.first():
         seed_admin()
         add_test_data()
@@ -62,7 +61,6 @@ with app.app_context():
     if not Activity.query.first():
         seed_activities()
 
-# Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_handler)
 app.register_blueprint(activity_bp)
@@ -72,7 +70,6 @@ app.register_blueprint(notifications_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(mail_bp)
 
-# Route for rendering index.html
 @app.route('/')
 def index():
     return render_template('index.html')
