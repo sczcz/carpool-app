@@ -7,8 +7,9 @@ from extensions import mail, db
 
 mail_bp = Blueprint('mail', __name__)
 
-# Initialize the serializer with a secret key
-serializer = URLSafeTimedSerializer('your-secret-key')  # Replace with your app's secret key
+serializer = URLSafeTimedSerializer('your-secret-key')
+
+
 
 @mail_bp.route('/api/auth/reset-password', methods=['POST'])
 def reset_password():
@@ -23,11 +24,10 @@ def reset_password():
     if not user:
         return jsonify({'error': 'User with this email does not exist'}), 404
 
-    # Generate token with itsdangerous
+    # This will generate a token with 'itsdangerous'
     token = serializer.dumps(email, salt='password-reset-salt')
     reset_link = f"http://localhost:3000/reset-password?token={token}&email={email}"
 
-    # Send email
     msg = Message(
         subject='Återställning av lösenord',
         sender=current_app.config['MAIL_USERNAME'],
@@ -66,8 +66,7 @@ def reset_password_confirm():
         return jsonify({'error': 'Token is required'}), 400
 
     try:
-        # Decode token
-        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)  # Token expires after 1 hour
+        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)  # Expires after 1h
         return jsonify({'message': 'Token is valid', 'email': email}), 200
     except SignatureExpired:
         return jsonify({'error': 'Token has expired'}), 400
@@ -87,7 +86,6 @@ def update_password():
         return jsonify({'error': 'Alla fält måste fyllas i'}), 400
 
     try:
-        # Validera token
         email_from_token = serializer.loads(token, salt='password-reset-salt', max_age=3600)
         if email != email_from_token:
             return jsonify({'error': 'Invalid token or email'}), 400
@@ -96,12 +94,11 @@ def update_password():
     except BadSignature:
         return jsonify({'error': 'Invalid token'}), 400
 
-    # Uppdatera lösenord
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({'error': 'Användaren existerar inte'}), 404
 
-    user.password = generate_password_hash(new_password)  # Uppdatera lösenordet
+    user.password = generate_password_hash(new_password)
     db.session.commit()
 
     return jsonify({'message': 'Lösenordet har uppdaterats'}), 200

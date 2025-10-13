@@ -43,7 +43,6 @@ class Child(db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id', ondelete='CASCADE'), nullable=True)
 
 
-# This is the parent child link (many-to-many)
 class ParentChildLink(db.Model):
     __tablename__ = 'parent_child_link'
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), primary_key=True)

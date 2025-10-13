@@ -25,27 +25,25 @@ def send_carpool_notification_email(carpool_id):
         print(f"Carpool {carpool_id} not found.")
         return
 
-    # RIKTIGA TIDSVÄRDEN
+    # ACTUAL TIME VALUES
     # two_days_ago = datetime.utcnow() - timedelta(days=2)
     # one_day_ago = datetime.utcnow() - timedelta(days=1)
 
-    # FÖR TESTNING
+    # FOR TESTING/DEV
     two_days_ago = datetime.utcnow() - timedelta(minutes=2)
     one_day_ago = datetime.utcnow() - timedelta(minutes=1)
 
     recipients = set()
 
-    # Hämta senaste meddelandet för att identifiera avsändaren
     last_message = db.session.query(CarpoolMessage).filter_by(carpool_id=carpool_id).order_by(CarpoolMessage.timestamp.desc()).first()
     if not last_message:
         print(f"No messages found for carpool {carpool_id}.")
         return
 
-    sender_id = last_message.sender_id  # Avsändarens ID
+    sender_id = last_message.sender_id
 
-    # Hantera direktpassagerare (som lagt till sig själva)
     for passenger in carpool.passengers:
-        if passenger.user_id and passenger.user_id != sender_id:  # Ignorera avsändaren
+        if passenger.user_id and passenger.user_id != sender_id:
             user = User.query.get(passenger.user_id)
             if user and user.email:
                 if user.notification_preferences:
@@ -59,7 +57,7 @@ def send_carpool_notification_email(carpool_id):
                     print(f"Email already sent to {user.email} for carpool {carpool_id}. Skipping.")
                     continue
 
-                # Kontroll 1: >0 olästa meddelanden och inte inloggad på 2 dygn
+                # Check 1: >0 unread msgs and not logged in for 2 days
                 unread_messages_since_last_login = (
                     db.session.query(CarpoolMessage)
                     .filter(
@@ -75,7 +73,7 @@ def send_carpool_notification_email(carpool_id):
                         email_notifications_sent.setdefault(user.user_id, {})[carpool_id] = True
                         continue
 
-                # Kontroll 2: 5+ olästa meddelanden senaste 1 dygn
+                # Check 2: 5+ unread msgs the last 24hrs
                 unread_messages_last_day = (
                     db.session.query(CarpoolMessage)
                     .filter(
@@ -89,12 +87,11 @@ def send_carpool_notification_email(carpool_id):
                     recipients.add(user.email)
                     email_notifications_sent.setdefault(user.user_id, {})[carpool_id] = True
 
-    # Hantera föräldrar till barnpassagerare
     for passenger in carpool.passengers:
         parent_links = ParentChildLink.query.filter_by(child_id=passenger.child_id).all()
         for link in parent_links:
             parent = User.query.get(link.user_id)
-            if parent and parent.email and parent.user_id != sender_id:  # Ignorera avsändaren
+            if parent and parent.email and parent.user_id != sender_id:
                 if parent.notification_preferences:
                     notification_preferences = json.loads(parent.notification_preferences)
                 else:
@@ -106,7 +103,7 @@ def send_carpool_notification_email(carpool_id):
                     print(f"Email already sent to {parent.email} for carpool {carpool_id}. Skipping.")
                     continue
 
-                # Kontroll 1: >0 olästa meddelanden och inte inloggad på 2 dygn
+                # Check 1: >0 unread msgs and not logged in for 2 days
                 unread_messages_since_last_login = (
                     db.session.query(CarpoolMessage)
                     .filter(
@@ -122,7 +119,7 @@ def send_carpool_notification_email(carpool_id):
                         email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
                         continue
 
-                # Kontroll 2: 5+ olästa meddelanden senaste 1 dygn
+                # Check 2: 5+ unread msgs the last 24hrs
                 unread_messages_last_day = (
                     db.session.query(CarpoolMessage)
                     .filter(
@@ -136,8 +133,7 @@ def send_carpool_notification_email(carpool_id):
                     recipients.add(parent.email)
                     email_notifications_sent.setdefault(parent.user_id, {})[carpool_id] = True
 
-    # Hantera föraren
-    if carpool.driver_id and carpool.driver_id != sender_id:  # Ignorera avsändaren
+    if carpool.driver_id and carpool.driver_id != sender_id:
         driver = User.query.get(carpool.driver_id)
         if driver and driver.email:
             if driver.notification_preferences:
@@ -150,7 +146,7 @@ def send_carpool_notification_email(carpool_id):
             if email_notifications_sent.get(driver.user_id, {}).get(carpool_id, False):
                 print(f"Email already sent to {driver.email} for carpool {carpool_id}. Skipping.")
             else:
-                # Kontroll 1: >0 olästa meddelanden och inte inloggad på 2 dygn
+                # Check 1: >0 unread msgs and not logged in for 2 days
                 unread_messages_since_last_login = (
                     db.session.query(CarpoolMessage)
                     .filter(
@@ -165,7 +161,7 @@ def send_carpool_notification_email(carpool_id):
                         recipients.add(driver.email)
                         email_notifications_sent.setdefault(driver.user_id, {})[carpool_id] = True
 
-                # Kontroll 2: 5+ olästa meddelanden senaste 1 dygn
+                # Check 2: 5+ unread msgs the last 24hrs
                 unread_messages_last_day = (
                     db.session.query(CarpoolMessage)
                     .filter(
@@ -183,7 +179,6 @@ def send_carpool_notification_email(carpool_id):
         print(f"No recipients found for carpool {carpool_id} who match the criteria.")
         return
 
-    # Skicka email till mottagarna
     try:
         with mail.connect() as conn:
             subject = f"Olästa meddelanden i samåkning {carpool_id}"
@@ -222,7 +217,6 @@ def create_notification(user_id, carpool_id, message, message_id=None):
     db.session.add(notification)
     db.session.commit()
 
-    # Kontrollera om vi behöver query
     created_notification = Notification.query.filter_by(
         user_id=user_id, 
         carpool_id=carpool_id, 
@@ -232,9 +226,9 @@ def create_notification(user_id, carpool_id, message, message_id=None):
 
     return notification
 
-# Helper function to notify users in a carpool
+
+
 def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
-    # Initiera active_users om det saknas
     if carpool_id not in active_users:
         active_users[carpool_id] = set()
 
@@ -243,12 +237,10 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
         print(f"Carpool {carpool_id} not found.")
         return
 
-    notified_users = set()  # För att undvika dubblerade notifieringar
+    notified_users = set()
 
-    # Hämta bilinformation (om det finns)
     car_info = f"{carpool.car.model_name}" if carpool.car else "Ingen bil tilldelad"
 
-    # Hämta övergripande information om carpoolen
     carpool_details = {
         "id": carpool.id,
         "carpool_type": carpool.carpool_type,
@@ -259,7 +251,6 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
         "car_info": car_info,
     }
 
-    # Notify the carpool driver if they are not the sender or active
     if carpool.driver_id != sender_id and carpool.driver_id not in active_users[carpool_id]:
         if carpool.driver_id not in notified_users:
             notification = create_notification(
@@ -278,7 +269,6 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
             )
             notified_users.add(carpool.driver_id)
 
-    # Notify parents of passengers if they are not active
     for passenger in carpool.passengers:
         parent_links = ParentChildLink.query.filter_by(child_id=passenger.child_id).all()
         for parent_link in parent_links:
@@ -320,6 +310,7 @@ def notify_users_in_carpool(carpool_id, message, sender_id, message_id):
 
 
 
+# This will fetch the messages linked to a specific carpool (i.e chat history)
 @message_bp.route('/api/carpool/<int:carpool_id>/messages', methods=['GET'])
 @token_required
 def get_carpool_messages(current_user, carpool_id):
@@ -332,11 +323,10 @@ def get_carpool_messages(current_user, carpool_id):
         .all()
     )
     
-    # Skapa en lista med alla meddelanden och relevant användarinformation
     messages_data = [{
         'id': msg.CarpoolMessage.id,
         'sender_id': msg.CarpoolMessage.sender_id,
-        'sender_name': f"{msg.User.first_name} {msg.User.last_name}",  # Kombinerar för- och efternamn
+        'sender_name': f"{msg.User.first_name} {msg.User.last_name}",
         'content': msg.CarpoolMessage.content,
         'timestamp': msg.CarpoolMessage.timestamp,
         'status': msg.CarpoolMessage.status
@@ -344,7 +334,7 @@ def get_carpool_messages(current_user, carpool_id):
 
     return jsonify(messages_data), 200
 
-# Socket.IO-händelsehanterare för anslutning, chattrum och meddelanden
+# --- Socket.IO-event managers below ---
 @socketio.on('join_carpool')
 def handle_join_carpool(data):
     carpool_id = data.get('carpool_id')
@@ -369,7 +359,7 @@ def handle_leave_carpool(data):
     leave_room(f'carpool_{carpool_id}')
     if carpool_id in active_users:
         active_users[carpool_id].discard(user_id)
-        if not active_users[carpool_id]:  # Rensa tomma rum
+        if not active_users[carpool_id]:
             del active_users[carpool_id]
 
 @socketio.on('join_user')
@@ -379,7 +369,6 @@ def handle_join_user_room(data):
         emit('error', {'error': 'User ID is required to join personal room.'})
         return
 
-    # Lägg till användaren i deras personliga notisrum
     join_room(f'user_{user_id}')
     emit('join_success', {'message': f'Joined personal notification room for user {user_id}'})
 
@@ -397,39 +386,30 @@ def handle_send_message(data):
         emit('error', {'error': 'Message content is required!'}, room=request.sid)
         return
 
-    # Hämta användaren för att inkludera namnet i meddelandet
     sender = User.query.get(sender_id)
     if not sender:
         emit('error', {'error': 'Sender not found.'}, room=request.sid)
         return
 
-    # Hämta `activity_id` från `Carpool`
     carpool = db.session.query(Carpool).filter_by(id=carpool_id).first()
     if not carpool:
         emit('error', {'error': 'Carpool not found.'}, room=request.sid)
         return
 
-    # Hämta `address` från `Activity` baserat på `activity_id`
     activity = db.session.query(Activity).filter_by(activity_id=carpool.activity_id).first()
     activity_address = activity.address if activity else "okänd destination"
 
-    # Define timezone conversion
     from_zone = tz.tzutc()
-    to_zone = tz.tzlocal()  # This converts to the server's local timezone
-
-    # Get UTC time for the message
+    to_zone = tz.tzlocal()
     utc_timestamp = datetime.utcnow()
-    utc_timestamp = utc_timestamp.replace(tzinfo=from_zone)  # Mark it as UTC
-    
-    # Convert UTC timestamp to local time
+    utc_timestamp = utc_timestamp.replace(tzinfo=from_zone)
     local_timestamp = utc_timestamp.astimezone(to_zone)
 
-    # Spara meddelandet i databasen med UTC-tid
     message = CarpoolMessage(
         sender_id=sender_id,
         carpool_id=carpool_id,
         content=content,
-        timestamp=utc_timestamp,  # Still saving in UTC to the database
+        timestamp=utc_timestamp,
         status='sent'
     )
     
@@ -438,7 +418,6 @@ def handle_send_message(data):
 
     send_carpool_notification_email(carpool_id)
 
-    # Skicka meddelandet till alla anslutna klienter i rummet
     emit('new_message', {
         'carpool_id': carpool_id,
         'message': {
@@ -446,10 +425,9 @@ def handle_send_message(data):
             'sender_id': message.sender_id,
             'sender_name': f"{sender.first_name} {sender.last_name}",
             'content': message.content,
-            'timestamp': local_timestamp.isoformat()  # Sending local time to clients
+            'timestamp': local_timestamp.isoformat()
         }
     }, room=f'carpool_{carpool_id}')
 
-    # Skapa och skicka notifikation
     notification_message = f"meddelande i samåkning till {activity_address}"
     notify_users_in_carpool(carpool_id, notification_message, message.sender_id, message.id)

@@ -45,7 +45,6 @@ def get_users(current_user):
 @admin_bp.route('/api/admin/make-admin', methods=['PUT'])
 @token_required
 def make_user_admin(current_user):
-    # Kontrollera att den inloggade användaren är admin
     if not is_user_admin(current_user.user_id):
         return jsonify({"error": "Access denied!"}), 403
 
@@ -134,48 +133,38 @@ def delete_user(current_user, user_id):
         return jsonify({"error": "User not found!"}), 404
 
     try:
-        # Ta bort notiser kopplade till användaren
         notifications = Notification.query.filter_by(user_id=user_id).all()
         for notification in notifications:
             db.session.delete(notification)
 
-        # Ta bort alla samåkningar som användaren har skapat
         carpools = Carpool.query.filter_by(driver_id=user_id).all()
         for carpool in carpools:
-            # Ta bort passagerare kopplade till carpoolen
             Passenger.query.filter_by(carpool_id=carpool.id).delete()
-
-            # Ta bort meddelanden kopplade till carpoolen
             CarpoolMessage.query.filter_by(carpool_id=carpool.id).delete()
 
-            # Ta bort själva carpoolen
             db.session.delete(carpool)
 
-        # Ta bort alla länkar mellan användaren och barn
         child_links = ParentChildLink.query.filter_by(user_id=user_id).all()
         for link in child_links:
             db.session.delete(link)
 
-            # Kontrollera om barnet inte längre är länkat till någon annan användare
             remaining_links = ParentChildLink.query.filter_by(child_id=link.child_id).all()
             if not remaining_links:
                 child = Child.query.get(link.child_id)
                 if child:
                     db.session.delete(child)
 
-        #Ta bort sparade bilar
         cars = Car.query.filter_by(owner_id=user_id).all()
         for car in cars:
              db.session.delete(car)
 
-        # Ta bort själva användaren
         db.session.delete(user)
         db.session.commit()
 
         return jsonify({"message": f"Användare {user.email} och dess data har raderats."}), 200
 
     except Exception as e:
-        db.session.rollback()  # Återställ ändringar om något går fel
+        db.session.rollback()
         current_app.logger.error(f"Error deleting user {user_id}: {e}")
         return jsonify({"error": "An error occurred while deleting the user."}), 500
 
@@ -192,7 +181,6 @@ def cleanup_activities(current_user):
         now = datetime.datetime.utcnow()
         three_months_ago = now - datetime.timedelta(days=90)
 
-        # Hämta aktiviteter att rensa
         activities_to_delete = Activity.query.filter(
             db.or_(
                 Activity.end_date < now,
@@ -203,22 +191,17 @@ def cleanup_activities(current_user):
             )
         ).all()
 
-        # Hämta IDs för aktiviteter som ska tas bort
         activity_ids_to_delete = [activity.activity_id for activity in activities_to_delete]
 
-        # Hämta och ta bort relaterade samåkningar
         carpools_to_delete = Carpool.query.filter(Carpool.activity_id.in_(activity_ids_to_delete)).all()
         carpool_ids_to_delete = [carpool.id for carpool in carpools_to_delete]
 
-        # Ta bort relaterade passagerare
         passengers_to_delete = Passenger.query.filter(Passenger.carpool_id.in_(carpool_ids_to_delete)).all()
 
-        # Räkna antal poster för att logga senare
         deleted_activities_count = len(activities_to_delete)
         deleted_carpools_count = len(carpools_to_delete)
         deleted_passengers_count = len(passengers_to_delete)
 
-        # Ta bort poster från databasen
         for passenger in passengers_to_delete:
             db.session.delete(passenger)
 
@@ -239,11 +222,10 @@ def cleanup_activities(current_user):
 
     except Exception as e:
         current_app.logger.error(f"Fel vid rensning av aktiviteter: {e}")
-        db.session.rollback()  # Återställ databasen om något går fel
+        db.session.rollback()
         return jsonify({"error": "Ett fel inträffade vid rensning av aktiviteter."}), 500
 
 
-# Helper function for authentication
 def is_user_admin(user_id):
     user_roles = (
         db.session.query(Role.name)

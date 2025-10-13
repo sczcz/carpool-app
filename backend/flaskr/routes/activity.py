@@ -13,7 +13,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 activity_bp = Blueprint('activity', __name__)
 
-# Updated role mapping
+# List of possible roles
 role_mapping = {
     'vårdnadshavare': 1,
     'ledare': 2,
@@ -91,28 +91,25 @@ def fetch_calendar_events():
 def get_activities_by_role(current_user):
     now = datetime.now()
 
-    # --- Barnaktiviteter ---
-    # Hämta barn som är kopplade till den inloggade användaren
+    # Fetch children linked with current user/parent
     children = db.session.query(Child).join(ParentChildLink).filter(
         ParentChildLink.user_id == current_user.user_id
     ).all()
 
-    # Hämta rollnamn baserat på barnens `role_id`
     children_roles = [Role.query.filter_by(role_id=child.role_id).first().name.lower() for child in children]
 
-    # Matcha `role_ids` för aktiviteter som stämmer överens med barnens roller
+    # Match `role_ids` for activities to child role
     role_ids = [role_mapping[role] for role in children_roles if role in role_mapping]
 
-    # Hämta aktiviteter för barnens roller
+    # Fetch the activities relevant to child role
     children_activities = Activity.query.filter(
         Activity.role_id.in_(role_ids),
         Activity.start_date >= now,
         Activity.is_visible == True
     ).all()
 
-    # --- Ledaraktiviteter ---
-    # Kontrollera om användaren har rollen "ledare"
-    leader_role_id = role_mapping.get('ledare')  # Hämta role_id för "ledare" från mappningen
+    # Checks if user has 'leader' role
+    leader_role_id = role_mapping.get('ledare')
     leader_activities = []
     if db.session.query(UserRole).filter_by(user_id=current_user.user_id, role_id=leader_role_id).first():
         leader_activities = Activity.query.filter(
@@ -121,14 +118,14 @@ def get_activities_by_role(current_user):
             Activity.is_visible == True
         ).all()
 
-    # --- Aktiviteter där användaren är förare ---
+    # Fetching activities where user is driver
     driver_activities = Activity.query.join(Carpool).filter(
         Carpool.driver_id == current_user.user_id,
         Activity.start_date >= now,
         Activity.is_visible == True
     ).all()
 
-    # --- Aktiviteter där användaren är passagerare ---
+    # Fetching activities where user is passenger
     passenger_activities = Activity.query.join(Carpool).join(Passenger).filter(
         db.or_(
             Passenger.user_id == current_user.user_id,
@@ -138,12 +135,12 @@ def get_activities_by_role(current_user):
         Activity.is_visible == True
     ).all()
 
-    # --- Kombinera alla aktiviteter ---
+    # Save all activities
     all_activities = list({activity.activity_id: activity for activity in (
         children_activities + leader_activities + driver_activities + passenger_activities
     )}.values())
 
-    # --- Skapa en lista av aktiviteter ---
+    # Create a list of activities
     events_list = [{
         'activity_id': activity.activity_id,
         'summary': activity.name,
@@ -154,7 +151,7 @@ def get_activities_by_role(current_user):
         'scout_level': list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
     } for activity in all_activities]
 
-    # --- Hämta nya händelser från den externa kalendern om det behövs ---
+    # Fetch new events from the calendar
     new_events = fetch_calendar_events()
     events_list.extend(new_events)
 
@@ -163,19 +160,17 @@ def get_activities_by_role(current_user):
 
 
 
-# Funktion för att hämta alla synliga aktiviteter
+# Fecthing all activities not marked invisible
 @activity_bp.route('/api/protected/activity/no_role', methods=['GET'])
 @token_required
 def get_visible_activities(current_user):
     now = datetime.now()
 
-    # Hämta alla aktiviteter som är synliga och inte passerade
     activities = Activity.query.filter(
         Activity.start_date >= now,
-        Activity.is_visible == True  # Endast synliga aktiviteter
+        Activity.is_visible == True
     ).all()
 
-    # Skapa en lista av aktiviteter
     events_list = [{
         'activity_id': activity.activity_id,
         'summary': activity.name,
@@ -186,7 +181,6 @@ def get_visible_activities(current_user):
         'scout_level': list(role_mapping.keys())[list(role_mapping.values()).index(activity.role_id)]
     } for activity in activities]
 
-    # Hämta nya händelser från den externa kalendern om det behövs
     new_events = fetch_calendar_events()
     events_list.extend(new_events)
 
@@ -217,13 +211,11 @@ def get_all_activities(current_user):
 @token_required
 def remove_activity(current_user, activity_id):
     try:
-        # Hämta aktiviteten från databasen baserat på ID
         activity = Activity.query.get(activity_id)
 
         if not activity:
             return make_response(jsonify({"error": "Aktiviteten hittades inte."}), 404)
 
-        # Uppdatera is_visible till False
         activity.is_visible = False
         db.session.commit()
 
@@ -240,14 +232,11 @@ def remove_activity(current_user, activity_id):
 @token_required
 def make_activity_visible(current_user, activity_id):
     try:
-        # Hämta aktiviteten från databasen
         activity = Activity.query.get(activity_id)
 
-        # Kontrollera om aktiviteten finns
         if not activity:
             return make_response(jsonify({"error": "Aktiviteten hittades inte."}), 404)
 
-        # Uppdatera is_visible till True
         activity.is_visible = True
         db.session.commit()
 
@@ -271,39 +260,33 @@ def parse_date(date_string):
 @token_required
 def create_activity(current_user):
     try:
-        # Hämta data från förfrågan
         data = request.get_json()
 
-        # Validera obligatoriska fält
         required_fields = ['name', 'start_date', 'address', 'role_id']
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             return make_response(jsonify({"error": f"Saknade fält: {', '.join(missing_fields)}"}), 400)
 
-        # Konvertera start_date och end_date till datetime
         start_date = parse_date(data['start_date'])
         end_date = None
         if 'end_date' in data and data['end_date']:
             end_date = parse_date(data['end_date'])
 
-        # Kontrollera om role_id är giltig
         role_id = data['role_id']
         role = Role.query.get(role_id)
         if not role:
             return make_response(jsonify({"error": "Ogiltig roll"}), 400)
 
-        # Skapa ny aktivitet
         new_activity = Activity(
             name=data['name'],
             start_date=start_date,
             end_date=end_date,
             role_id=role_id,
             address=data['address'],
-            description=data.get('description', ''),  # Beskrivning är valfri
-            is_visible=data.get('is_visible', True)  # Standardvärde för synlighet
+            description=data.get('description', ''), 
+            is_visible=data.get('is_visible', True)
         )
 
-        # Lägg till aktiviteten i databasen
         db.session.add(new_activity)
         db.session.commit()
 
@@ -324,7 +307,6 @@ def create_activity(current_user):
     except ValueError as ve:
         return make_response(jsonify({"error": str(ve)}), 400)
     except Exception as e:
-        # Rollback vid fel
         db.session.rollback()
         current_app.logger.error(f"Fel vid skapande av aktivitet: {e}")
         return make_response(jsonify({"error": "Ett fel inträffade vid skapande av aktiviteten."}), 500)
@@ -334,23 +316,19 @@ def create_activity(current_user):
 @token_required
 def get_activity_by_carpool(current_user, carpool_id):
     try:
-        # Hämta carpool baserat på ID
         carpool = Carpool.query.get(carpool_id)
         if not carpool:
             return make_response(jsonify({"error": "Carpoolen hittades inte."}), 404)
 
-        # Hämta aktivitet kopplad till carpool
         activity = Activity.query.get(carpool.activity_id)
         if not activity:
             return make_response(jsonify({"error": "Aktiviteten kopplad till carpoolen hittades inte."}), 404)
         
         passengers = []
         for passenger in carpool.passengers:
-            # Hantera om passageraren är ett barn
             if passenger.child_id:
                 child = Child.query.get(passenger.child_id)
                 if child:
-                    # Hämta föräldrar från ParentChildLink
                     parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
                     parents = [
                         {
@@ -368,7 +346,6 @@ def get_activity_by_carpool(current_user, carpool_id):
                         "parents": parents
                     })
 
-            # Hantera om passageraren är en användare
             elif passenger.user_id:
                 user = User.query.get(passenger.user_id)
                 if user:
@@ -379,7 +356,6 @@ def get_activity_by_carpool(current_user, carpool_id):
                         "phone": user.phone
                     })
 
-        # Bygg respons med aktivitet och carpool-detaljer
         response = {
             "activity": {
                 "activity_id": activity.activity_id,

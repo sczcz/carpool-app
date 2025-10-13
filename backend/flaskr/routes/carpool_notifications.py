@@ -17,7 +17,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
         print(f"Carpool {carpool_id} not found.")
         return
 
-    # Hämta föraren (skaparen av carpoolen)
     driver = User.query.get(carpool.driver_id)
     if driver and driver.email:
         if email_notifications_sent.get(driver.user_id, {}).get(carpool_id, False):
@@ -26,12 +25,9 @@ def send_passenger_list_notification(carpool_id, action, current_user):
     if current_user.user_id == driver.user_id:
         return
 
-    # Hämta aktivitet kopplad till carpoolen
     activity = Activity.query.get(carpool.activity_id) if carpool.activity_id else None
-
     message = f"{current_user.first_name} {current_user.last_name} har {'lagt till' if action == 'added' else 'tagit bort'} en passagerare."
 
-    # Skapa notis i databasen
     notification = Notification(
         user_id=driver.user_id,
         carpool_id=carpool_id,
@@ -45,11 +41,9 @@ def send_passenger_list_notification(carpool_id, action, current_user):
     car = Car.query.get(carpool.car_id)
     passengers = []
     for passenger in carpool.passengers:
-        # Hantera om passageraren är ett barn
         if passenger.child_id:
             child = Child.query.get(passenger.child_id)
             if child:
-                # Hämta föräldrar från ParentChildLink
                 parent_links = ParentChildLink.query.filter_by(child_id=child.child_id).all()
                 parents = [
                     {
@@ -67,7 +61,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
                     "parents": parents
                 })
 
-        # Hantera om passageraren är en användare
         elif passenger.user_id:
             user = User.query.get(passenger.user_id)
             if user:
@@ -78,7 +71,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
                     "phone": user.phone
                 })
 
-    # Förbered data för emit
     carpool_details = {
         "id": carpool.id,
         "driver_id": carpool.driver_id,
@@ -99,7 +91,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
         "dtstart": activity.start_date.isoformat(),
     } if activity else None
 
-    # Skicka notis via Socket.IO
     emit(
         'notification',
         {
@@ -114,7 +105,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
         to=f"user_{driver.user_id}", namespace='/'
     )
 
-    # Kontrollera om föraren har aktiverat notiser för passagerarlistan
     if driver.notification_preferences:
         notification_preferences = json.loads(driver.notification_preferences)
     else:
@@ -124,7 +114,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
         print(f"Driver {driver.email} has disabled passenger list notifications. Skipping.")
         return
 
-    # Skapa ett e-postmeddelande baserat på åtgärden
     if action == "added":
         subject = f"Ny passagerare i din samåkning {carpool_id}"
         body = f"Hej {driver.first_name},\n\nEn ny passagerare har lagts till i din samåkning.\n\nHälsningar, Redo-supporten."
@@ -145,7 +134,6 @@ def send_passenger_list_notification(carpool_id, action, current_user):
         print(f"Unknown action: {action}. No notification sent.")
         return
 
-    # Skicka e-post
     try:
         with mail.connect() as conn:
             msg = Message(subject=subject, recipients=[driver.email], body=body, sender="redo@kustscoutjonstorp.se")
