@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { InfoIcon } from '@chakra-ui/icons';
-import { FaTrash, FaCarSide} from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { FaPlus } from 'react-icons/fa';
 import {
   Box,
   Heading,
@@ -29,14 +28,21 @@ import {
   Popover, 
   PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
-import { FaUserCircle, FaPlus } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
 import { sv } from 'date-fns/locale'
 import { useUser } from '../utils/UserContext';
 import { useCarpool } from '../utils/CarpoolContext';
+import roleColors from '../utils/roleColors';
 import CarpoolComponent from './CarPoolComponent';
 import AddChildModal from './AddChildModal';
 import SelectParticipantModal from './SelectParticipantModal'
+import DashboardHeader from './DashboardHeader';
+import FiltersBar from './FiltersBar';
+import ActivityList from './ActivityList';
+import ActivityCard from './ActivityCard';
+import CarpoolList from './CarpoolList';
+import LoadingState from './LoadingState';
+import ErrorState from './ErrorState';
 
 const DashBoardParent = ({ token }) => {
   const {
@@ -72,18 +78,6 @@ const DashBoardParent = ({ token }) => {
   const [filterByRole, setFilterByRole] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [participants, setParticipants] = useState([]);
-
-  const roleColors = {
-    tumlare: '#41a62a',
-    kutar: '#71c657',     
-    upptäckare: '#00a8e1', 
-    äventyrare: '#e95f13', 
-    utmanare: '#da005e',   
-    rover: '#e2e000',  
-    vuxenscout: '#40e0d0',
-    ledare: '#7fffd4'
-
-  };
 
   const isInMyActivities = (activity) => {
     return activity.carpools?.some((carpool) => {
@@ -407,53 +401,25 @@ const DashBoardParent = ({ token }) => {
     }
   };
 
-const handleLoadMore = () => {
-  setVisibleActivitiesCount(visibleActivitiesCount + 10);
-};
+  const handleLoadMore = () => {
+    setVisibleActivitiesCount(visibleActivitiesCount + 10);
+  };
 
   const openChatModal = (carpoolId) => {
     setSelectedCarpoolId(carpoolId);
     openChat(carpoolId);
   };
 
-  if (loading) {
-    return (
-      <VStack>
-        <Spinner size="xl" color="brand.500" />
-        <Text>Laddar...</Text>
-      </VStack>
-    );
-  }
-
-  if (activityLoading) {
-    return (
-      <VStack>
-        <Spinner size="xl" color="brand.500" />
-        <Text>Laddar aktiviteter...</Text>
-      </VStack>
-    );
-  }
-
-  if (error) {
-    return (
-      <VStack>
-        <Text color="red.500">Fel vid hämtning av aktiviteter: {error}</Text>
-        <Button onClick={() => { setError(null); fetchActivities(); }} colorScheme="blue">Försök igen</Button>
-      </VStack>
-    );
-  }
+  if (loading) return <LoadingState message="Laddar..." />;
+  if (activityLoading) return <LoadingState message="Laddar aktiviteter..." />;
+  if (error) return <ErrorState message={`Fel vid hämtning av aktiviteter: ${error}`} onRetry={() => { setError(null); fetchActivities(); }} />;
 
   return (
     <Box p={5}>
       <Flex justify="center">
         <Box maxWidth="1200px" width="100%">
           {/* Header */}
-          <Flex justify="space-between" align="center" mb={5}>
-            <HStack>
-              <Icon as={FaUserCircle} w={8} h={8} color="brand.500" />
-              <Heading as="h1" size="lg" color="brand.500">Välkommen, {fullName}</Heading>
-            </HStack>
-          </Flex>
+          <DashboardHeader fullName={fullName} />
 
           {/* Welcome message */}
           <Box mb={6}>
@@ -462,19 +428,11 @@ const handleLoadMore = () => {
           </Text>
           </Box>
 
-
-          <Box mb={4}>
-            <Button
-              fontSize={{ base: 'sm', lg: 'md' }}
-              colorScheme={filterByRole ? 'gray' : 'gray'}
-              onClick={() => setFilterByRole(!filterByRole)}
-            >
-              {filterByRole ? 'Visa alla aktiviteter' : 'Visa endast aktiviteter baserat på dina barns roller'}
-            </Button>
-          </Box>
-
-
-
+          <FiltersBar
+            filterByRole={filterByRole}
+            onToggleFilter={() => setFilterByRole(!filterByRole)}
+            onAddChild={openAddChildModal}
+          />
           <Divider mb={6} />
 
           {myActivities.length > 0 && (
@@ -511,158 +469,23 @@ const handleLoadMore = () => {
                 </PopoverContent>
               </Popover>
             </Box>
-              <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                {activitiesForMyActivities.map((activity, index) => (
-                  <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="gray.50">
-                    <Flex justify="space-between" align="center" mb={2}>
-                      <Tag size="lg" color="white" backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
-                        <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
-                      </Tag>
-                      <Button colorScheme="brand" size="sm" onClick={() => toggleMyCarpool(index)}>
-                        {openMyCarpoolIndex === index ? 'Dölj samåkning' : 'Visa samåkning'}
-                      </Button>
-                    </Flex>
-                    <Text fontWeight="bold">{format(parseISO(activity.dtstart), "d MMMM", { locale: sv })}</Text>
-                    <Text fontSize="sm" color="gray.600">Start: {format(parseISO(activity.dtstart), "HH:mm")}</Text>
-                    <Text>{activity.location}</Text>
-                    <Text mt={2}>{activity.summary.split('//')[0]}</Text>
-                    <Collapse in={openMyCarpoolIndex === index} animateOpacity>
-                    <Box mt={2} maxHeight="250px" overflowY="auto">
-                      <VStack spacing={4}>
-                        <Button
-                          rightIcon={<FaPlus />}
-                          leftIcon={<FaCarSide/>}
-                          colorScheme="brand"
-                          size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openCarpoolModal(activity.activity_id);
-                        }}
-                      >
-                          Lägg till samåkning
-                        </Button>
-
-                        {fetchingCarpools ? (
-                      <Spinner />
-                    ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
-                      activity.carpools.map((carpool) => (
-                        <Box
-                          key={carpool.id}
-                          p={4}
-                          borderWidth={1}
-                          borderRadius="lg"
-                          w="100%"
-                          bg="gray.50"
-                          boxShadow="sm"
-                          fontSize={{ base: 'sm', sm: 'md' }}
-                          onClick={(e) => { e.stopPropagation(); handleCarpoolClick(activity, carpool) }}
-                          cursor="pointer"
-                          _hover={{ bg: 'gray.100' }}
-                        >
-                          <Flex direction="column">
-                              {/* Text Section */}
-                              <Flex justify="space-between" mb={2}>
-                                <Text fontSize="md" color="brand.600" flex="1" noOfLines={1}>
-                                  {carpool.departure_address}
-                                  {carpool.carpool_type === 'drop-off' && (
-                                    <span style={{ margin: '0 8px', color: 'gray.600' }}>→</span>
-                                  )}
-                                  {carpool.carpool_type === 'pick-up' && (
-                                    <span style={{ margin: '0 8px', color: 'gray.600' }}>←</span>
-                                  )}
-                                  {carpool.carpool_type === 'both' && (
-                                    <span style={{ margin: '0 8px', color: 'gray.600' }}>↔</span>
-                                  )}
-                                  {activity.location} ({translateCarpoolType(carpool?.carpool_type) || 'N/A'})
-                                </Text>
-                              </Flex>
-                              <Text fontSize="sm" color="gray.500" mb={2}>
-                                Tillgängliga platser: {carpool.available_seats}
-                              </Text>
-
-                              {/* Buttons Section */}
-                              <Flex justify="flex-end" gap="2" mt="auto">
-                                {carpool.driver_id === userId && (
-                                  <Button
-                                  colorScheme="red"
-                                  variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteCarpool(carpool.id, activity.activity_id);
-                                    }}
-                                  >
-                                  <Icon as={FaTrash} color="red.500" />
-                                  </Button>
-                                )}
-
-                                {carpool.available_seats > 0 ? (
-                                  <Button
-                                    colorScheme={joinedChildrenInCarpool[carpool.id]?.allJoined ? 'blue' : 'green'}
-                                    size="sm"
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      const allChildrenJoined = await checkIfAllChildrenJoined(carpool.id);
-                                      if (allChildrenJoined) {
-                                        setJoinedChildrenInCarpool((prev) => ({
-                                          ...prev,
-                                          [carpool.id]: { allJoined: true },
-                                        }));
-                                        return;
-                                      }
-                                      handleJoinCarpool(carpool.id, activity.activity_id);
-                                    }}
-                                    isDisabled={joinedChildrenInCarpool[carpool.id]?.allJoined}
-                                  >
-                                    {loadingJoinState[carpool.id] ? (
-                                      <Spinner size="xs" />
-                                    ) : joinedChildrenInCarpool[carpool.id]?.allJoined ? (
-                                      'Bokad'
-                                    ) : (
-                                      'Boka'
-                                    )}
-                                  </Button>
-                                ) : (
-                                  <Button colorScheme="red" size="sm" isDisabled>
-                                    Full
-                                  </Button>
-                                )}
-
-                                <Button
-                                  colorScheme="teal"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openChatModal(carpool.id);
-                                  }}
-                                >
-                                  Chatt
-                                </Button>
-                                <Button
-                                    display={{ base: 'inline-flex', md: 'none' }}
-                                    colorScheme="cyan"
-                                    color="white"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCarpoolClick(activity, carpool);
-                                    }}
-                                  >
-                                    Info
-                                  </Button>
-                              </Flex>
-                            </Flex>
-                            </Box>
-                          ))
-                        ) : (
-                          <Text>Inga tillgängliga samåkningar för denna aktivitet.</Text>
-                        )}
-                      </VStack>
-                    </Box>
-                  </Collapse>
-                  </Box>
-                ))}
-              </SimpleGrid>
+              <ActivityList
+                activities={activitiesForMyActivities}
+                openIndex={openMyCarpoolIndex}
+                onToggle={(index) => toggleMyCarpool(index)}
+                onOpenCarpoolModal={openCarpoolModal}
+                fetchingCarpools={fetchingCarpools}
+                roleColors={roleColors}
+                userId={userId}
+                joinedChildrenInCarpool={joinedChildrenInCarpool}
+                checkIfAllChildrenJoined={checkIfAllChildrenJoined}
+                handleJoinCarpool={handleJoinCarpool}
+                loadingJoinState={loadingJoinState}
+                handleDeleteCarpool={handleDeleteCarpool}
+                openChatModal={openChatModal}
+                translateCarpoolType={translateCarpoolType}
+                onCarpoolClick={handleCarpoolClick}
+              />
             </Box>
           )}
 
@@ -725,164 +548,30 @@ const handleLoadMore = () => {
 
             <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
               {activitiesForUpcoming.slice(0, visibleActivitiesCount).map((activity, index) => (
-                <Box key={activity.activity_id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md" bg="white">
-                  <Flex justify="space-between" align="center" mb={2}>
-                    <Tag size="lg" color={'white'} backgroundColor={roleColors[activity.scout_level] || 'gray.200'} borderRadius="full">
-                    <TagLabel>{activity.scout_level.charAt(0).toUpperCase() + activity.scout_level.slice(1)}</TagLabel>
-                    </Tag>
-                    <Button
-                      colorScheme="brand"
-                      size="sm"
-                      onClick={() => toggleCarpool(index, activity.activity_id)}
-                    >
-                      {openCarpoolIndex === index ? 'Dölj samåkning' : 'Visa samåkning'}
-                    </Button>
-                  </Flex>
-                  <Text fontWeight="bold">
-                    {format(parseISO(activity.dtstart), "d MMMM", { locale: sv })}
-                  </Text>
-                  <Text fontSize="sm" color="gray.600">
-                    Start: {format(parseISO(activity.dtstart), "HH:mm", { locale: sv })}
-                  </Text>
-
-                  <Text>{activity.location}</Text>
-                  <Text mt={2}>{activity.summary.split('//')[0]}</Text>
-
-                  <Collapse in={openCarpoolIndex === index} animateOpacity>
-                    <Box mt={2} maxHeight="250px" overflowY="auto">
-                      <VStack spacing={4}>
-                        <Button
-                         rightIcon={<FaPlus />}
-                         leftIcon={<FaCarSide/>}
-                          colorScheme="brand"
-                          size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openCarpoolModal(activity.activity_id);
-                        }}
-                      >
-                          Lägg till samåkning
-                        </Button>
-
-                        {fetchingCarpools ? (
-                          <Spinner />
-                        ) : Array.isArray(activity.carpools) && activity.carpools.length > 0 ? (
-                          activity.carpools.map((carpool) => (
-                            <Box
-                              key={carpool.id}
-                              p={4}
-                              borderWidth={1}
-                              borderRadius="lg"
-                              w="100%"
-                              bg="gray.50"
-                              boxShadow="sm"
-                              fontSize={{ base: 'sm', sm: 'md' }}
-                              onClick={(e) => { e.stopPropagation(); handleCarpoolClick(activity, carpool)}}
-                              cursor="pointer"
-                              _hover={{ bg: 'gray.100' }}
-                              
-                            >
-                              <Flex direction="column">
-                                {/* Text Section */}
-                                <Flex justify="space-between" mb={2}>
-                                  <Text fontSize="md" color="brand.600" flex="1" noOfLines={1}>
-                                    {carpool.departure_address}
-                                    {carpool.carpool_type === 'drop-off' && (
-                                      <span style={{ margin: '0 8px', color: 'gray.600' }}>→</span>
-                                    )}
-                                    {carpool.carpool_type === 'pick-up' && (
-                                      <span style={{ margin: '0 8px', color: 'gray.600' }}>←</span>
-                                    )}
-                                    {carpool.carpool_type === 'both' && (
-                                      <span style={{ margin: '0 8px', color: 'gray.600' }}>↔</span>
-                                    )}
-                                    {activity.location} ({translateCarpoolType(carpool?.carpool_type) || 'N/A'})
-                                  </Text>
-                                </Flex>
-                                <Text fontSize="sm" color="gray.500" mb={2}>
-                                  Tillgängliga platser: {carpool.available_seats}
-                                </Text>
-
-                                {/* Buttons Section */}
-                                <Flex justify="flex-end" gap="2" mt="auto">
-                                  {carpool.driver_id === userId && (
-                                    <Button
-                                    colorScheme="red"
-                                    variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteCarpool(carpool.id, activity.activity_id);
-                                      }}
-                                    >
-                                      <Icon as={FaTrash} color="red.500" />
-                                    </Button>
-                                  )}
-
-                                  {carpool.available_seats > 0 ? (
-                                    <Button
-                                      colorScheme={joinedChildrenInCarpool[carpool.id]?.allJoined ? 'blue' : 'green'}
-                                      size="sm"
-                                      onClick={async (e) => {
-                                        e.stopPropagation();
-                                        const allChildrenJoined = await checkIfAllChildrenJoined(carpool.id);
-                                        if (allChildrenJoined) {
-                                          setJoinedChildrenInCarpool((prev) => ({
-                                            ...prev,
-                                            [carpool.id]: { allJoined: true },
-                                          }));
-                                          return;
-                                        }
-                                        handleJoinCarpool(carpool.id, activity.activity_id);
-                                      }}
-                                      isDisabled={joinedChildrenInCarpool[carpool.id]?.allJoined}
-                                    >
-                                      {loadingJoinState[carpool.id] ? (
-                                        <Spinner size="xs" />
-                                      ) : joinedChildrenInCarpool[carpool.id]?.allJoined ? (
-                                        'Bokad'
-                                      ) : (
-                                        'Boka'
-                                      )}
-                                    </Button>
-                                  ) : (
-                                    <Button colorScheme="red" size="sm" isDisabled>
-                                      Full
-                                    </Button>
-                                  )}
-
-                                  <Button
-                                    colorScheme="teal"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openChatModal(carpool.id);
-                                    }}
-                                  >
-                                    Chatt
-                                  </Button>
-                                  <Button
-                                    display={{ base: 'inline-flex', md: 'none' }}
-                                    colorScheme="cyan"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCarpoolClick(activity, carpool);
-                                    }}
-                                  >
-                                    Info
-                                  </Button>
-                                </Flex>
-                              </Flex>
-                            </Box>
-                          ))
-                        ) : (
-                          <Text>Inga tillgängliga samåkningar för denna aktivitet.</Text>
-                        )}
-                      </VStack>
-                    </Box>
-                  </Collapse>
-                </Box>
+                <ActivityCard
+                  key={activity.activity_id}
+                  activity={activity}
+                  index={index}
+                  isOpen={openCarpoolIndex === index}
+                  onToggle={toggleCarpool}
+                  roleColors={roleColors}
+                >
+                  <CarpoolList
+                    activity={activity}
+                    carpools={activity.carpools}
+                    fetchingCarpools={fetchingCarpools}
+                    onOpenCarpoolModal={openCarpoolModal}
+                    userId={userId}
+                    joinedChildrenInCarpool={joinedChildrenInCarpool}
+                    checkIfAllChildrenJoined={checkIfAllChildrenJoined}
+                    onJoinCarpool={handleJoinCarpool}
+                    loadingJoinState={loadingJoinState}
+                    onDeleteCarpool={handleDeleteCarpool}
+                    onOpenChat={openChatModal}
+                    onCarpoolClick={handleCarpoolClick}
+                    translateCarpoolType={translateCarpoolType}
+                  />
+                </ActivityCard>
               ))}
             </SimpleGrid>
 
