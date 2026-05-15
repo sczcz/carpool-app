@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { InfoIcon } from '@chakra-ui/icons';
 import { FaPlus } from 'react-icons/fa';
 import {
@@ -7,14 +7,8 @@ import {
   Text,
   Button,
   VStack,
-  HStack,
-  Icon,
   Divider,
   Flex,
-  Collapse,
-  Tag,
-  TagLabel,
-  Spinner,
   SimpleGrid,
   useToast,
   Modal,
@@ -26,14 +20,13 @@ import {
   useDisclosure,
   IconButton,
   Popover,
-  PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
+  PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody
 } from '@chakra-ui/react';
-import { format, parseISO } from 'date-fns';
-import { sv } from 'date-fns/locale';
 import { useUser } from '../utils/UserContext';
 import { useCarpool } from '../utils/CarpoolContext';
 import roleColors from '../utils/roleColors';
 import useActivities from '../hooks/useActivities';
+import useJoinedChildren from '../hooks/useJoinedChildren';
 import CarpoolComponent from './CarPoolComponent';
 import AddChildModal from './AddChildModal';
 import SelectParticipantModal from './SelectParticipantModal';
@@ -82,7 +75,8 @@ const DashBoardParent = ({ token }) => {
   const [openMyCarpoolIndex, setOpenMyCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
   const [selectedActivityId, setSelectedActivityId] = useState(null);
-  const [joinedChildrenInCarpool, setJoinedChildrenInCarpool] = useState({});
+  const { joinedChildrenInCarpool, refreshCarpoolJoinedStatus, setJoinedChildrenInCarpool } =
+  useJoinedChildren(activities, checkIfAllChildrenJoined);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
@@ -104,9 +98,154 @@ const DashBoardParent = ({ token }) => {
     });
   };
 
-  const activitiesForUpcoming = activities.filter(activity => !isInMyActivities(activity));
-  const activitiesForMyActivities = activities.filter((activity) =>
-    Array.isArray(activity.carpools) && isInMyActivities(activity)
+  const activitiesForUpcoming = useMemo(
+    () => activities.filter((activity) => !isInMyActivities(activity)),
+    [activities, userId]
+  );
+
+  const activitiesForMyActivities = useMemo(
+    () =>
+      activities.filter(
+        (activity) =>
+          Array.isArray(activity.carpools) && isInMyActivities(activity)
+      ),
+    [activities, userId]
+  );
+
+  const toggleMyCarpool = useCallback((index) => {
+    setOpenMyCarpoolIndex((prev) => (prev === index ? null : index));
+  }, []);
+
+  const openCarpoolModal = useCallback(
+    (activityId) => {
+      const activity = activities.find((a) => a.activity_id === activityId);
+      setSelectedActivity(activity);
+      setSelectedActivityId(activityId);
+      onOpen();
+    },
+    [activities, onOpen]
+  );
+
+  const handleCarpoolClick = useCallback(
+    (activity, carpool) => {
+      setSelectedActivity(activity);
+      setSelectedCarpool(carpool);
+      setSelectedCarpoolId(carpool.id);
+      onDetailsOpen();
+    },
+    [onDetailsOpen]
+  );
+
+  const handleJoinCarpool = useCallback(
+    async (carpoolId, activityId) => {
+      try {
+        const participantsData = await selectJoin(carpoolId);
+        setParticipants(participantsData);
+        setSelectedCarpoolId(carpoolId);
+        setSelectedActivityId(activityId);
+        setIsModalOpen(true);
+      } catch (error) {
+        toast({
+          title: 'Fel',
+          description: error.message || 'Ett fel inträffade vid hämtning av deltagare.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    },
+    [selectJoin]
+  );
+
+  const handleDeleteCarpool = useCallback(
+    async (carpoolId, activityId) => {
+      try {
+        const carpoolResponse = await fetch(`/api/carpool/${carpoolId}/passengers`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const carpoolData = await carpoolResponse.json();
+        if (carpoolData.passengers && carpoolData.passengers.length > 0) {
+          const confirmDelete = window.confirm(
+            'Samåkningen har passagerare! Är du säker på att du vill ta bort?'
+          );
+          if (!confirmDelete) return;
+        }
+
+        await deleteCarpool(carpoolId, activityId);
+
+        toast({
+          title: 'Samåkning borttagen',
+          description: 'Samåkning borttagen!',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Kan inte ta bort samåkning',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    },
+    [deleteCarpool]
+  );
+
+  const toggleCarpool = useCallback(
+    (index, activityId) => {
+      const isInMyActivities = myActivities.some((activity) => activity.activity_id === activityId);
+
+      if (isInMyActivities) {
+        const myActivityIndex = myActivities.findIndex((activity) => activity.activity_id === activityId);
+        toggleMyCarpool(myActivityIndex);
+      } else {
+        setOpenCarpoolIndex((prev) => (prev === index ? null : index));
+      }
+
+      fetchCarpoolsForActivity(activityId).catch((e) => console.error(e));
+    },
+    [myActivities, fetchCarpoolsForActivity, toggleMyCarpool]
+  );
+
+  const openChatModal = useCallback(
+    (carpoolId) => {
+      setSelectedCarpoolId(carpoolId);
+      openChat(carpoolId);
+    },
+    [openChat]
+  );
+
+  const handleParticipantSelect = useCallback(
+    async (participant) => {
+      try {
+        const payload = {
+          carpool_id: selectedCarpoolId,
+          ...(participant.type === 'user' ? { add_self: true } : { child_id: participant.id }),
+        };
+        await addPassenger(payload, selectedActivityId);
+        toast({
+          title: 'Samåkning uppdaterad',
+          description: `${participant.name} har lagts till i samåkningen!`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        setIsModalOpen(false);
+      } catch (error) {
+        toast({
+          title: 'Fel',
+          description: error.message || 'Ett fel inträffade vid försök att lägga till deltagare.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    },
+    [addPassenger, selectedActivityId, selectedCarpoolId]
   );
 
   useEffect(() => {
@@ -132,157 +271,20 @@ const DashBoardParent = ({ token }) => {
     }
   }, [userLoading, userId]);
 
-  // Fetch activities when user is ready or filter changes
   useEffect(() => {
     if (userId && !userLoading) {
       fetchActivities(filterByRole).catch((e) => {
-        // fetchActivities already sets error inside hook
         console.error('fetchActivities failed', e);
       });
     }
   }, [userId, userLoading, filterByRole, fetchActivities]);
 
-  // initialize joinedChildrenInCarpool using hook checkIfAllChildrenJoined
-  useEffect(() => {
-    const init = async () => {
-      const joinedStatus = {};
-      for (const activity of activities) {
-        if (activity.carpools) {
-          for (const carpool of activity.carpools) {
-            try {
-              const allChildrenJoined = await checkIfAllChildrenJoined(carpool.id);
-              joinedStatus[carpool.id] = { allJoined: allChildrenJoined };
-            } catch (e) {
-              joinedStatus[carpool.id] = { allJoined: false };
-            }
-          }
-        }
-      }
-      setJoinedChildrenInCarpool(joinedStatus);
-    };
-    if (activities.length > 0) init();
-  }, [activities, checkIfAllChildrenJoined]);
-
-  const handleCarpoolClick = (activity, carpool) => {
-    setSelectedActivity(activity);
-    setSelectedCarpool(carpool);
-    setSelectedCarpoolId(carpool.id);
-    onDetailsOpen();
-  };
-
   const handleChildAdded = () => {
     window.location.reload();
   };
 
-  // replaced: use selectJoin (hook) to fetch participants
-  const handleJoinCarpool = async (carpoolId, activityId) => {
-    try {
-      const participantsData = await selectJoin(carpoolId);
-      setParticipants(participantsData);
-      setSelectedCarpoolId(carpoolId);
-      setSelectedActivityId(activityId);
-      setIsModalOpen(true);
-    } catch (error) {
-      toast({
-        title: 'Fel',
-        description: error.message || 'Ett fel inträffade vid hämtning av deltagare.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  // replaced: use addPassenger (hook)
-  const handleParticipantSelect = async (participant) => {
-    try {
-      const payload = {
-        carpool_id: selectedCarpoolId,
-        ...(participant.type === 'user' ? { add_self: true } : { child_id: participant.id })
-      };
-      await addPassenger(payload, selectedActivityId);
-      toast({
-        title: 'Samåkning uppdaterad',
-        description: `${participant.name} har lagts till i samåkningen!`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-      setIsModalOpen(false);
-      // hook addPassenger already refreshes carpools for the activity if activityId passed
-    } catch (error) {
-      toast({
-        title: 'Fel',
-        description: error.message || 'Ett fel inträffade vid försök att lägga till deltagare.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  // keep passenger-check, then call hook deleteCarpool
-  const handleDeleteCarpool = async (carpoolId, activityId) => {
-    try {
-      const carpoolResponse = await fetch(`/api/carpool/${carpoolId}/passengers`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const carpoolData = await carpoolResponse.json();
-      if (carpoolData.passengers && carpoolData.passengers.length > 0) {
-        const confirmDelete = window.confirm("Samåkningen har passagerare! Är du säker på att du vill ta bort?");
-        if (!confirmDelete) return;
-      }
-
-      await deleteCarpool(carpoolId, activityId);
-
-      toast({
-        title: 'Samåkning borttagen',
-        description: 'Samåkning borttagen!',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-
-      // myActivities will update via the activities -> myActivities effect
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Kan inte ta bort samåkning',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const openCarpoolModal = (activityId) => {
-    const activity = activities.find(a => a.activity_id === activityId);
-    setSelectedActivity(activity);
-    setSelectedActivityId(activityId);
-    onOpen();
-  };
-
   const toggleUpcomingCarpool = (index) => {
     setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
-  };
-
-  const toggleMyCarpool = (index) => {
-    setOpenMyCarpoolIndex(openMyCarpoolIndex === index ? null : index);
-  };
-
-  const toggleCarpool = (index, activityId) => {
-    const isInMyActivities = myActivities.some(activity => activity.activity_id === activityId);
-
-    if (isInMyActivities) {
-      const myActivityIndex = myActivities.findIndex(activity => activity.activity_id === activityId);
-      toggleMyCarpool(myActivityIndex);
-    } else {
-      setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
-    }
-
-    fetchCarpoolsForActivity(activityId).catch((e) => console.error(e));
   };
 
   const translateCarpoolType = (type) => {
@@ -300,11 +302,6 @@ const DashBoardParent = ({ token }) => {
 
   const handleLoadMore = () => {
     setVisibleActivitiesCount(visibleActivitiesCount + 10);
-  };
-
-  const openChatModal = (carpoolId) => {
-    setSelectedCarpoolId(carpoolId);
-    openChat(carpoolId);
   };
 
   if (userLoading) return <LoadingState message="Laddar..." />;
