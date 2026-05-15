@@ -227,6 +227,11 @@ const DashBoardParent = ({ token }) => {
           ...(participant.type === 'user' ? { add_self: true } : { child_id: participant.id }),
         };
         await addPassenger(payload, selectedActivityId);
+
+        if (selectedCarpoolId) {
+          await refreshCarpoolJoinedStatus(selectedCarpoolId);
+        }
+
         toast({
           title: 'Samåkning uppdaterad',
           description: `${participant.name} har lagts till i samåkningen!`,
@@ -245,7 +250,7 @@ const DashBoardParent = ({ token }) => {
         });
       }
     },
-    [addPassenger, selectedActivityId, selectedCarpoolId]
+    [addPassenger, refreshCarpoolJoinedStatus, selectedActivityId, selectedCarpoolId]
   );
 
   useEffect(() => {
@@ -366,7 +371,7 @@ const DashBoardParent = ({ token }) => {
               <ActivityList
                 activities={activitiesForMyActivities}
                 openIndex={openMyCarpoolIndex}
-                onToggle={(index) => toggleMyCarpool(index)}
+                onToggle={toggleMyCarpool}
                 onOpenCarpoolModal={openCarpoolModal}
                 fetchingCarpools={fetchingCarpools}
                 roleColors={roleColors}
@@ -489,7 +494,7 @@ const DashBoardParent = ({ token }) => {
                     activityId={selectedActivityId}
                     onClose={onClose}
                     activity={selectedActivity}
-                    onCarpoolCreated={() => fetchCarpoolsForActivity(selectedActivityId)}
+                    onCarpoolCreated={() => fetchCarpoolsForActivity(selectedActivityId, { force: true })}
                   />
                 )}
               </ModalBody>

@@ -122,7 +122,6 @@ export default function useActivities() {
         body: JSON.stringify(payload),
       });
       if (!resp.ok) throw new Error('Failed to add passenger');
-      // refresh carpools for the activity (force)
       if (activityId) await fetchCarpoolsForActivity(activityId, { force: true });
       return await resp.json();
     } catch (err) {
