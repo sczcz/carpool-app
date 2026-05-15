@@ -24,18 +24,19 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  IconButton, 
-  Popover, 
+  IconButton,
+  Popover,
   PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
 import { format, parseISO } from 'date-fns';
-import { sv } from 'date-fns/locale'
+import { sv } from 'date-fns/locale';
 import { useUser } from '../utils/UserContext';
 import { useCarpool } from '../utils/CarpoolContext';
 import roleColors from '../utils/roleColors';
+import useActivities from '../hooks/useActivities';
 import CarpoolComponent from './CarPoolComponent';
 import AddChildModal from './AddChildModal';
-import SelectParticipantModal from './SelectParticipantModal'
+import SelectParticipantModal from './SelectParticipantModal';
 import DashboardHeader from './DashboardHeader';
 import FiltersBar from './FiltersBar';
 import ActivityList from './ActivityList';
@@ -46,9 +47,6 @@ import ErrorState from './ErrorState';
 
 const DashBoardParent = ({ token }) => {
   const {
-    activities,
-    setActivities,
-    fetchCarpoolsForActivity,
     selectedActivity,
     setSelectedActivity,
     selectedCarpool,
@@ -61,15 +59,28 @@ const DashBoardParent = ({ token }) => {
     setSelectedCarpoolId,
     isChatOpen,
   } = useCarpool();
-  const { userId, fullName, loading } = useUser();
+
+  const { userId, fullName, loading: userLoading } = useUser();
+
+  // Activities hook
+  const {
+    activities,
+    setActivities,
+    fetchActivities,
+    fetchCarpoolsForActivity,
+    checkIfAllChildrenJoined,
+    deleteCarpool,
+    addPassenger,
+    selectJoin,
+    loading: activitiesLoading,
+    error: activitiesError,
+    fetchingCarpools 
+  } = useActivities();
+
   const [myActivities, setMyActivities] = useState([]);
-  const [activityLoading, setActivityLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [openCarpoolIndex, setOpenCarpoolIndex] = useState(null);
   const [openMyCarpoolIndex, setOpenMyCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
-  const [fetchingCarpools, setFetchingCarpools] = useState(false);
-  const [fetchedCarpools, setFetchedCarpools] = useState(new Set());
   const [selectedActivityId, setSelectedActivityId] = useState(null);
   const [joinedChildrenInCarpool, setJoinedChildrenInCarpool] = useState({});
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -78,6 +89,7 @@ const DashBoardParent = ({ token }) => {
   const [filterByRole, setFilterByRole] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [participants, setParticipants] = useState([]);
+  const [loadingJoinState, setLoadingJoinState] = useState({});
 
   const isInMyActivities = (activity) => {
     return activity.carpools?.some((carpool) => {
@@ -91,10 +103,9 @@ const DashBoardParent = ({ token }) => {
       return isDriver || hasSelfAsPassenger || hasChildAsPassenger;
     });
   };
-  
 
   const activitiesForUpcoming = activities.filter(activity => !isInMyActivities(activity));
-  const activitiesForMyActivities = activities.filter((activity) => 
+  const activitiesForMyActivities = activities.filter((activity) =>
     Array.isArray(activity.carpools) && isInMyActivities(activity)
   );
 
@@ -111,112 +122,46 @@ const DashBoardParent = ({ token }) => {
         return isDriver || hasSelfAsPassenger || hasChildAsPassenger;
       })
     );
-  
+
     setMyActivities(updatedMyActivities);
   }, [activities, userId]);
-  
 
   useEffect(() => {
-    if (!loading && !userId) {
+    if (!userLoading && !userId) {
       window.location.href = '/';
     }
-  }, [loading, userId]);
+  }, [userLoading, userId]);
 
+  // Fetch activities when user is ready or filter changes
   useEffect(() => {
-    if (userId && !loading) {
-      fetchActivities();
+    if (userId && !userLoading) {
+      fetchActivities(filterByRole).catch((e) => {
+        // fetchActivities already sets error inside hook
+        console.error('fetchActivities failed', e);
+      });
     }
-  }, [userId, loading]);
+  }, [userId, userLoading, filterByRole, fetchActivities]);
 
+  // initialize joinedChildrenInCarpool using hook checkIfAllChildrenJoined
   useEffect(() => {
-    setMyActivities(activities.filter(activity => isInMyActivities(activity)));
-  }, [activities]);
-  
-  const fetchActivities = async () => {
-    setActivityLoading(true);
-    try {
-      const apiEndpoint = filterByRole
-        ? '/api/protected/activity/by_role'
-        : '/api/protected/activity/no_role';
-  
-      const response = await fetch(apiEndpoint, { credentials: 'include' });
-      const data = await response.json();
-  
-      const sortedActivities = data.events.sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
-  
-      const activitiesWithCarpools = await Promise.all(
-        sortedActivities.map(async (activity) => {
-          try {
-            const carpoolResponse = await fetch(`/api/carpool/list?activity_id=${activity.activity_id}`, {
-              credentials: 'include',
-            });
-            const carpoolData = await carpoolResponse.json();
-            return { ...activity, carpools: carpoolData.carpools || [] };
-          } catch (error) {
-            console.error(`Error fetching carpools for activity ${activity.activity_id}:`, error);
-            return { ...activity, carpools: [] };
+    const init = async () => {
+      const joinedStatus = {};
+      for (const activity of activities) {
+        if (activity.carpools) {
+          for (const carpool of activity.carpools) {
+            try {
+              const allChildrenJoined = await checkIfAllChildrenJoined(carpool.id);
+              joinedStatus[carpool.id] = { allJoined: allChildrenJoined };
+            } catch (e) {
+              joinedStatus[carpool.id] = { allJoined: false };
+            }
           }
-        })
-      );
-  
-      setActivities(activitiesWithCarpools);
-    } catch (err) {
-      console.error('Error fetching activities:', err);
-      setError(err.message);
-    } finally {
-      setActivityLoading(false);
-    }
-  };
-  
-  useEffect(() => {
-    fetchActivities();
-  }, [filterByRole]);
-  
-  
-
-  const toggleUpcomingCarpool = (index) => {
-    setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
-  };
-
-  const toggleMyCarpool = (index) => {
-    setOpenMyCarpoolIndex(openMyCarpoolIndex === index ? null : index);
-  };
-  
-  const [loadingJoinState, setLoadingJoinState] = useState({});
-  
-  useEffect(() => {
-    if (activities.length > 0) {
-      initializeJoinedChildrenState();
-    }
-  }, [activities]);
-  
-  const initializeJoinedChildrenState = async () => {
-    const joinedStatus = {};
-    for (const activity of activities) {
-      if (activity.carpools) {
-        for (const carpool of activity.carpools) {
-          const allChildrenJoined = await checkIfAllChildrenJoined(carpool.id);
-          joinedStatus[carpool.id] = { allJoined: allChildrenJoined };
         }
       }
-    }
-    setJoinedChildrenInCarpool(joinedStatus);
-  };
-
-  const checkIfAllChildrenJoined = async (carpoolId) => {
-    try {
-      const response = await fetch(`/api/carpool/all-children-joined?carpool_id=${carpoolId}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const data = await response.json();
-      return response.ok && data.all_children_joined && data.user_already_joined;
-    } catch (error) {
-      console.error('Error:', error);
-      return false;
-    }
-  };
+      setJoinedChildrenInCarpool(joinedStatus);
+    };
+    if (activities.length > 0) init();
+  }, [activities, checkIfAllChildrenJoined]);
 
   const handleCarpoolClick = (activity, carpool) => {
     setSelectedActivity(activity);
@@ -229,18 +174,10 @@ const DashBoardParent = ({ token }) => {
     window.location.reload();
   };
 
+  // replaced: use selectJoin (hook) to fetch participants
   const handleJoinCarpool = async (carpoolId, activityId) => {
     try {
-      const response = await fetch(`/api/carpool/select-join?carpool_id=${carpoolId}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-  
-      if (!response.ok) {
-        throw new Error('Misslyckades med att hämta deltagare.');
-      }
-  
-      const participantsData = await response.json();
+      const participantsData = await selectJoin(carpoolId);
       setParticipants(participantsData);
       setSelectedCarpoolId(carpoolId);
       setSelectedActivityId(activityId);
@@ -255,24 +192,15 @@ const DashBoardParent = ({ token }) => {
       });
     }
   };
-  
 
+  // replaced: use addPassenger (hook)
   const handleParticipantSelect = async (participant) => {
     try {
-      const response = await fetch(`/api/carpool/add-passenger`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          carpool_id: selectedCarpoolId,
-          ...(participant.type === 'user'
-            ? { add_self: true }
-            : { child_id: participant.id }),
-        }),
-      });
-  
-      if (!response.ok) throw new Error('Misslyckades med att lägga till deltagare.');
-  
+      const payload = {
+        carpool_id: selectedCarpoolId,
+        ...(participant.type === 'user' ? { add_self: true } : { child_id: participant.id })
+      };
+      await addPassenger(payload, selectedActivityId);
       toast({
         title: 'Samåkning uppdaterad',
         description: `${participant.name} har lagts till i samåkningen!`,
@@ -280,9 +208,8 @@ const DashBoardParent = ({ token }) => {
         duration: 5000,
         isClosable: true,
       });
-  
       setIsModalOpen(false);
-      fetchCarpoolsForActivity(selectedActivityId);
+      // hook addPassenger already refreshes carpools for the activity if activityId passed
     } catch (error) {
       toast({
         title: 'Fel',
@@ -293,10 +220,8 @@ const DashBoardParent = ({ token }) => {
       });
     }
   };
-  
 
-  
-
+  // keep passenger-check, then call hook deleteCarpool
   const handleDeleteCarpool = async (carpoolId, activityId) => {
     try {
       const carpoolResponse = await fetch(`/api/carpool/${carpoolId}/passengers`, {
@@ -304,24 +229,14 @@ const DashBoardParent = ({ token }) => {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
-  
       const carpoolData = await carpoolResponse.json();
-  
       if (carpoolData.passengers && carpoolData.passengers.length > 0) {
-        const confirmDelete = window.confirm(
-          "Samåkningen har passagerare! Är du säker på att du vill ta bort?"
-        );
+        const confirmDelete = window.confirm("Samåkningen har passagerare! Är du säker på att du vill ta bort?");
         if (!confirmDelete) return;
       }
-  
-      const response = await fetch(`/api/carpool/${carpoolId}/delete`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-  
-      if (!response.ok) throw new Error('Failed to delete carpool');
-  
+
+      await deleteCarpool(carpoolId, activityId);
+
       toast({
         title: 'Samåkning borttagen',
         description: 'Samåkning borttagen!',
@@ -329,31 +244,8 @@ const DashBoardParent = ({ token }) => {
         duration: 5000,
         isClosable: true,
       });
-  
-      setMyActivities((prevActivities) =>
-        prevActivities
-          .map((activity) =>
-            activity.activity_id === activityId
-              ? {
-                  ...activity,
-                  carpools: activity.carpools.filter((carpool) => carpool.id !== carpoolId),
-                }
-              : activity
-          )
-          .filter((activity) => activity.carpools.length > 0)
-      );
-  
-      setActivities((prevActivities) =>
-        prevActivities.map((activity) =>
-          activity.activity_id === activityId
-            ? {
-                ...activity,
-                carpools: activity.carpools.filter((carpool) => carpool.id !== carpoolId),
-              }
-            : activity
-        )
-      );
-  
+
+      // myActivities will update via the activities -> myActivities effect
     } catch (error) {
       toast({
         title: 'Error',
@@ -364,29 +256,34 @@ const DashBoardParent = ({ token }) => {
       });
     }
   };
-  
+
   const openCarpoolModal = (activityId) => {
     const activity = activities.find(a => a.activity_id === activityId);
     setSelectedActivity(activity);
     setSelectedActivityId(activityId);
     onOpen();
   };
-  
+
+  const toggleUpcomingCarpool = (index) => {
+    setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
+  };
+
+  const toggleMyCarpool = (index) => {
+    setOpenMyCarpoolIndex(openMyCarpoolIndex === index ? null : index);
+  };
+
   const toggleCarpool = (index, activityId) => {
     const isInMyActivities = myActivities.some(activity => activity.activity_id === activityId);
-  
+
     if (isInMyActivities) {
       const myActivityIndex = myActivities.findIndex(activity => activity.activity_id === activityId);
       toggleMyCarpool(myActivityIndex);
     } else {
       setOpenCarpoolIndex(openCarpoolIndex === index ? null : index);
     }
-  
-    if (!fetchedCarpools.has(activityId)) {
-      fetchCarpoolsForActivity(activityId);
-      setFetchedCarpools((prevSet) => new Set(prevSet).add(activityId));
-    }
-  }; 
+
+    fetchCarpoolsForActivity(activityId).catch((e) => console.error(e));
+  };
 
   const translateCarpoolType = (type) => {
     switch (type) {
@@ -410,9 +307,9 @@ const DashBoardParent = ({ token }) => {
     openChat(carpoolId);
   };
 
-  if (loading) return <LoadingState message="Laddar..." />;
-  if (activityLoading) return <LoadingState message="Laddar aktiviteter..." />;
-  if (error) return <ErrorState message={`Fel vid hämtning av aktiviteter: ${error}`} onRetry={() => { setError(null); fetchActivities(); }} />;
+  if (userLoading) return <LoadingState message="Laddar..." />;
+  if (activitiesLoading) return <LoadingState message="Laddar aktiviteter..." />;
+  if (activitiesError) return <ErrorState message={`Fel vid hämtning av aktiviteter: ${activitiesError}`} onRetry={() => { fetchActivities(filterByRole).catch(()=>{}); }} />;
 
   return (
     <Box p={5}>
@@ -423,9 +320,9 @@ const DashBoardParent = ({ token }) => {
 
           {/* Welcome message */}
           <Box mb={6}>
-          <Text fontSize={{ base: 'md', lg: 'lg' }} color="brand.600">
-            Hej {fullName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
-          </Text>
+            <Text fontSize={{ base: 'md', lg: 'lg' }} color="brand.600">
+              Hej {fullName}, här är din översikt för kommande aktiviteter och samåkningsmöjligheter.
+            </Text>
           </Box>
 
           <FiltersBar
@@ -437,38 +334,38 @@ const DashBoardParent = ({ token }) => {
 
           {myActivities.length > 0 && (
             <Box p={4}
-            bg="blue.50"
-            borderRadius="lg"
-            shadow="md"
-            borderWidth="0px"
-          >
+              bg="blue.50"
+              borderRadius="lg"
+              shadow="md"
+              borderWidth="0px"
+            >
               <Box mb={8} display="flex" alignItems="center">
-              <Heading as="h2" size="md" mb={4} color="gray.700" mt={5} fontWeight="bold">
-              Mina aktiviteter              
-              </Heading>
-              <Popover>
-                <PopoverTrigger>
-                  <IconButton 
-                    icon={<InfoIcon />} 
-                    aria-label="More Info" 
-                    variant="unstyled" 
-                    fontSize={{ base: 'l' }} 
-                    _hover={{ color: "gray.700" }}
-                  />
-                </PopoverTrigger>
-                <PopoverContent>
-                  <PopoverArrow />
-                  <PopoverBody>
-                    <Text mb={2}>
-                    Här kan du se dina bokade samåkningar samt de samåkningar som du har skapat. 
-                    </Text>
-                    <Text>
-                    "Mina aktiviteter" visar både resor du ska delta i och de samåkningar där du erbjuder plats för andra.
-                    </Text>
-                  </PopoverBody>
-                </PopoverContent>
-              </Popover>
-            </Box>
+                <Heading as="h2" size="md" mb={4} color="gray.700" mt={5} fontWeight="bold">
+                  Mina aktiviteter
+                </Heading>
+                <Popover>
+                  <PopoverTrigger>
+                    <IconButton
+                      icon={<InfoIcon />}
+                      aria-label="More Info"
+                      variant="unstyled"
+                      fontSize={{ base: 'l' }}
+                      _hover={{ color: "gray.700" }}
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <PopoverArrow />
+                    <PopoverBody>
+                      <Text mb={2}>
+                        Här kan du se dina bokade samåkningar samt de samåkningar som du har skapat.
+                      </Text>
+                      <Text>
+                        "Mina aktiviteter" visar både resor du ska delta i och de samåkningar där du erbjuder plats för andra.
+                      </Text>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
+              </Box>
               <ActivityList
                 activities={activitiesForMyActivities}
                 openIndex={openMyCarpoolIndex}
@@ -497,11 +394,11 @@ const DashBoardParent = ({ token }) => {
               </Heading>
               <Popover>
                 <PopoverTrigger>
-                <IconButton 
-                    icon={<InfoIcon />} 
-                    aria-label="More Info" 
-                    variant="unstyled" 
-                    fontSize={{ base: 'l' }} 
+                  <IconButton
+                    icon={<InfoIcon />}
+                    aria-label="More Info"
+                    variant="unstyled"
+                    fontSize={{ base: 'l' }}
                     _hover={{ color: "gray.700" }}
                   />
                 </PopoverTrigger>
@@ -517,21 +414,22 @@ const DashBoardParent = ({ token }) => {
             {activities.length === 0 && (
               <VStack spacing={4}>
                 <Box mb={8} display="flex" alignItems="center">
-                <Text fontSize="lg" color="gray.500">Inga aktiviteter hittades. Lägg till barn</Text>
+                  <Text fontSize="lg" color="gray.500">Inga aktiviteter hittades. Lägg till barn</Text>
                   <Popover>
                     <PopoverTrigger>
-                    <IconButton 
-                    icon={<InfoIcon />} 
-                    aria-label="More Info" 
-                    variant="unstyled" 
-                    fontSize={{ base: 'l' }} 
-                    _hover={{ color: "gray.700" }}
-                  />
+                      <IconButton
+                        icon={<InfoIcon />}
+                        aria-label="More Info"
+                        variant="unstyled"
+                        fontSize={{ base: 'l' }}
+                        _hover={{ color: "gray.700" }}
+                      />
                     </PopoverTrigger>
                     <PopoverContent>
                       <PopoverArrow />
                       <PopoverBody>
-                      För att se dina barns aktiviteter måste du först lägga till dem. För att boka in dig själv, klicka på 'Visa alla aktiviteter'.                      </PopoverBody>
+                        För att se dina barns aktiviteter måste du först lägga till dem. För att boka in dig själv, klicka på 'Visa alla aktiviteter'.
+                      </PopoverBody>
                     </PopoverContent>
                   </Popover>
                 </Box>
@@ -589,23 +487,23 @@ const DashBoardParent = ({ token }) => {
               </ModalHeader>
               <ModalCloseButton size={{ base: 'sm', md: 'md' }} />
               <ModalBody p={{ base: 2, md: 4 }} maxH={{ base: '60vh', md: 'none' }} overflowY={{ base: 'auto', md: 'visible' }}>
-              {selectedActivity && (
-              <CarpoolComponent 
-                activityId={selectedActivityId} 
-                onClose={onClose} 
-                activity={selectedActivity}
-                onCarpoolCreated={() => fetchCarpoolsForActivity(selectedActivityId)}
-              />
-            )}
+                {selectedActivity && (
+                  <CarpoolComponent
+                    activityId={selectedActivityId}
+                    onClose={onClose}
+                    activity={selectedActivity}
+                    onCarpoolCreated={() => fetchCarpoolsForActivity(selectedActivityId)}
+                  />
+                )}
               </ModalBody>
             </ModalContent>
           </Modal>
 
           <SelectParticipantModal
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              participants={participants}
-              onSelect={handleParticipantSelect}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            participants={participants}
+            onSelect={handleParticipantSelect}
           />
         </Box>
       </Flex>
