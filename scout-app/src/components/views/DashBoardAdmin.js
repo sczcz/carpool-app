@@ -25,8 +25,8 @@ import {
   Popover, 
   PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody,
 } from "@chakra-ui/react";
-import useRoleProtection from "../utils/useRoleProtection";
-import useAdminUsers from "../hooks/useAdminUsers";
+import useRoleProtection from "../../utils/useRoleProtection";
+import useAdminUsers from "../../hooks/useAdminUsers";
 
 const DashBoardAdmin = () => {
   useRoleProtection(["admin"]);

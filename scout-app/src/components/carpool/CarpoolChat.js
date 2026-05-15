@@ -9,9 +9,9 @@ import {
   HStack,
 } from '@chakra-ui/react';
 import { format, isSameDay } from 'date-fns';
-import socket from '../utils/socket';
-import { useCarpool } from '../utils/CarpoolContext';
-import { useUser } from '../utils/UserContext';
+import socket from '../../utils/socket';
+import { useCarpool } from '../../utils/CarpoolContext';
+import { useUser } from '../../utils/UserContext';
 
 function CarpoolChat() {
   const {

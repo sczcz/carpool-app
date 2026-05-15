@@ -21,11 +21,11 @@ import {
   PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import useRoleProtection from "../utils/useRoleProtection";
-import useLeaderActivities from '../hooks/useLeaderActivities';
-import { translateCarpoolType } from '../utils/carpoolHelper';
-import CreateActivityModal from "./CreateActivityModal";
-import roleColors from '../utils/roleColors';
+import useRoleProtection from "../../utils/useRoleProtection";
+import useLeaderActivities from '../../hooks/useLeaderActivities';
+import { translateCarpoolType } from '../../utils/carpoolHelper';
+import CreateActivityModal from "../modals/CreateActivityModal";
+import roleColors from '../../utils/roleColors';
 
 const Dashboard = ({ token }) => {
   useRoleProtection(["admin", "ledare"]);

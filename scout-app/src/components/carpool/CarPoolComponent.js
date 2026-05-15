@@ -20,7 +20,7 @@ import {
   IconButton,
   Popover, PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody
 } from '@chakra-ui/react';
-import AddCarModal from './AddCarModal';
+import AddCarModal from '../modals/AddCarModal';
 
 
 const CarpoolComponent = ({ activityId, onClose, activity, onCarpoolCreated }) => {

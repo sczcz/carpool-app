@@ -8,7 +8,7 @@ import {
   Image,
   Link,
 } from '@chakra-ui/react';
-import LilyBlueIcon from '../assets/lily-blue.svg';
+import LilyBlueIcon from '../../assets/lily-blue.svg';
 export default function Footer() {
   return (
     <Box

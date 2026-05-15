@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useCarpool } from '../utils/CarpoolContext';
-import { useUser } from '../utils/UserContext';
+import { useCarpool } from '../../utils/CarpoolContext';
+import { useUser } from '../../utils/UserContext';
 import {
   Modal,
   ModalOverlay,
@@ -21,7 +21,7 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { FaFlag, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTrash, FaUser } from 'react-icons/fa';
-import ExpandableText from './ExpandableText';
+import ExpandableText from '../common/ExpandableText';
 import { format, parseISO } from 'date-fns';
 
 const CarpoolDetails = () => {

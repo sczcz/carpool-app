@@ -15,8 +15,8 @@ import {
 } from '@chakra-ui/react';
 import { InfoIcon } from '@chakra-ui/icons';
 import ActivityCard from './ActivityCard';
-import CarpoolList from './CarpoolList';
-import AddChildModal from './AddChildModal';
+import CarpoolList from '../carpool/CarpoolList';
+import AddChildModal from '../modals/AddChildModal';
 
 const UpcomingActivitiesPanel = ({
   activities,

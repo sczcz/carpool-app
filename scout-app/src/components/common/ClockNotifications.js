@@ -18,11 +18,11 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { BellIcon } from '@chakra-ui/icons';
-import { fetchNotifications } from '../utils/notifications';
-import socket from '../utils/socket';
-import { useUser } from '../utils/UserContext';
-import CarpoolChat from './CarpoolChat';
-import { useCarpool } from '../utils/CarpoolContext';
+import { fetchNotifications } from '../../utils/notifications';
+import socket from '../../utils/socket';
+import { useUser } from '../../utils/UserContext';
+import { useCarpool } from '../../utils/CarpoolContext';
+import CarpoolChat from '../carpool/CarpoolChat';
 
 const ClockNotifications = ({ isScrolled }) => {
   const {

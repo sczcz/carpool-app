@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Stack, Flex, Button, Text, VStack, Box, useBreakpointValue, useDisclosure } from '@chakra-ui/react';
 import Login from './Login';
 import Register from './Register';
-import { useUser } from '../utils/UserContext';
+import { useUser } from '../../utils/UserContext';
 
 const Home = () => {
   const { userId, roles, isInitialized } = useUser();

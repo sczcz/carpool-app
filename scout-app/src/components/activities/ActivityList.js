@@ -15,7 +15,7 @@ import {
 import { FaPlus, FaCarSide, FaTrash } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import CarpoolList from './CarpoolList';
+import CarpoolList from '../carpool/CarpoolList';
 
 const ActivityList = ({
   activities = [],

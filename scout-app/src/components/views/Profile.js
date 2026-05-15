@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaPen, FaPlus } from "react-icons/fa";
-import AddChildModal from './AddChildModal';
-import AddCarModal from './AddCarModal';
-import { useUser } from '../utils/UserContext';
+import AddChildModal from '../modals/AddChildModal';
+import AddCarModal from '../modals/AddCarModal';
+import { useUser } from '../../utils/UserContext';
 import {
   Box,
   Checkbox,

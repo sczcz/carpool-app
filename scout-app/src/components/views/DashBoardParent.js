@@ -13,20 +13,20 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
-import { useUser } from '../utils/UserContext';
-import { useCarpool } from '../utils/CarpoolContext';
-import roleColors from '../utils/roleColors';
-import useActivities from '../hooks/useActivities';
-import useCarpoolModal from '../hooks/useCarpoolModal';
-import useJoinedChildren from '../hooks/useJoinedChildren';
-import CarpoolComponent from './CarPoolComponent';
-import SelectParticipantModal from './SelectParticipantModal';
-import DashboardHeader from './DashboardHeader';
-import FiltersBar from './FiltersBar';
-import MyActivitiesPanel from './MyActivitiesPanel';
-import UpcomingActivitiesPanel from './UpcomingActivitiesPanel';
-import LoadingState from './LoadingState';
-import ErrorState from './ErrorState';
+import { useUser } from '../../utils/UserContext';
+import { useCarpool } from '../../utils/CarpoolContext';
+import roleColors from '../../utils/roleColors';
+import useActivities from '../../hooks/useActivities';
+import useCarpoolModal from '../../hooks/useCarpoolModal';
+import useJoinedChildren from '../../hooks/useJoinedChildren';
+import CarpoolComponent from '../carpool/CarPoolComponent';
+import SelectParticipantModal from '../modals/SelectParticipantModal';
+import DashboardHeader from '../layout/DashboardHeader';
+import FiltersBar from '../activities/FiltersBar';
+import MyActivitiesPanel from '../activities/MyActivitiesPanel';
+import UpcomingActivitiesPanel from '../activities/UpcomingActivitiesPanel';
+import LoadingState from '../common/LoadingState';
+import ErrorState from '../common/ErrorState';
 
 const DashBoardParent = () => {
   const {

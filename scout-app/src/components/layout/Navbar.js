@@ -1,4 +1,5 @@
-import React, { useEffect, useState, navigate } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaArrowRight, FaSignOutAlt } from 'react-icons/fa';
 import { Menu, MenuButton, MenuList, MenuItem, Avatar, useMediaQuery } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
@@ -18,12 +19,12 @@ import {
   CloseButton,
 } from '@chakra-ui/react';
 import { HamburgerIcon } from '@chakra-ui/icons';
-import Login from './Login';
-import Register from './Register';
-import LilyWhiteIcon from '../assets/lily-white.svg'; 
-import LilyBlueIcon from '../assets/lily-blue.svg';
-import ClockNotifications from './ClockNotifications';
-import { useUser } from '../utils/UserContext';
+import Login from '../views/Login';
+import Register from '../views/Register';
+import LilyWhiteIcon from '../../assets/lily-white.svg'; 
+import LilyBlueIcon from '../../assets/lily-blue.svg';
+import ClockNotifications from '../common/ClockNotifications';
+import { useUser } from '../../utils/UserContext';
 
 const Navbar = () => {
   const { roles, isInitialized, clearUserData, userId } = useUser();
@@ -33,8 +34,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const links = [];
   const isMobile = useMediaQuery("(max-width: 767px)");
-
-
+  const navigate = useNavigate();
 
   const addLink = (to, label) => {
     if (!links.some(link => link.to === to)) {

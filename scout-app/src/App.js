@@ -2,19 +2,19 @@ import { React, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider, useUser } from './utils/UserContext';
 import { CarpoolProvider, useCarpool } from './utils/CarpoolContext';
-import Navbar from './components/Navbar';
-import Home from './components/Home';
-import DashBoardAdmin from './components/DashBoardAdmin';
-import DashBoardLeader from './components/DashBoardLeader';
-import DashBoardParent from './components/DashBoardParent'; 
-import CarpoolDetails from './components/CarpoolDetails';
-import CarpoolChat from './components/CarpoolChat';
-import Profile from './components/Profile'; 
-import Footer from './components/Footer';
-import ResetPassword from './components/ResetPassword';
-import Error404 from './components/Error404';
-import Error500 from './components/Error500';
-import Information from './components/Information';
+import Navbar from './components/layout/Navbar';
+import Home from './components/views/Home';
+import DashBoardAdmin from './components/views/DashBoardAdmin';
+import DashBoardLeader from './components/views/DashBoardLeader';
+import DashBoardParent from './components/views/DashBoardParent'; 
+import CarpoolDetails from './components/carpool/CarpoolDetails';
+import CarpoolChat from './components/carpool/CarpoolChat';
+import Profile from './components/views/Profile'; 
+import Footer from './components/layout/Footer';
+import ResetPassword from './components/views/ResetPassword';
+import Error404 from './components/views/Error404';
+import Error500 from './components/views/Error500';
+import Information from './components/views/Information';
 import { 
   Box, 
   Modal, 
