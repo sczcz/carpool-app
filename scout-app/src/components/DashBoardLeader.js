@@ -22,153 +22,32 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import useRoleProtection from "../utils/useRoleProtection";
+import useLeaderActivities from '../hooks/useLeaderActivities';
+import { translateCarpoolType } from '../utils/carpoolHelper';
 import CreateActivityModal from "./CreateActivityModal";
+import roleColors from '../utils/roleColors';
 
 const Dashboard = ({ token }) => {
   useRoleProtection(["admin", "ledare"]);
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const toast = useToast();
+  const {
+    activities,
+    loading,
+    error,
+    fetchingCarpools,
+    fetchActivities,
+    fetchCarpoolsForActivity,
+    toggleActivityVisibility,
+  } = useLeaderActivities(toast);
+
   const [openActivityId, setOpenActivityId] = useState(null);
   const [visibleCount, setVisibleCount] = useState(3);
-  const [fetchingCarpools, setFetchingCarpools] = useState(false);
   const [selectedRole, setSelectedRole] = useState('Alla roller');
-  const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-
-  const roleColors = {
-    tumlare: '#41a62a',
-    kutar: '#71c657',     
-    upptäckare: '#00a8e1', 
-    äventyrare: '#e95f13', 
-    utmanare: '#da005e',   
-    rover: '#e2e000',
-    vuxenscout: '#5353ec',
-    ledare: '#003660'        
-  };
 
   useEffect(() => {
     fetchActivities();
-  }, [token]);
-
-  const fetchActivities = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/protected/activity/all', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error('Något gick fel vid hämtning av aktiviteter');
-      }
-  
-      const data = await response.json();
-      const sortedActivities = data.events
-        .map((activity) => ({
-          ...activity,
-          isVisible: activity.is_visible,
-        }))
-        .sort((a, b) => new Date(a.dtstart) - new Date(b.dtstart));
-      setActivities(sortedActivities);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const translateCarpoolType = (type) => {
-    switch (type) {
-      case 'drop-off':
-        return 'Avresa';
-      case 'pick-up':
-        return 'Hemresa';
-      case 'both':
-        return 'Avresa & Hemresa';
-      default:
-        return 'Okänd';
-    }
-  };
-
-  const fetchCarpoolsForActivity = async (activityId) => {
-    setFetchingCarpools(true);
-    try {
-      const response = await fetch(`/api/carpool/list?activity_id=${activityId}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        setActivities((prevActivities) =>
-          prevActivities.map((activity) => {
-            if (activity.activity_id === activityId) {
-              return { ...activity, carpools: data.carpools };
-            }
-            return activity;
-          })
-        );
-      } else {
-        throw new Error('Misslyckades med att hämta samåkningar');
-      }
-    } catch (error) {
-      toast({
-        title: 'Fel vid hämtning av samåkningar.',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setFetchingCarpools(false);
-    }
-  };
-
-  const toggleActivityVisibility = async (activityId, isVisible) => {
-    const endpoint = isVisible
-      ? `/api/protected/activity/remove/${activityId}`
-      : `/api/protected/activity/make_visible/${activityId}`;
-    try {
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Misslyckades med att uppdatera aktivitetens synlighet');
-      }
-
-      setActivities((prevActivities) =>
-        prevActivities.map((activity) =>
-          activity.activity_id === activityId
-            ? { ...activity, isVisible: !isVisible }
-            : activity
-        )
-      );
-
-      toast({
-        title: `Aktiviteten har nu blivit ${!isVisible ? 'synlig' : 'dold'}.`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: 'Ett fel uppstod vid ändring av synligheten.',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
+  }, [fetchActivities]);
 
   const toggleActivity = (activityId) => {
     setOpenActivityId(openActivityId === activityId ? null : activityId);
@@ -195,6 +74,10 @@ const Dashboard = ({ token }) => {
 
   const uniqueRoles = [...new Set(activities.map(activity => activity.scout_level))];
 
+  const handleActivityCreated = () => {
+    fetchActivities();
+  };
+
   if (loading) {
     return (
       <VStack>
@@ -208,14 +91,10 @@ const Dashboard = ({ token }) => {
     return (
       <VStack>
         <Text color="red.500">Fel vid hämtning av aktiviteter: {error}</Text>
-        <Button onClick={() => { setError(null); fetchActivities(); }} colorScheme="blue">Försök igen</Button>
+        <Button onClick={() => { fetchActivities(); }} colorScheme="blue">Försök igen</Button>
       </VStack>
     );
   }
-
-  const handleActivityCreated = () => {
-    fetchActivities();
-  };
 
   return (
   <Flex direction="column" align="center" justify="center" p={4} width="100%" overflowX="hidden">
@@ -460,9 +339,6 @@ const Dashboard = ({ token }) => {
       </Grid>
     </Flex>
   );
-
- 
 };
 
 export default Dashboard;
-

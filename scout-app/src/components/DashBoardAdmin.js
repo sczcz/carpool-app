@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
 import { InfoIcon } from '@chakra-ui/icons';
-import { FaTrash, FaCarSide} from 'react-icons/fa';
+import { FaTrash } from 'react-icons/fa';
+import { useState } from 'react';
+import { useRef } from 'react';
 import {
   AlertDialog,
   AlertDialogBody,
@@ -22,281 +23,88 @@ import {
   useToast,
   IconButton, 
   Popover, 
-  PopoverTrigger, PopoverContent, PopoverArrow, PopoverCloseButton, PopoverBody,
+  PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody,
 } from "@chakra-ui/react";
-import { useUser } from "../utils/UserContext";
 import useRoleProtection from "../utils/useRoleProtection";
+import useAdminUsers from "../hooks/useAdminUsers";
 
 const DashBoardAdmin = () => {
   useRoleProtection(["admin"]);
-  const { isInitialized, fetchUserData, hasRole } = useUser();
-  const [unacceptedUsers, setUnacceptedUsers] = useState([]);
   const toast = useToast();
-  const navigate = useNavigate();
-  const [allUsers, setAllUsers] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
   const cancelRef = useRef();
+  const [filter, setFilter] = useState("");
+
+  const {
+    unacceptedUsers,
+    allUsers,
+    isDeleteDialogOpen,
+    userToDelete,
+    fetchUnacceptedUsers,
+    fetchAllUsers,
+    openDeleteDialog,
+    closeDeleteDialog,
+    promoteToAdmin,
+    acceptUser,
+    confirmDeleteUser,
+    clearOldActivities,
+  } = useAdminUsers(toast);
 
   const buttonSize = useBreakpointValue({ base: "sm", md: "md" });
 
-  const openDeleteDialog = (userId) => {
-    setUserToDelete(userId);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const closeDeleteDialog = () => {
-    setIsDeleteDialogOpen(false);
-    setUserToDelete(null);
-  };
-
-  const promoteToAdmin = (userId) => {
-    fetch('/api/admin/make-admin', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ id: userId }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.message) {
-          setAllUsers((prevUsers) =>
-            prevUsers.map((user) =>
-              user.id === userId
-                ? { ...user, roles: [...user.roles, 'admin'] }
-                : user
-            )
-          );
-          toast({
-            title: 'Uppgradering lyckades',
-            description: data.message,
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-          });
-        } else if (data.error) {
-          toast({
-            title: 'Fel vid uppgradering',
-            description: data.error,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-        }
-      })
-      .catch((err) =>
-        toast({
-          title: 'Serverfel',
-          description: err.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        })
-      );
-  };
-
-
   useEffect(() => {
-    fetch('/api/users/all', {
-      method: 'GET',
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setAllUsers(data);
-        } else {
-          console.error('Data från backend är inte en array:', data);
-        }
-      })
-      .catch((err) =>
-        toast({
-          title: 'Fel vid hämtning av användare',
-          description: err.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        })
-      );
-  }, [toast]);
+    fetchUnacceptedUsers();
+    fetchAllUsers();
+  }, [fetchUnacceptedUsers, fetchAllUsers]);
 
-  useEffect(() => {
-    fetch('/api/admin/unaccepted-users', {
-      method: 'GET',
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.unaccepted_users) {
-          setUnacceptedUsers(data.unaccepted_users);
-        }
-      })
-      .catch((err) =>
-        toast({
-          title: 'Fel vid hämtning av användare',
-          description: err.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        })
-      );
-  }, [toast]);
-
-  const acceptUser = (userId) => {
-    fetch('/api/admin/accept-user', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ user_id: userId }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.message) {
-          setUnacceptedUsers((prev) => prev.filter((user) => user.id !== userId));
-          toast({
-            title: 'Användare accepterad',
-            description: data.message,
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-          });
-        }
-      })
-      .catch((err) =>
-        toast({
-          title: 'Fel vid accepterande av användare',
-          description: err.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        })
-      );
+  const handleDeleteConfirm = () => {
+    if (userToDelete) {
+      confirmDeleteUser(userToDelete);
+    }
   };
-
-  const confirmDeleteUser = () => {
-    if (!userToDelete) return;
-
-    fetch(`/api/admin/delete-user/${userToDelete}`, {
-      method: "DELETE",
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.message) {
-          setUnacceptedUsers((prev) =>
-            prev.filter((user) => user.id !== userToDelete)
-          );
-          setAllUsers((prev) =>
-            prev.filter((user) => user.id !== userToDelete)
-          );
-          toast({
-            title: "Användare borttagen",
-            description: data.message,
-            status: "success",
-            duration: 5000,
-            isClosable: true,
-          });
-        }
-        closeDeleteDialog();
-      })
-      .catch((err) =>
-        toast({
-          title: "Fel vid borttagning av användare",
-          description: err.message,
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        })
-      );
-  };
-
-  const clearOldActivities = () => {
-    fetch('/api/admin/cleanup-activities', {
-      method: 'DELETE',
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.message) {
-          const { deleted_activities, deleted_carpools, deleted_passengers } = data;
-          toast({
-            title: 'Rensning klar',
-            description: `${data.message}\nAktiviteter: ${deleted_activities}, Samåkningar: ${deleted_carpools}, Passagerare: ${deleted_passengers}`,
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-          });
-        } else if (data.error) {
-          toast({
-            title: 'Fel vid rensning',
-            description: data.error,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-        }
-      })
-      .catch((err) =>
-        toast({
-          title: 'Serverfel',
-          description: err.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        })
-      );
-  };
-
 
   return (
     <Box width="100%" maxW="1200px" mx="auto" p={[4, 6]}>
       {/* Page Heading */}
       <Box mb={8} display="flex" alignItems="center">
-        <Heading  as="h1" size="xl" textAlign={["center", "left"]}>
+        <Heading as="h1" size="xl" textAlign={["center", "left"]}>
           Administratör
         </Heading>
         <Popover>
-        <PopoverTrigger>
-          <IconButton 
-            icon={<InfoIcon />} 
-            aria-label="Mer information" 
-            variant="unstyled" 
-            fontSize={{ base: 'l' }} 
-            _hover={{ color: "gray.700" }}
-          />
-        </PopoverTrigger>
-        <PopoverContent>
-          <PopoverArrow />
-          <PopoverBody>
-            <Text mb={2}>
-              Här kan du som administratör hantera användare och aktiviteter på plattformen.
-            </Text>
-            
-            <Text mb={2}>
-              Du kan godkänna eller ta bort användare som väntar på godkännande.
-            </Text>
-            
-            <Text mb={2}>
-              För varje användare kan du också visa detaljer som deras roller, senaste inloggning och deras kontaktuppgifter.
-            </Text>
-            
-            <Text mb={2}>
-              Du har även möjlighet att befordra Ledare till adminstatus eller ta bort dem från plattformen.
-            </Text>
-            
-            <Text>
-              På dashboarden kan du även filtrera användare baserat på deras roller för att enkelt hantera dem, samt visa och hantera de aktiviteter som du är ansvarig för.
-            </Text>
-          </PopoverBody>
-        </PopoverContent>
-      </Popover>
-
-            </Box>
+          <PopoverTrigger>
+            <IconButton 
+              icon={<InfoIcon />} 
+              aria-label="Mer information" 
+              variant="unstyled" 
+              fontSize={{ base: 'l' }} 
+              _hover={{ color: "gray.700" }}
+            />
+          </PopoverTrigger>
+          <PopoverContent>
+            <PopoverArrow />
+            <PopoverBody>
+              <Text mb={2}>
+                Här kan du som administratör hantera användare och aktiviteter på plattformen.
+              </Text>
+              
+              <Text mb={2}>
+                Du kan godkänna eller ta bort användare som väntar på godkännande.
+              </Text>
+              
+              <Text mb={2}>
+                För varje användare kan du också visa detaljer som deras roller, senaste inloggning och deras kontaktuppgifter.
+              </Text>
+              
+              <Text mb={2}>
+                Du har även möjlighet att befordra Ledare till adminstatus eller ta bort dem från plattformen.
+              </Text>
+              
+              <Text>
+                På dashboarden kan du även filtrera användare baserat på deras roller för att enkelt hantera dem, samt visa och hantera de aktiviteter som du är ansvarig för.
+              </Text>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+      </Box>
 
       {/* Pending User Approvals Section */}
       <Box mb={[6, 12]}>
@@ -318,7 +126,7 @@ const DashBoardAdmin = () => {
             gridAutoFlow="column"
             gap="16px"
           >
-            {unacceptedUsers.map((user, idx) => (
+            {unacceptedUsers.map((user) => (
               <Card
                 key={user.id}
                 shadow="md"
@@ -367,34 +175,33 @@ const DashBoardAdmin = () => {
               </Card>
             ))}
 
-          <AlertDialog
-            isOpen={isDeleteDialogOpen}
-            leastDestructiveRef={cancelRef}
-            onClose={closeDeleteDialog}
-          >
-            <AlertDialogOverlay>
-              <AlertDialogContent>
-                <AlertDialogHeader>Bekräfta borttagning</AlertDialogHeader>
-                <AlertDialogBody>
-                  Detta raderar användarkontot samt all data kopplad till denne. Är du
-                  säker?
-                </AlertDialogBody>
-                <AlertDialogFooter>
-                  <Button ref={cancelRef} onClick={closeDeleteDialog}>
-                    Avbryt
-                  </Button>
-                  <Button
-                    colorScheme="red"
-                    onClick={confirmDeleteUser}
-                    ml={3}
-                  >
-                    Radera
-                  </Button>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialogOverlay>
-          </AlertDialog>
-
+            <AlertDialog
+              isOpen={isDeleteDialogOpen}
+              leastDestructiveRef={cancelRef}
+              onClose={closeDeleteDialog}
+            >
+              <AlertDialogOverlay>
+                <AlertDialogContent>
+                  <AlertDialogHeader>Bekräfta borttagning</AlertDialogHeader>
+                  <AlertDialogBody>
+                    Detta raderar användarkontot samt all data kopplad till denne. Är du
+                    säker?
+                  </AlertDialogBody>
+                  <AlertDialogFooter>
+                    <Button ref={cancelRef} onClick={closeDeleteDialog}>
+                      Avbryt
+                    </Button>
+                    <Button
+                      colorScheme="red"
+                      onClick={handleDeleteConfirm}
+                      ml={3}
+                    >
+                      Radera
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialogOverlay>
+            </AlertDialog>
           </Box>
         </Box>
       </Box>
@@ -436,9 +243,9 @@ const DashBoardAdmin = () => {
             {Array.isArray(allUsers) &&
               allUsers
                 .filter((user) => (filter ? user.roles.includes(filter) : true))
-                .map((user, idx) => (
+                .map((user) => (
                   <Card
-                    key={idx}
+                    key={user.id}
                     shadow="md"
                     borderWidth="1px"
                     borderRadius="lg"
@@ -487,7 +294,6 @@ const DashBoardAdmin = () => {
                             Gör Admin
                           </Button>
                         )}
-
                       </HStack>
                     </CardFooter>
                   </Card>
@@ -495,6 +301,8 @@ const DashBoardAdmin = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* Cleanup section */}
       <Box mt={8} textAlign="center">
         <HStack justify="flex-start" spacing={4}>
           <Button
@@ -535,8 +343,6 @@ const DashBoardAdmin = () => {
         </HStack>
       </Box>
     </Box>
-
-  
   );
 };
 
