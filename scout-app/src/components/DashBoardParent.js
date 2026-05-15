@@ -26,6 +26,7 @@ import { useUser } from '../utils/UserContext';
 import { useCarpool } from '../utils/CarpoolContext';
 import roleColors from '../utils/roleColors';
 import useActivities from '../hooks/useActivities';
+import useCarpoolModal from '../hooks/useCarpoolModal';
 import useJoinedChildren from '../hooks/useJoinedChildren';
 import CarpoolComponent from './CarPoolComponent';
 import AddChildModal from './AddChildModal';
@@ -70,20 +71,30 @@ const DashBoardParent = ({ token }) => {
     fetchingCarpools 
   } = useActivities();
 
+  const { joinedChildrenInCarpool, refreshCarpoolJoinedStatus, setJoinedChildrenInCarpool } =
+    useJoinedChildren(activities, checkIfAllChildrenJoined);
+
+  const {
+    participants,
+    isModalOpen,
+    loadingJoinState,
+    openJoinModal,
+    closeJoinModal,
+    handleParticipantSelect,
+  } = useCarpoolModal({
+    selectJoin,
+    addPassenger,
+    refreshCarpoolJoinedStatus,
+  });
   const [myActivities, setMyActivities] = useState([]);
   const [openCarpoolIndex, setOpenCarpoolIndex] = useState(null);
   const [openMyCarpoolIndex, setOpenMyCarpoolIndex] = useState(null);
   const [visibleActivitiesCount, setVisibleActivitiesCount] = useState(10);
   const [selectedActivityId, setSelectedActivityId] = useState(null);
-  const { joinedChildrenInCarpool, refreshCarpoolJoinedStatus, setJoinedChildrenInCarpool } =
-  useJoinedChildren(activities, checkIfAllChildrenJoined);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
   const { isOpen: isAddChildOpen, onOpen: openAddChildModal, onClose: closeAddChildModal } = useDisclosure();
   const [filterByRole, setFilterByRole] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [participants, setParticipants] = useState([]);
-  const [loadingJoinState, setLoadingJoinState] = useState({});
 
   const isInMyActivities = (activity) => {
     return activity.carpools?.some((carpool) => {
@@ -134,27 +145,6 @@ const DashBoardParent = ({ token }) => {
       onDetailsOpen();
     },
     [onDetailsOpen]
-  );
-
-  const handleJoinCarpool = useCallback(
-    async (carpoolId, activityId) => {
-      try {
-        const participantsData = await selectJoin(carpoolId);
-        setParticipants(participantsData);
-        setSelectedCarpoolId(carpoolId);
-        setSelectedActivityId(activityId);
-        setIsModalOpen(true);
-      } catch (error) {
-        toast({
-          title: 'Fel',
-          description: error.message || 'Ett fel inträffade vid hämtning av deltagare.',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-    },
-    [selectJoin]
   );
 
   const handleDeleteCarpool = useCallback(
@@ -217,40 +207,6 @@ const DashBoardParent = ({ token }) => {
       openChat(carpoolId);
     },
     [openChat]
-  );
-
-  const handleParticipantSelect = useCallback(
-    async (participant) => {
-      try {
-        const payload = {
-          carpool_id: selectedCarpoolId,
-          ...(participant.type === 'user' ? { add_self: true } : { child_id: participant.id }),
-        };
-        await addPassenger(payload, selectedActivityId);
-
-        if (selectedCarpoolId) {
-          await refreshCarpoolJoinedStatus(selectedCarpoolId);
-        }
-
-        toast({
-          title: 'Samåkning uppdaterad',
-          description: `${participant.name} har lagts till i samåkningen!`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-        setIsModalOpen(false);
-      } catch (error) {
-        toast({
-          title: 'Fel',
-          description: error.message || 'Ett fel inträffade vid försök att lägga till deltagare.',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-    },
-    [addPassenger, refreshCarpoolJoinedStatus, selectedActivityId, selectedCarpoolId]
   );
 
   useEffect(() => {
@@ -378,7 +334,7 @@ const DashBoardParent = ({ token }) => {
                 userId={userId}
                 joinedChildrenInCarpool={joinedChildrenInCarpool}
                 checkIfAllChildrenJoined={checkIfAllChildrenJoined}
-                handleJoinCarpool={handleJoinCarpool}
+                handleJoinCarpool={openJoinModal}
                 loadingJoinState={loadingJoinState}
                 handleDeleteCarpool={handleDeleteCarpool}
                 openChatModal={openChatModal}
@@ -464,7 +420,7 @@ const DashBoardParent = ({ token }) => {
                     userId={userId}
                     joinedChildrenInCarpool={joinedChildrenInCarpool}
                     checkIfAllChildrenJoined={checkIfAllChildrenJoined}
-                    onJoinCarpool={handleJoinCarpool}
+                    onJoinCarpool={openJoinModal}
                     loadingJoinState={loadingJoinState}
                     onDeleteCarpool={handleDeleteCarpool}
                     onOpenChat={openChatModal}
@@ -503,7 +459,7 @@ const DashBoardParent = ({ token }) => {
 
           <SelectParticipantModal
             isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
+            onClose={closeJoinModal}
             participants={participants}
             onSelect={handleParticipantSelect}
           />
